@@ -4,7 +4,7 @@ If something is wrong feel free to PR!
 
 I will write more soon.
 
-##The sample 
+## The sample 
 Currently, the sample features the following:
 
 - A bare minimum movement processor to show how to set up processors
@@ -13,7 +13,7 @@ Currently, the sample features the following:
 
 
 
-##Entity Component System
+## Entity Component System
 Mass is an archetype-based Entity Componenet System. If you already know what that is you can skip ahead to the next section.
 
 In Mass, some ECS terminology differs from the norm in order to not get confused with existing unreal code:
@@ -46,19 +46,19 @@ Mass is Unreal's new in-house ECS framework! Technically, Sequencer already used
 
 I'll start with a quick overview of the important stuff for now. 
 
-####Entities
+#### Entities
 Unique identifiers for individual entities.
-####Fragments
+#### Fragments
 Raw data-only UScriptStructs that entities can own and processors can query on. Stored in chunked archetype arrays for quick processing.
-####Tags
+#### Tags
 Fragments that have no data to only be used as tags for filtering. Just bits on an archetype internally.
-####Processors
+#### Processors
 The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. They can also include rules that define in which order they are called in. Automatically registered with Mass by default. 
-####Queries
+#### Queries
 A collection of fragments and tags combined with rules to filter for. Can exclude certain fragments or even include them optionally. This section will be expanded on soon!
 
 
-####Traits
+#### Traits
 
 Traits are C++ defined objects that declare a set of fragments and data to use for authoring new entities in a data-driven way. They usually contain fragments and data that go well together to make defining different kinds of entities in the editor simple. 
 
@@ -67,15 +67,15 @@ MassEntityConfigAsset and add new traits to it. Each trait can be expanded to se
 
 Traits are often used to add SharedFragments in the form of settings.
 
-####Shared Fragments
+#### Shared Fragments
 
 Shared Fragments (FMassSharedFragment) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. The archetype only needs to store one copy for many of sharing entities.
 
-###Plugins and Modules
+### Plugins and Modules
 The Mass framework is divided into many different plugins and modules. Here's my quick overview:
-#####MassEntity
+##### MassEntity
 The core plugin+modules manages all entity creation and storage. You should store a pointer to this subsystem in your code.
-#####MassGameplay 
+##### MassGameplay 
 A plugin with many modules with many useful fragments and processors is used throughout the framework. 
 - **MassCommon**
 Basic fragments like FTransformFragment.
