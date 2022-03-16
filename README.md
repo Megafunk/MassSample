@@ -40,7 +40,7 @@ Internally, Mass is similar to the existing [Unity DOTS](https://docs.unity3d.co
 
 
 
-##Mass
+## Mass
 
 Mass is Unreal's new in-house ECS framework! Technically, Sequencer already used one internally but it wasn't intended for gameplay code. Mass was created by the AI team at Epic Games to facilitate massive crowd simulations but has grown to include many other features as well. It was featured in the new Matrix demo Epic released recently.
 
