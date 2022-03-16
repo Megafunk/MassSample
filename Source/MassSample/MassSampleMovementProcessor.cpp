@@ -3,8 +3,8 @@
 
 #include "MassSampleMovementProcessor.h"
 #include "MassSampleFragments.h"
-#include "../../../../Unreal Engine Binaries/UE_5.0/Engine/Plugins/Runtime/MassGameplay/Source/MassCommon/Public/MassCommonFragments.h"
-#include "../../../../Unreal Engine Binaries/UE_5.0/Engine/Plugins/Runtime/MassGameplay/Source/MassMovement/Public/MassMovementFragments.h"
+#include "MassCommon/Public/MassCommonFragments.h"
+#include "MassMovement/Public/MassMovementFragments.h"
 
 UMassSampleMovementProcessor::UMassSampleMovementProcessor()
 {
