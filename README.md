@@ -20,11 +20,12 @@ In Mass, some ECS terminology differs from the norm in order to not get confused
 | ECS | Mass |
 | ----------- | ----------- |
 | Entity | Entity |
-| Component | Fragment / Tag | 
+| Component | Fragment / Tag <!-- FIXME: Don't put tags here--> | 
 | System | Processor | 
 
-I'm not going to call it an EFP though!
 
+I'm not going to call it an EFP though!
+<!-- FIXME: This is repeated information also found below. Can use this to index further sections. Missing Traits. -->
 - Entities: simple unique identifiers that can have components.
 - Fragments: data-only structs that can be removed or added at runtime
 - Processors: functions that operate on specific components they query for
@@ -38,7 +39,8 @@ Fragments are stored in memory as tightly packed arrays of other identical fragm
 
 Internally, Mass is similar to the existing [Unity DOTS](https://docs.unity3d.com/Packages/com.unity.entities@0.17/manual/index.html) and [FLECS](https://github.com/SanderMertens/flecs) archetype-based ECS libraries. There are many more!
 
-
+<!-- FIXME: Let's figure out first an index to later fill with content if you agree. -->
+<!-- FIXME: I'd say we can keep the majority of content we have in here, but we should define first an index. -->
 
 ## Mass
 
@@ -56,6 +58,8 @@ Fragments that have no data to only be used as tags for filtering. Just bits on 
 The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. They can also include rules that define in which order they are called in. Automatically registered with Mass by default. 
 #### Queries
 A collection of fragments and tags combined with rules to filter for. Can exclude certain fragments or even include them optionally. This section will be expanded on soon!
+
+<!-- FIXME: Might be nice minimal code samples for relevant parts + cross ref the simple use case. -->
 
 
 #### Traits
