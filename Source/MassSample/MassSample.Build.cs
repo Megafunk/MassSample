@@ -6,6 +6,8 @@ public class MassSample : ModuleRules
 {
 	public MassSample(ReadOnlyTargetRules Target) : base(Target)
 	{
+		
+		PublicDefinitions.Add("WITH_MASSGAMEPLAY_DEBUG=1");
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"MassEntity",
@@ -17,7 +19,9 @@ public class MassSample : ModuleRules
 			"MassRepresentation",
 			"MassSignals",
 			"MassCrowd",
-			"MassReplication"
+			"MassReplication",
+			"ZoneGraph",
+			"MassZoneGraphNavigation"
 
 			
 		});
