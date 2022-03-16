@@ -6,27 +6,45 @@ public class MassSample : ModuleRules
 {
 	public MassSample(ReadOnlyTargetRules Target) : base(Target)
 	{
-		
-		PublicDefinitions.Add("WITH_MASSGAMEPLAY_DEBUG=1");
-		PrivateDependencyModuleNames.AddRange(new string[]
-		{
-			"MassEntity",
-			"StructUtils",
-			"MassCommon",
-			"MassMovement",
-			"MassActors",
-			"MassSpawner",
-			"MassRepresentation",
-			"MassSignals",
-			"MassCrowd",
-			"MassReplication",
-			"ZoneGraph",
-			"MassZoneGraphNavigation"
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        
+		PublicIncludePaths.AddRange(
+            new string[] {
+                "MassSample"
+            }
+        );
 
-			
-		});
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        PrivateIncludePaths.AddRange(
+            new string[] {
+            }
+        );
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay" });
-	}
+        PublicDependencyModuleNames.AddRange(
+			new string[] { 
+				"Core", 
+				"CoreUObject", 
+				"Engine", 
+				"InputCore" 
+			}
+		);
+
+        PrivateDependencyModuleNames.AddRange(
+			new string[] {
+				"MassEntity",
+				"StructUtils",
+				"MassCommon",
+				"MassMovement",
+				"MassActors",
+				"MassSpawner",
+				"MassRepresentation",
+				"MassSignals",
+				"MassCrowd",
+				"MassReplication",
+				"ZoneGraph",
+				"MassZoneGraphNavigation"
+			}
+		);
+
+        PublicDefinitions.Add("WITH_MASSGAMEPLAY_DEBUG=1");
+    }
 }

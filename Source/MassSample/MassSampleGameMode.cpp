@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "MassSampleGameMode.h"
-#include "MassSampleCharacter.h"
+#include "Character/MassSampleCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 AMassSampleGameMode::AMassSampleGameMode()

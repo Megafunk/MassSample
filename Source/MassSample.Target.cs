@@ -9,6 +9,6 @@ public class MassSampleTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
-		ExtraModuleNames.Add("MassSample");
+		ExtraModuleNames.AddRange(new string[] { "LyraGame" });
 	}
 }

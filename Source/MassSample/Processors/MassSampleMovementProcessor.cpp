@@ -2,9 +2,9 @@
 
 
 #include "MassSampleMovementProcessor.h"
-#include "MassSampleFragments.h"
 #include "MassCommon/Public/MassCommonFragments.h"
 #include "MassMovement/Public/MassMovementFragments.h"
+#include "Traits/MassSampleFragments.h"
 
 UMassSampleMovementProcessor::UMassSampleMovementProcessor()
 {
