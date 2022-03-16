@@ -98,9 +98,9 @@ Lets entities "claim" SmartObjects to interact with them.
 
 There are more modules that implement AI features that I will document with more detail when I get around to it.
 
--Zonegraph
+- **Zonegraph**
 In-level splines and shapes that use config defined lanes to direct crowd entities around! Think sidewalks, roads etc.
--StateTree
+- **StateTree**
 A new lightweight AI statemachine that can work in conjunction with Mass Crowds one of them is used to direct the cones in the parade.
 
 
