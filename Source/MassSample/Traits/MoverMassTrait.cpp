@@ -12,7 +12,7 @@ void UMoverMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContex
 {
 	BuildContext.AddFragment<FTransformFragment>();
 
-	BuildContext.AddFragment_GetRef<FSampleVelocityFragment>().Value = Velocity;
+	BuildContext.AddFragment_GetRef<FMassVelocityFragment>().Value = Velocity;
 	
 	BuildContext.AddTag<FMoverTag>();
 	

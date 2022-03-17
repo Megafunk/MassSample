@@ -11,22 +11,12 @@
  * If you want to, it is possible to add functions as well for getter/setters and the like.
  */
 USTRUCT()
-struct FSampleFragment : public FMassFragment
+struct FSampleColorFragment : public FMassFragment
 {
 	GENERATED_BODY()
 	
 	FColor Color = FColor::Red;
 };
-
-//this already exists in the mass movement module but I just wanted to demonstrate
-USTRUCT()
-struct FSampleVelocityFragment : public FMassFragment
-{
-	GENERATED_BODY()
-
-	FVector Value = FVector::ZeroVector;
-};
-
 
 /**
  * FMassTags are structs that exist only as tags on Mass entities. They cannot have data!

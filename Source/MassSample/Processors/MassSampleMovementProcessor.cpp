@@ -23,14 +23,14 @@ void UMassSampleMovementProcessor::ConfigureQueries()
 	
 	//Only include entities that meet the following rules:
 
-	//must have an FMoverTag
+	//ALL must have an FMoverTag
 	MovementEntityQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
 
 	//must have an FTransformFragment and we are reading and changing it
 	MovementEntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	
 	//must have an FTransformFragment and we are only reading it
-	MovementEntityQuery.AddRequirement<FSampleVelocityFragment>(EMassFragmentAccess::ReadOnly);
+	MovementEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);
 
 }
 
@@ -50,7 +50,7 @@ void UMassSampleMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem
 		const TArrayView<FTransformFragment> TransformList = Context.GetMutableFragmentView<FTransformFragment>();
 		
 		//This one is readonly, so we don't need Mutable
-		const TConstArrayView<FSampleVelocityFragment> VelocityList = Context.GetFragmentView<FSampleVelocityFragment>();
+		const TConstArrayView<FMassVelocityFragment> VelocityList = Context.GetFragmentView<FMassVelocityFragment>();
 
 		
 		//Loop over every entity in the current chunk and do stuff!
@@ -59,12 +59,10 @@ void UMassSampleMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem
 			FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
 
 			FVector VelocityToMove = VelocityList[EntityIndex].Value;
-
+			
 			//Multiply the amount to move by delta time from the context.
 			VelocityToMove = Context.GetDeltaTimeSeconds() * VelocityToMove;
-
-			//VelocityToMove = FVector(100.0f);
-                
+			
 			TransformToChange.AddToTranslation(VelocityToMove);
 			
 		}
