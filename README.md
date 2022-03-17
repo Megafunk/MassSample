@@ -20,20 +20,18 @@ In Mass, some ECS terminology differs from the norm in order to not get confused
 | ECS | Mass |
 | ----------- | ----------- |
 | Entity | Entity |
-| Component | Fragment / Tag <!-- FIXME: Don't put tags here--> | 
+| Component | Fragment | 
 | System | Processor | 
 
-
-I'm not going to call it an EFP though!
 <!-- FIXME: This is repeated information also found below. Can use this to index further sections. Missing Traits. -->
-- Entities: simple unique identifiers that can have components.
-- Fragments: data-only structs that can be removed or added at runtime
-- Processors: functions that operate on specific components they query for
+<!--- Entities: simple unique identifiers that can have components.-->
+<!--- Fragments: data-only structs that can be removed or added at runtime -->
+<!--- Processors: functions that operate on specific components they query for-->
 
 Typical Unreal Engine game code is expressed as actor objects that inherit from parent classes to change their data and functionality based on what they ***are***. 
-In an ECS, an entity is only composed of fragments that get manipulated by outside processors based on which ECS components they ***have***. 
+In an ECS, an entity is only composed of fragments that get manipulated by processors based on which ECS components they ***have***. 
 
-An entity is really just a small unique identifier that points to some fragments. A Processor defines a query that filters only for archetypes that have specific fragments. For example, a basic "movement" Processor could query for entities that have a transform and velocity component to add the velocity to their current transform position. 
+An entity is really just a small unique identifier that points to some fragments. A Processor defines a query that filters only for entities that have specific fragments. For example, a basic "movement" Processor could query for entities that have a transform and velocity component to add the velocity to their current transform position. 
 
 Fragments are stored in memory as tightly packed arrays of other identical fragment arrangements called archetypes. Because of this, the aforementioned movement processor can be incredibly high performance because it does a simple operation on a small amount of data all at once. New functionality can easily be added by creating new fragments and processors.
 
@@ -105,7 +103,7 @@ There are more modules that implement AI features that I will document with more
 - **Zonegraph**
 In-level splines and shapes that use config defined lanes to direct crowd entities around! Think sidewalks, roads etc.
 - **StateTree**
-A new lightweight AI statemachine that can work in conjunction with Mass Crowds. One of them is used to direct the cones in the parade.
+A new lightweight AI statemachine that can work in conjunction with Mass Crowds. One of them is used to give movement targets to the cones in the parade in the sample.
 
 
 
