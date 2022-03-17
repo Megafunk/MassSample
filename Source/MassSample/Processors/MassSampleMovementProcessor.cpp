@@ -4,7 +4,7 @@
 #include "MassSampleMovementProcessor.h"
 #include "MassCommon/Public/MassCommonFragments.h"
 #include "MassMovement/Public/MassMovementFragments.h"
-#include "Fragments//MassSampleFragments.h"
+#include "Fragments/MassSampleFragments.h"
 
 UMassSampleMovementProcessor::UMassSampleMovementProcessor()
 {
