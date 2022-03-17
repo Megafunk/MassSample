@@ -12,6 +12,7 @@
  */
 UCLASS()
 //TODO: leaving mass out of the name here to avoid confusion. Perhaps change the other classes too?
+// FIXME: Find a common prefix for all the filenames of the module. Can do UMassBlah...
 class MASSSAMPLE_API UMSampleSubSystem : public UWorldSubsystem
 {
 	GENERATED_BODY()

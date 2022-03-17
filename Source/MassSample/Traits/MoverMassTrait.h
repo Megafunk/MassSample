@@ -19,6 +19,7 @@ class MASSSAMPLE_API UMoverMassTrait : public UMassEntityTraitBase
 protected:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 
+	// FIXME: Not working as expected, revise processor file.
 	UPROPERTY(EditAnywhere, Category = "Mass")
 	FVector Velocity = {0,0,100.0f};
 

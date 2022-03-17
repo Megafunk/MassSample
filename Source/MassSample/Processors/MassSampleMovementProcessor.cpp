@@ -32,6 +32,14 @@ void UMassSampleMovementProcessor::ConfigureQueries()
 	//must have an FTransformFragment and we are only reading it
 	MovementEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);
 
+
+	/** FIXME: Conceptual - UMassRandomVelocityInitializer might be stealing FMassVelocityFragment,
+	noticed that if I put an input matching what the UMassRandomVelocityInitializer expects
+	the velocity gets randomized. Maybe we require to create a new fragment exclusive for the trait **/
+
+	// FIXME: Revise fragment reusability.
+
+
 }
 
 void UMassSampleMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)

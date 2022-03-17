@@ -7,6 +7,8 @@
 #include "UObject/Object.h"
 #include "MassSampleMovementProcessor.generated.h"
 
+// FIXME: This hello world is perfect as is, we just need to investigate the velocity fragment missbehav and document it.
+
 /**
  * Example processor demonstrating how to move entities found in query
  * Processors are called "Systems" in most ECS libraries. 
