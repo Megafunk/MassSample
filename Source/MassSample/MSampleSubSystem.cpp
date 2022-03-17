@@ -6,7 +6,7 @@
 #include "MassCommonFragments.h"
 #include "MassEntitySubsystem.h"
 #include "MassMovementFragments.h"
-#include "MassSampleFragments.h"
+#include "Fragments/MassSampleFragments.h"
 #include "Example/MassVelocityRandomizerTrait.h"
 
 
