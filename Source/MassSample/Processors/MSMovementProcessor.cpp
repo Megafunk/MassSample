@@ -1,12 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MassSampleMovementProcessor.h"
+#include "MSMovementProcessor.h"
 #include "MassCommon/Public/MassCommonFragments.h"
 #include "MassMovement/Public/MassMovementFragments.h"
-#include "Fragments/MassSampleFragments.h"
+#include "Fragments/MSFragments.h"
 
-UMassSampleMovementProcessor::UMassSampleMovementProcessor()
+UMSMovementProcessor::UMSMovementProcessor()
 {
 	//This executes on any type of game client (server, standalone, client etc).
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
@@ -15,12 +15,10 @@ UMassSampleMovementProcessor::UMassSampleMovementProcessor()
 
 	//Using the built-in movement processor group
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
-
 }
 
-void UMassSampleMovementProcessor::ConfigureQueries()
+void UMSMovementProcessor::ConfigureQueries()
 {
-	
 	//Only include entities that meet the following rules:
 
 	//ALL must have an FMoverTag
@@ -30,25 +28,21 @@ void UMassSampleMovementProcessor::ConfigureQueries()
 	MovementEntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	
 	//must have an FTransformFragment and we are only reading it
-	MovementEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);
+	MovementEntityQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
 
 
 	/** FIXME: Conceptual - UMassRandomVelocityInitializer might be stealing FMassVelocityFragment,
 	noticed that if I put an input matching what the UMassRandomVelocityInitializer expects
 	the velocity gets randomized. Maybe we require to create a new fragment exclusive for the trait **/
-
-	// FIXME: Revise fragment reusability.
-
-
+	// FIXME: Revise fragment reusability. - document this docx.
 }
 
-void UMassSampleMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
 	//The processor's work begins!
 	//Just be aware that code that affects Mass entities in here is called when we are in processing mode.
 
-
-	                        //Note that this is a lambda! If you want extra data you may need to pass something into the []
+	//Note that this is a lambda! If you want extra data you may need to pass something into the []
 	MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 	{
 		//Get the length of the entities in our current ExecutionContext
@@ -58,27 +52,19 @@ void UMassSampleMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem
 		const TArrayView<FTransformFragment> TransformList = Context.GetMutableFragmentView<FTransformFragment>();
 		
 		//This one is readonly, so we don't need Mutable
-		const TConstArrayView<FMassVelocityFragment> VelocityList = Context.GetFragmentView<FMassVelocityFragment>();
+		const TConstArrayView<FMassForceFragment> ForceList = Context.GetFragmentView<FMassForceFragment>();
 
-		
 		//Loop over every entity in the current chunk and do stuff!
 		for (int32 EntityIndex = 0; EntityIndex < NumEntities; ++EntityIndex)
 		{
 			FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
 
-			FVector VelocityToMove = VelocityList[EntityIndex].Value;
+			FVector DeltaForce = ForceList[EntityIndex].Value;
 			
 			//Multiply the amount to move by delta time from the context.
-			VelocityToMove = Context.GetDeltaTimeSeconds() * VelocityToMove;
+			DeltaForce = Context.GetDeltaTimeSeconds() * DeltaForce;
 			
-			TransformToChange.AddToTranslation(VelocityToMove);
-			
+			TransformToChange.AddToTranslation(DeltaForce);
 		}
-
-		
-
-		
 	});
-
-	
 }

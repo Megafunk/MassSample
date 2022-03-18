@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "MassSampleCharacter.h"
+#include "MSCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -9,9 +9,9 @@
 #include "GameFramework/SpringArmComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
-// AMassSampleCharacter
+// AMSCharacter
 
-AMassSampleCharacter::AMassSampleCharacter()
+AMSCharacter::AMSCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -54,52 +54,52 @@ AMassSampleCharacter::AMassSampleCharacter()
 //////////////////////////////////////////////////////////////////////////
 // Input
 
-void AMassSampleCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+void AMSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AMassSampleCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &AMassSampleCharacter::MoveRight);
+	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AMSCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("Move Right / Left", this, &AMSCharacter::MoveRight);
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
 	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AMassSampleCharacter::TurnAtRate);
+	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AMSCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &AMassSampleCharacter::LookUpAtRate);
+	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &AMSCharacter::LookUpAtRate);
 
 	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &AMassSampleCharacter::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &AMassSampleCharacter::TouchStopped);
+	PlayerInputComponent->BindTouch(IE_Pressed, this, &AMSCharacter::TouchStarted);
+	PlayerInputComponent->BindTouch(IE_Released, this, &AMSCharacter::TouchStopped);
 }
 
-void AMassSampleCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
+void AMSCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
 	Jump();
 }
 
-void AMassSampleCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
+void AMSCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
 	StopJumping();
 }
 
-void AMassSampleCharacter::TurnAtRate(float Rate)
+void AMSCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
-void AMassSampleCharacter::LookUpAtRate(float Rate)
+void AMSCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
-void AMassSampleCharacter::MoveForward(float Value)
+void AMSCharacter::MoveForward(float Value)
 {
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
@@ -113,7 +113,7 @@ void AMassSampleCharacter::MoveForward(float Value)
 	}
 }
 
-void AMassSampleCharacter::MoveRight(float Value)
+void AMSCharacter::MoveRight(float Value)
 {
 	if ( (Controller != nullptr) && (Value != 0.0f) )
 	{

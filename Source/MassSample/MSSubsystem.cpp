@@ -1,16 +1,16 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MSampleSubSystem.h"
+#include "MSSubsystem.h"
 
 #include "MassCommonFragments.h"
 #include "MassEntitySubsystem.h"
 #include "MassMovementFragments.h"
-#include "Fragments/MassSampleFragments.h"
+#include "Fragments/MSFragments.h"
 #include "Example/MassVelocityRandomizerTrait.h"
 
 
-void UMSampleSubSystem::Initialize(FSubsystemCollectionBase& Collection)
+void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	const UWorld* World = GetWorld();
 
@@ -21,7 +21,7 @@ void UMSampleSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 	//To spawn entities from C++ we can make a new archetype like so:
 	FMassArchetypeHandle MoverArchetype =  EntitySystem->CreateArchetype(
-		{
+	{
 		FTransformFragment::StaticStruct(),
 		FMassVelocityFragment::StaticStruct()
 	});
@@ -34,8 +34,8 @@ void UMSampleSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 	//Afterwards you can add, remove or change fragments of the entity. Let's add a tag fragment!
 	EntitySystem->AddTagToEntity(NewEntity,
 		FMoverTag::StaticStruct());
-	//Make sure you use AddTag for tags and AddFragment for fragments!
-	EntitySystem->AddFragmentToEntity(NewEntity,
+		//Make sure you use AddTag for tags and AddFragment for fragments!
+		EntitySystem->AddFragmentToEntity(NewEntity,
 		FSampleColorFragment::StaticStruct());
 
 	

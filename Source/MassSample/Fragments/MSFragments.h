@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTypes.h"
-#include "MassSampleFragments.generated.h"
+#include "MSFragments.generated.h"
 
 /**
  * FMassFragments are simple structs that can hold data.
