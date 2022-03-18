@@ -5,14 +5,13 @@
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
 #include "UObject/Object.h"
-#include "MoverMassTrait.generated.h"
+#include "MSMoverMassTrait.generated.h"
 
 /**
- * 
+ * This trait uses 2 fragments. One to set the location of the entity, and another one to feed a constant force to add.
  */
-
 UCLASS(meta = (DisplayName = "Sample Mover Trait"))
-class MASSSAMPLE_API UMoverMassTrait : public UMassEntityTraitBase
+class MASSSAMPLE_API UMSMoverMassTrait : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
 
@@ -20,6 +19,6 @@ protected:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = "Mass")
-	FVector Velocity = {0,0,100.0f};
+	FVector Force = {0,0,100.0f};
 
 };

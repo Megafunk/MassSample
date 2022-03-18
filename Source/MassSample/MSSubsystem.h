@@ -5,14 +5,15 @@
 #include "CoreMinimal.h"
 #include "MassEntitySubsystem.h"
 #include "UObject/Object.h"
-#include "MSampleSubSystem.generated.h"
+#include "MSSubsystem.generated.h"
 
 /**
  * 
  */
 UCLASS()
 //TODO: leaving mass out of the name here to avoid confusion. Perhaps change the other classes too?
-class MASSSAMPLE_API UMSampleSubSystem : public UWorldSubsystem
+// FIXME: Find a common prefix for all the filenames of the module. Can do UMassBlah...
+class MASSSAMPLE_API UMSSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 public:

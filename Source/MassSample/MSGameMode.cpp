@@ -1,10 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "MassSampleGameMode.h"
-#include "Character/MassSampleCharacter.h"
+#include "MSGameMode.h"
+#include "Character/MSCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
-AMassSampleGameMode::AMassSampleGameMode()
+AMSGameMode::AMSGameMode()
 {
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"));

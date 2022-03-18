@@ -5,18 +5,20 @@
 #include "CoreMinimal.h"
 #include "MassProcessor.h"
 #include "UObject/Object.h"
-#include "MassSampleMovementProcessor.generated.h"
+#include "MSMovementProcessor.generated.h"
+
+// FIXME: This hello world is perfect as is, we just need to investigate the velocity fragment missbehav and document it.
 
 /**
  * Example processor demonstrating how to move entities found in query
  * Processors are called "Systems" in most ECS libraries. 
  */
 UCLASS()
-class MASSSAMPLE_API UMassSampleMovementProcessor : public UMassProcessor
+class MASSSAMPLE_API UMSMovementProcessor : public UMassProcessor
 {
 	GENERATED_BODY()
 public:
-	UMassSampleMovementProcessor();
+	UMSMovementProcessor();
 
 protected:
 	virtual void ConfigureQueries() override;
