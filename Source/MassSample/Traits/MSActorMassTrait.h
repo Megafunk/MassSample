@@ -5,14 +5,14 @@
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
 #include "MassObserverProcessor.h"
-#include "ActorMassTrait.generated.h"
+#include "MSActorMassTrait.generated.h"
 
 /**
  * 
  */
 
 UCLASS(meta = (DisplayName = "Sample Actor Trait"))
-class MASSSAMPLE_API UActorMassTrait : public UMassEntityTraitBase
+class MASSSAMPLE_API UMSActorMassTrait : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
 
@@ -27,12 +27,12 @@ protected:
 };
 
 UCLASS()
-class MASSSAMPLE_API UActorMassInitializer : public UMassObserverProcessor
+class MASSSAMPLE_API UMSActorMassInitializer : public UMassObserverProcessor
 {
 	GENERATED_BODY()
 protected:
 
-	UActorMassInitializer();
+	UMSActorMassInitializer();
 	
 	virtual void ConfigureQueries() override;
 	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;

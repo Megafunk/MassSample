@@ -1,14 +1,14 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ActorMassTrait.h"
+#include "MSActorMassTrait.h"
 
 #include "MassActorSubsystem.h"
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
 #include "Fragments/MSFragments.h"
 
-void UActorMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+void UMSActorMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {
 	FMassActorFragment& MassActorFragment = BuildContext.AddFragment_GetRef<FMassActorFragment>();
 	
@@ -18,19 +18,19 @@ void UActorMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContex
 	
 }
 
-UActorMassInitializer::UActorMassInitializer()
+UMSActorMassInitializer::UMSActorMassInitializer()
 {
 	ObservedType = FMassActorFragment::StaticStruct();
 	Operation = EMassObservedOperation::Add;
 }
 
-void UActorMassInitializer::ConfigureQueries()
+void UMSActorMassInitializer::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FMassActorFragment>(EMassFragmentAccess::ReadWrite);
 
 }
 
-void UActorMassInitializer::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSActorMassInitializer::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
 
 	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
