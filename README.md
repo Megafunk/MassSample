@@ -10,20 +10,20 @@ This documentation will be updated often!
 > 1 [Mass](#mass)  
 > 2 [Entity Component System](#ecs)  
 > 3 [Sample Project](#sample)  
->   3.1 [Test indent 1](#tocs)  
+> &nbsp;&nbsp;&nbsp;3.1 [Test indent 1](#tocs)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.1.1. [Test indent 2](#tocs)  
 > 4 [Mass Concepts](#massconcepts)  
->   4.1 [Entities](#mass-entities)   
->   4.2 [Fragments](#mass-fragments)  
->   4.3 [Tags](#mass-tags)  
->   4.4 [Processors](#mass-processors)  
->   4.5 [Queries](#mass-queries)  
->   4.6 [Traits](#mass-traits)  
->    4.7 [Shared Fragments](#mass-sf)  
+> &nbsp;&nbsp;&nbsp;4.1 [Entities](#mass-entities)   
+> &nbsp;&nbsp;&nbsp;4.2 [Fragments](#mass-fragments)  
+> &nbsp;&nbsp;&nbsp;4.3 [Tags](#mass-tags)  
+> &nbsp;&nbsp;&nbsp;4.4 [Processors](#mass-processors)  
+> &nbsp;&nbsp;&nbsp;4.5 [Queries](#mass-queries)  
+> &nbsp;&nbsp;&nbsp;4.6 [Traits](#mass-traits)  
+> &nbsp;&nbsp;&nbsp;4.7 [Shared Fragments](#mass-sf)  
 > 5 [Mass Plugins and Modules](#mass-pm)  
->   5.1 [MassEntity](#mass-pm-me)  
->   5.2 [MassGameplay](#mass-pm-gp)  
->   5.3 [MassAI](#mass-pm-ai)  
+> &nbsp;&nbsp;&nbsp;5.1 [MassEntity](#mass-pm-me)  
+> &nbsp;&nbsp;&nbsp;5.2 [MassGameplay](#mass-pm-gp)  
+> &nbsp;&nbsp;&nbsp;5.3 [MassAI](#mass-pm-ai)  
 
 <a name="mass"></a>
 ## 1 Mass
@@ -58,13 +58,10 @@ Currently, the sample features the following:
 - A Mass-simulated crowd of cones that parades around the level following a ZoneGraph shape with lanes.
 
 
-
-
-
 <!-- FIXME: Let's figure out first an index to later fill with content if you agree. -->
 <!-- FIXME: I'd say we can keep the majority of content we have in here, but we should define first an index. -->
 
-<a name="concepts"></a>
+<a name="massconcepts"></a>
 ## 4 Mass Concepts
 
 #### Sections
