@@ -6,7 +6,7 @@
 #include "MassActorSubsystem.h"
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
-#include "Fragments/MassSampleFragments.h"
+#include "Fragments/MSFragments.h"
 
 void UActorMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {
