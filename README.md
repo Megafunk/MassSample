@@ -7,30 +7,30 @@ This documentation will be updated often!
 <!--- Introduce here table of contents -->
 <a name="tocs"></a>
 ## Table of Contents
-> 1 [Mass](#mass)  
-> 2 [Entity Component System](#ecs)  
-> 3 [Sample Project](#sample)  
-> &nbsp;&nbsp;&nbsp;3.1 [Test indent 1](#tocs)  
+> 1. [Mass](#mass)  
+> 2. [Entity Component System](#ecs)  
+> 3. [Sample Project](#sample)  
+> 3.1 [Test indent 1](#tocs)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.1.1. [Test indent 2](#tocs)  
-> 4 [Mass Concepts](#massconcepts)  
-> &nbsp;&nbsp;&nbsp;4.1 [Entities](#mass-entities)   
-> &nbsp;&nbsp;&nbsp;4.2 [Fragments](#mass-fragments)  
-> &nbsp;&nbsp;&nbsp;4.3 [Tags](#mass-tags)  
-> &nbsp;&nbsp;&nbsp;4.4 [Processors](#mass-processors)  
-> &nbsp;&nbsp;&nbsp;4.5 [Queries](#mass-queries)  
-> &nbsp;&nbsp;&nbsp;4.6 [Traits](#mass-traits)  
-> &nbsp;&nbsp;&nbsp;4.7 [Shared Fragments](#mass-sf)  
-> 5 [Mass Plugins and Modules](#mass-pm)  
-> &nbsp;&nbsp;&nbsp;5.1 [MassEntity](#mass-pm-me)  
-> &nbsp;&nbsp;&nbsp;5.2 [MassGameplay](#mass-pm-gp)  
-> &nbsp;&nbsp;&nbsp;5.3 [MassAI](#mass-pm-ai)  
+> 4. [Mass Concepts](#massconcepts)  
+> 4.1 [Entities](#mass-entities)   
+> 4.2 [Fragments](#mass-fragments)  
+> 4.3 [Tags](#mass-tags)  
+> 4.4 [Processors](#mass-processors)  
+> 4.5 [Queries](#mass-queries)  
+> 4.6 [Traits](#mass-traits)  
+> 4.7 [Shared Fragments](#mass-sf)  
+> 5. [Mass Plugins and Modules](#mass-pm)  
+> 5.1 [MassEntity](#mass-pm-me)  
+> 5.2 [MassGameplay](#mass-pm-gp)  
+> 5.3 [MassAI](#mass-pm-ai)  
 
 <a name="mass"></a>
-## 1 Mass
+## 1. Mass
 Mass is Unreal's new in-house ECS framework! Technically, [Sequencer](https://docs.unrealengine.com/4.26/en-US/AnimatingObjects/Sequencer/Overview/) already used one internally but it wasn't intended for gameplay code. Mass was created by the AI team at Epic Games to facilitate massive crowd simulations but has grown to include many other features as well. It was featured in the new [Matrix demo](https://www.unrealengine.com/en-US/blog/introducing-the-matrix-awakens-an-unreal-engine-5-experience) Epic released recently.
 
 <a name="ecs"></a>
-## 2 Entity Component System 
+## 2. Entity Component System 
 Mass is an archetype-based Entity Componenet System. If you already know what that is you can skip ahead to the next section.
 
 In Mass, some ECS terminology differs from the norm in order to not get confused with existing unreal code:
@@ -50,7 +50,7 @@ Fragments are stored in memory as tightly packed arrays of other identical fragm
 Internally, Mass is similar to the existing [Unity DOTS](https://docs.unity3d.com/Packages/com.unity.entities@0.17/manual/index.html) and [FLECS](https://github.com/SanderMertens/flecs) archetype-based ECS libraries. There are many more!
 
 <a name="sample"></a>
-## 3 Sample Project
+## 3. Sample Project
 Currently, the sample features the following:
 
 - A bare minimum movement processor to show how to set up processors.
@@ -62,7 +62,7 @@ Currently, the sample features the following:
 <!-- FIXME: I'd say we can keep the majority of content we have in here, but we should define first an index. -->
 
 <a name="massconcepts"></a>
-## 4 Mass Concepts
+## 4. Mass Concepts
 
 #### Sections
 
@@ -111,7 +111,7 @@ Traits are often used to add SharedFragments in the form of settings.
 Shared Fragments (FMassSharedFragment) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. The archetype only needs to store one copy for many of sharing entities.
 
 <a name="mass-pm"></a>
-## 5 Mass Plugins and Modules
+## 5. Mass Plugins and Modules
 The Mass framework is divided into many different plugins and modules. Here's my quick overview:
 
 <a name="mass-pm-me"></a>
@@ -149,9 +149,3 @@ There are more modules that implement AI features that I will document with more
 In-level splines and shapes that use config defined lanes to direct crowd entities around! Think sidewalks, roads etc.
 - **StateTree**
 A new lightweight AI statemachine that can work in conjunction with Mass Crowds. One of them is used to give movement targets to the cones in the parade in the sample.
-
-
-
-
-
-
