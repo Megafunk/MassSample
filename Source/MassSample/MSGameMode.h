@@ -6,7 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "MSGameMode.generated.h"
 
-UCLASS(minimalapi)
+UCLASS(minimalapi,Blueprintable)
 class AMSGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
