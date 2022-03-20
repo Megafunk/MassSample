@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "MassEntitySubsystem.h"
 #include "MassRepresentationProcessor.h"
+#include "MSNiagaraActor.h"
 #include "EntitySystem/MovieSceneEntityIDs.h"
 
 #include "Field/FieldSystemNodes.h"
@@ -50,6 +51,13 @@ protected:
 public:
 
 	TStatId GetStatId() const override { RETURN_QUICK_DECLARE_CYCLE_STAT(UBattlementECSSubsystem, STATGROUP_Tickables); }
+	
+	FSharedStruct GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem);
+
+	
+	/*This map lets us key based of of the hash of the NiagaraSystem pointer in new projectiles to see if they have an
+	  existing manager actor*/
+	TMap<uint32,AMSNiagaraActor*> PreexistingSharedNiagaraActors;
 
 	//UFUNCTION(BlueprintCallable)
 	//int32 SpawnProjectileEntity(FTransform Position, FVector Velocity, bool bRicochet);

@@ -33,9 +33,7 @@ public:
 	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
 
 	
-	FMassEntityQuery PositionToNiagaraQuery;
-	
-
-
+	FMassEntityQuery PositionToNiagaraFragmentQuery;
+	FMassEntityQuery PushArraysToNiagaraSystems;
 };
 

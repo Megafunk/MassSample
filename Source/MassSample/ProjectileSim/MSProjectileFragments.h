@@ -44,13 +44,19 @@ struct MASSSAMPLE_API FMFragment_LifeTime : public FMassFragment
 };
 
 
+/*		Please keep in mind that we key FSharedNiagaraSystemFragment off of the pointer
+ *		to the niagara system select in the trait.
+ *		Don't use the regular struct CRC32 hash like you would for other shared fragments.
+*/
 USTRUCT()
 struct MASSSAMPLE_API FSharedNiagaraSystemFragment : public FMassSharedFragment
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	TWeakObjectPtr<class UNiagaraSystem> NiagaraSystem; 
+	TWeakObjectPtr<class AMSNiagaraActor> NiagaraManagerActor;
+	
+	int32 IteratorOffset = 0;
 };
 
 

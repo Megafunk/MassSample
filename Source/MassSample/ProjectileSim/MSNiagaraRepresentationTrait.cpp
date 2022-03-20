@@ -6,21 +6,20 @@
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
 #include "MSProjectileFragments.h"
+#include "MSProjectileSubsystem.h"
 #include "NiagaraSystem.h"
+#include "Fragments/MSFragments.h"
 
 void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {
 
 	
-	UMassEntitySubsystem* EntitySubsystem = UWorld::GetSubsystem<UMassEntitySubsystem>(&World);
+	UMSProjectileSubsystem* ProjectileSubsystem = UWorld::GetSubsystem<UMSProjectileSubsystem>(&World);
 
 	BuildContext.AddFragment<FTransformFragment>();
-
 	
-	uint32 FragmentPropertiesHash = UE::StructUtils::GetStructCrc32(FConstStructView::Make(SharedNiagaraSystemFragment));
 	
-	FSharedStruct SharedFragment = EntitySubsystem->GetOrCreateSharedFragment<FSharedNiagaraSystemFragment>(
-		FragmentPropertiesHash, SharedNiagaraSystemFragment);
+	FSharedStruct SharedFragment = ProjectileSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem);
 	
 	BuildContext.AddSharedFragment(SharedFragment);
 }

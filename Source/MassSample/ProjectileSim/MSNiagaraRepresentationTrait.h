@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
 #include "MSProjectileFragments.h"
+#include "NiagaraSystem.h"
 #include "MSNiagaraRepresentationTrait.generated.h"
 
 /**
@@ -19,6 +20,7 @@ public:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = "Config")
-	FSharedNiagaraSystemFragment SharedNiagaraSystemFragment;
+	UNiagaraSystem* SharedNiagaraSystem;
+
 };
 
