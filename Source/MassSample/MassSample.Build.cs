@@ -44,7 +44,5 @@ public class MassSample : ModuleRules
 				"MassZoneGraphNavigation"
 			}
 		);
-
-        PublicDefinitions.Add("WITH_MASSENTITY_DEBUG=1");
-    }
+	}
 }
