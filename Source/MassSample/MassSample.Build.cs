@@ -45,6 +45,6 @@ public class MassSample : ModuleRules
 			}
 		);
 
-        PublicDefinitions.Add("WITH_MASSGAMEPLAY_DEBUG=1");
+        PublicDefinitions.Add("WITH_MASSENTITY_DEBUG=1");
     }
 }
