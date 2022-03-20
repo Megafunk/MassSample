@@ -28,3 +28,9 @@ struct FMoverTag : public FMassTag
 {
 	GENERATED_BODY()
 };
+USTRUCT()
+struct FMassSampleDebuggableTag : public FMassTag
+{
+	GENERATED_BODY()
+};
+

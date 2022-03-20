@@ -41,7 +41,10 @@ public class MassSample : ModuleRules
 				"MassCrowd",
 				"MassReplication",
 				"ZoneGraph",
-				"MassZoneGraphNavigation"
+				"MassGameplayDebug",
+				"MassZoneGraphNavigation", 
+				"Niagara",
+				"DeveloperSettings"
 			}
 		);
 	}
