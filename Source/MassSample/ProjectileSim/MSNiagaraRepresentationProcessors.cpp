@@ -55,18 +55,18 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 			iteratoroffset += QueryLength;
 			
 			auto Transforms = Context.GetFragmentView<FTransformFragment>().GetData();
-			const UNiagaraSystem* NiagaraSystem = Context.GetSharedFragmentPtr<FSharedNiagaraSystemFragment>()
-			                                             ->NiagaraSystem.Get();
+			const UNiagaraSystem* NiagaraSystem = Context.GetSharedFragment<FSharedNiagaraSystemFragment>()
+			                                             .NiagaraSystem.Get();
 
 			if(!NiagaraSystem) return;
-				
+			UE_LOG( LogTemp, Error, TEXT("projectile manager niagara system %s iterated on!"),*NiagaraSystem->GetName());
+
 			for (int32 i = 0; i < QueryLength; ++i)
 			{
 				// ParticlePositionData[i + iteratoroffset - QueryLength] = Transforms[i].GetTransform().GetTranslation();
 				// ParticleRotationData[i + iteratoroffset - QueryLength] = Transforms[i].GetTransform().GetRotation().GetForwardVector();
 
 				
-				UE_LOG( LogTemp, Error, TEXT("projectile manager niagara system %s iterated on!"),*NiagaraSystem->GetName());
 			}
 			
 		});

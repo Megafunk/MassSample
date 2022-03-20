@@ -19,6 +19,6 @@ public:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = "Config")
-	TObjectPtr<UNiagaraSystem> NiagaraSystemAsset;
+	FSharedNiagaraSystemFragment SharedNiagaraSystemFragment;
 };
 

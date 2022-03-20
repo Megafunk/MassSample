@@ -48,6 +48,8 @@ USTRUCT()
 struct MASSSAMPLE_API FSharedNiagaraSystemFragment : public FMassSharedFragment
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
 	TWeakObjectPtr<class UNiagaraSystem> NiagaraSystem; 
 };
 

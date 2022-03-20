@@ -16,9 +16,6 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 
 	BuildContext.AddFragment<FTransformFragment>();
 
-	FSharedNiagaraSystemFragment SharedNiagaraSystemFragment;
-	
-	SharedNiagaraSystemFragment.NiagaraSystem = NiagaraSystemAsset;
 	
 	uint32 FragmentPropertiesHash = UE::StructUtils::GetStructCrc32(FConstStructView::Make(SharedNiagaraSystemFragment));
 	
