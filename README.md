@@ -1,5 +1,5 @@
 # Community Mass Sample
-Our very WIP understanding of Unreal Engine 5's experimental Entity Componenet System (ECS) plugin with a small sample project. We are not affiliated with Epic Games and this system is actively being changed often so this information might not be accurate.
+Our very WIP understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are not affiliated with Epic Games and this system is actively being changed often so this information might not be accurate.
 If something is wrong feel free to PR!
 
 This documentation will be updated often!
@@ -101,14 +101,14 @@ A collection of fragments and tags combined with rules to filter for. Can exclud
 ### 4.6 Traits
 Traits are C++ defined objects that declare a set of fragments and data to use for authoring new entities in a data-driven way. They usually contain fragments and data that go well together to make defining different kinds of entities in the editor simple. 
 
-To start using traits, simply create a DataAsset that inherits from 
-MassEntityConfigAsset and add new traits to it. Each trait can be expanded to set properties if it has any. There are many built-in traits including an "assorted fragments" trait to add specific fragments without making a new trait. You can also define a parent MassEntityConfigAsset to inherit the fragments from another DataAsset.
+To start using traits, simply create a `DataAsset` that inherits from 
+`MassEntityConfigAsset` and add new traits to it. Each trait can be expanded to set properties if it has any. There are many built-in traits including an "assorted fragments" trait to add specific fragments without making a new trait. You can also define a parent MassEntityConfigAsset to inherit the fragments from another `DataAsset`.
 
-Traits are often used to add SharedFragments in the form of settings.
+Traits are often used to add Shared Fragments in the form of settings.
 
 <a name="mass-sf"></a>
 ### 4.7 Shared Fragments
-Shared Fragments (FMassSharedFragment) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. The archetype only needs to store one copy for many of sharing entities.
+Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. The archetype only needs to store one copy for many of sharing entities.
 
 <a name="mass-pm"></a>
 ## 5. Mass Plugins and Modules
@@ -122,9 +122,9 @@ The core plugin+modules manages all entity creation and storage. You should stor
 ### 5.2 MassGameplay 
 A plugin with many modules with many useful fragments and processors is used throughout the framework. 
 - **MassCommon**
-Basic fragments like FTransformFragment.
+Basic fragments like `FTransformFragment`.
 - **MassMovement**
-Features an important "UMassApplyMovementProcessor" processor that moves entities based on their velocity and force. Also includes a very "hello world" sample.
+Features an important `UMassApplyMovementProcessor` processor that moves entities based on their velocity and force. Also includes a very basic sample.
 - **MassRepresentation**
 Processors and fragments for rendering entities in the world. They generally use an ISMC to do so.
 - **MassSpawner** 
@@ -134,7 +134,7 @@ A bridge between the general UE5 actor framework and Mass. A type of fragment th
 - **MassLOD**
 LOD Processors that can manage different kinds of levels of detail, from rendering to ticking at different rates based on fragment settings.
 - **MassReplication**
-Replication support for Mass! Other modules override UMassReplicatorBase to replicate stuff. Entities are given a separate Network ID that gets
+Replication support for Mass! Other modules override `UMassReplicatorBase` to replicate stuff. Entities are given a separate Network ID that gets
 - **MassSignals** 
 A system that lets entities send named signals to each other.
 - **MassSmartObjects** 
