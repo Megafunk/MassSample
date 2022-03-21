@@ -35,23 +35,7 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 		//Let's prepare the shared fragments to accept new data!
 		EntitySubsystem.ForEachSharedFragment<FSharedNiagaraSystemFragment>([&,this](FSharedNiagaraSystemFragment& SharedNiagaraFragment)
 		{
-			
-
-					
-			 //todo: pray that this behaves the same with shared fragments for now
-			 auto TotalMatchingEntities = PositionToNiagaraFragmentQuery.GetNumMatchingEntities(EntitySubsystem);
-			 //todo-performance: shrink this with GC timing?
-			 bool bAllowShrinking = false;
-
-			
-			 SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticlePositions.SetNumUninitialized(TotalMatchingEntities,bAllowShrinking);
-			 SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticleDirectionVectors.SetNumUninitialized(TotalMatchingEntities,bAllowShrinking);
-			
-			 SharedNiagaraFragment.IteratorOffset = 0;
-			
-			
-			
-			
+			SharedNiagaraFragment.IteratorOffset = 0;
 		});
 
 		//query mass for transform data
@@ -71,12 +55,25 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 			if(!NiagaraActor) return;
 
 
+
+
+			//todo-performance: shrink this with GC timing?
+			bool bAllowShrinking = false;
+
+				
+			int32 ArrayResizeAmount = SharedNiagaraFragment.IteratorOffset + QueryLength;
+				
+			//todo-performance we want multithreading does this need to happen on another foreach?
+			SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticlePositions.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
+			SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticleDirectionVectors.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
+
+				
 			SharedNiagaraFragment.IteratorOffset += QueryLength;
 
 
+						
 
-
-
+				
 			for (int32 i = 0; i < QueryLength; ++i)
 			{
 
@@ -87,7 +84,7 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 				 NiagaraActor->ParticleDirectionVectors[ArrayPosition] = Transforms[i].GetTransform().GetRotation().GetForwardVector();
 				
 				//temp log to double check iteration order etc
-				//E_LOG( LogTemp, Error, TEXT("projectile manager niagara system %s iterated on!"),*NiagaraActor->GetName());
+				//UE_LOG( LogTemp, Error, TEXT("projectile manager niagara system %s iterated on! with chunk length %i "),*NiagaraActor->GetName(),QueryLength);
 
 			}
 			
@@ -100,7 +97,8 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 		AMSNiagaraActor* NiagaraActor =  SharedNiagaraFragment.NiagaraManagerActor.Get();
 		
 		
-		
+		//UE_LOG( LogTemp, Error, TEXT("Niagara array length for %s is %i"),*NiagaraActor->GetName(),SharedNiagaraFragment.NiagaraManagerActor->ParticlePositions.Num());
+
 
 				
 		if(UNiagaraComponent* NiagaraComponent = NiagaraActor->GetNiagaraComponent())
@@ -112,7 +110,7 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 		}
 		else
 		{
-			UE_LOG( LogTemp, Error, TEXT("projectile manager &s was invalid during array push!"),*NiagaraActor->GetName());
+			UE_LOG( LogTemp, Error, TEXT("projectile manager %s was invalid during array push!"),*NiagaraActor->GetName());
 		}
 		
 	});
