@@ -60,10 +60,11 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 			//todo-performance: shrink this with GC timing?
 			bool bAllowShrinking = false;
 
-			//todo-performance this should also probably not even happen if nothing about the niagara 
+			//todo-performance this should also probably not even happen if the total array num isn't going to change 
 			int32 ArrayResizeAmount = SharedNiagaraFragment.IteratorOffset + QueryLength;
 				
-			//todo-performance we want multithreading does this need to happen on another foreach?
+			//todo-performance if we want multithreading does this need to happen on another foreach?
+			//I did have this parrallelfor'd before but 
 			SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticlePositions.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
 			SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticleDirectionVectors.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
 
