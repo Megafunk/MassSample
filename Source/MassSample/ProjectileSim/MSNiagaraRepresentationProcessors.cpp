@@ -60,7 +60,7 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 			//todo-performance: shrink this with GC timing?
 			bool bAllowShrinking = false;
 
-				
+			//todo-performance this should also probably not even happen if nothing about the niagara 
 			int32 ArrayResizeAmount = SharedNiagaraFragment.IteratorOffset + QueryLength;
 				
 			//todo-performance we want multithreading does this need to happen on another foreach?

@@ -50,7 +50,7 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 public:
 
-	TStatId GetStatId() const override { RETURN_QUICK_DECLARE_CYCLE_STAT(UBattlementECSSubsystem, STATGROUP_Tickables); }
+	TStatId GetStatId() const override { RETURN_QUICK_DECLARE_CYCLE_STAT(MSProjectileSubsystem, STATGROUP_Tickables); }
 	
 	FSharedStruct GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem);
 
