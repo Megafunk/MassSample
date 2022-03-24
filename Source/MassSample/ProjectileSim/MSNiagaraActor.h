@@ -24,6 +24,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	//these arrays are sent to our niagara component by the niagara representation processor
+	//Why are they here instead of the fragment? dynamically sized data types are not allowed in mass due to the way archetypes are stored
 	TArray<FVector> ParticlePositions;
 	TArray<FVector> ParticleDirectionVectors;
 

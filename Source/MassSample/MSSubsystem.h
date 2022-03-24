@@ -21,4 +21,9 @@ public:
 	
 	UPROPERTY(Transient)
 	UMassEntitySubsystem* EntitySystem;
+	FMassArchetypeHandle MoverArchetype;
+
+
+	UFUNCTION(BlueprintCallable)
+	int32 SpawnEntity();
 };

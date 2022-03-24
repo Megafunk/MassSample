@@ -10,31 +10,12 @@ void UMSProjectileSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 		
 	MassSubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-		
-	// ForEachObjectOfClass(UMassProcessor::StaticClass(), [&](UObject* Obj)
-	// {
-	// 	UMassProcessor* mycdo = Cast<UMassProcessor>(Obj->GetClass()->GetDefaultObject());
-	// 	
-	// 	if(!mycdo->ShouldAutoAddToGlobalList())
-	// 	{
-	// 		mycdo->SetShouldAutoRegisterWithGlobalList(true);
-	// 	}
-	// }, true);
 	
-		
 }
 
 void UMSProjectileSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
-
 		
-}
-
-void UMSProjectileSubsystem::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	
 }
 
 FSharedStruct UMSProjectileSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem)
@@ -51,21 +32,17 @@ FSharedStruct UMSProjectileSubsystem::GetOrCreateSharedNiagaraFragmentForSystemT
 		//if yes, just grab the one we made earlier!
 		return MassSubsystem->GetOrCreateSharedFragment<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
 	}
-	else
-	{
-		//if not, we need to spawn an entity+actor for it!
 
-		AMSNiagaraActor* NewNiagaraActor = GetWorld()->SpawnActor<AMSNiagaraActor>();
+	//if not, we need to spawn an entity+actor for it!
+	AMSNiagaraActor* NewNiagaraActor = GetWorld()->SpawnActor<AMSNiagaraActor>();
 
-		NewNiagaraActor->GetNiagaraComponent()->SetAsset(NiagaraSystem);
-		
-		SharedStructToReturn.NiagaraManagerActor = NewNiagaraActor;
+	NewNiagaraActor->GetNiagaraComponent()->SetAsset(NiagaraSystem);
+	
+	SharedStructToReturn.NiagaraManagerActor = NewNiagaraActor;
 
-		PreexistingSharedNiagaraActors.Add(ParamsHash,NewNiagaraActor);
-
-		
-		return MassSubsystem->GetOrCreateSharedFragment<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
-		
-	}
+	PreexistingSharedNiagaraActors.Add(ParamsHash,NewNiagaraActor);
+	
+	return MassSubsystem->GetOrCreateSharedFragment<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
+	
 }
 

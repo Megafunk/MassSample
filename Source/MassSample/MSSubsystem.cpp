@@ -18,50 +18,52 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	EntitySystem = World->GetSubsystem<UMassEntitySubsystem>();
 
 
-	
 	//To spawn entities from C++ we can make a new archetype like so:
-	FMassArchetypeHandle MoverArchetype =  EntitySystem->CreateArchetype(
+	MoverArchetype =  EntitySystem->CreateArchetype(
 	{
 		FTransformFragment::StaticStruct(),
 		FMassVelocityFragment::StaticStruct()
 	});
 
 	
+	//TODO: query examples
+	//TODO: simple blueprint functions for interacting with mass for fun
+	
+	
+}
+
+int32 UMSSubsystem::SpawnEntity()
+{
+
+
 	//Create and store a handle to our new entity
 	FMassEntityHandle NewEntity = EntitySystem->CreateEntity(MoverArchetype);
+
 
 	
 	//Afterwards you can add, remove or change fragments of the entity. Let's add a tag fragment!
 	EntitySystem->AddTagToEntity(NewEntity,
 		FMoverTag::StaticStruct());
-		//Make sure you use AddTag for tags and AddFragment for fragments!
-		EntitySystem->AddFragmentToEntity(NewEntity,
-		FSampleColorFragment::StaticStruct());
+	//Make sure you use AddTag for tags and AddFragment for fragments!
+	EntitySystem->AddFragmentToEntity(NewEntity,
+	FSampleColorFragment::StaticStruct());
 
 	
 	//How about changing data on a fragment?
 	EntitySystem->GetFragmentDataChecked<FMassVelocityFragment>(NewEntity).Value = FMath::VRand()*100.0f;
 	EntitySystem->GetFragmentDataChecked<FSampleColorFragment>(NewEntity).Color = FColor::Blue;
 
+	
 
 	//calling mass.PrintEntityFragments 1 in editor should reveal this entity's fragments! For example:
 
-// 	Listing fragments values for Entity[i: 1 sn: 1] in /Game/ThirdPerson/Maps/ThirdPersonMap.ThirdPersonMap:MassEntitySubsystem_0
-// TransformFragment: (Transform=(Rotation=(X=0.000000,Y=0.000000,Z=0.000000,W=1.000000),Translation=(X=0.000000,Y=0.000000,Z=0.000000),Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)))
-// MassVelocityFragment: ()
-// SampleColorFragment: ()
+	// 	Listing fragments values for Entity[i: 1 sn: 1] in /Game/ThirdPerson/Maps/ThirdPersonMap.ThirdPersonMap:MassEntitySubsystem_0
+	// TransformFragment: (Transform=(Rotation=(X=0.000000,Y=0.000000,Z=0.000000,W=1.000000),Translation=(X=0.000000,Y=0.000000,Z=0.000000),Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)))
+	// MassVelocityFragment: ()
+	// SampleColorFragment: ()
+	UE_LOG( LogTemp, Warning, TEXT("%i entity created on frame %i"),	NewEntity.Index,GFrameCounter);
 
-
-	
-	//TODO: query examples
-	//TODO: simple blueprint functions for interacting with mass for fun
-
-	
-
-
-	
-	
-
+	return NewEntity.Index;
 	
 }
 

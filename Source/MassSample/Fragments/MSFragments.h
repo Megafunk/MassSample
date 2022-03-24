@@ -11,7 +11,7 @@
  * If you want to, it is possible to add functions as well for getter/setters and the like.
  */
 USTRUCT()
-struct FSampleColorFragment : public FMassFragment
+struct MASSSAMPLE_API FSampleColorFragment : public FMassFragment
 {
 	GENERATED_BODY()
 	
@@ -24,12 +24,12 @@ struct FSampleColorFragment : public FMassFragment
  */
 //*** TAGS ***//
 USTRUCT()
-struct FMoverTag : public FMassTag
+struct MASSSAMPLE_API FMoverTag : public FMassTag
 {
 	GENERATED_BODY()
 };
 USTRUCT()
-struct FMassSampleDebuggableTag : public FMassTag
+struct MASSSAMPLE_API FMassSampleDebuggableTag : public FMassTag
 {
 	GENERATED_BODY()
 };

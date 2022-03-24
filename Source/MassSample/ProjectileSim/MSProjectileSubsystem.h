@@ -31,7 +31,7 @@ public:
 //TODO: Might get around using this to store niagara fragments in the future
 //It's still useful to serve as a place anything can get projectile info though...
 UCLASS()
-class UMSProjectileSubsystem : public UTickableWorldSubsystem
+class UMSProjectileSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 protected:
@@ -46,12 +46,8 @@ protected:
 	
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
-
-	virtual void Tick(float DeltaTime) override;
-public:
-
-	TStatId GetStatId() const override { RETURN_QUICK_DECLARE_CYCLE_STAT(MSProjectileSubsystem, STATGROUP_Tickables); }
 	
+public:
 	FSharedStruct GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem);
 
 	

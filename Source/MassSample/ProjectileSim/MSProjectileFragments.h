@@ -12,32 +12,22 @@
 
 
 USTRUCT()
-struct MASSSAMPLE_API FMassFragment_Projectile : public FMassFragment
+struct MASSSAMPLE_API FDamageFragment : public FMassFragment
 {
 	GENERATED_BODY()
 	float Damage;
 };
 
-//the idea is to use this for representation and linetraces mainly
 USTRUCT()
-struct MASSSAMPLE_API FMassFragment_PreviousPos : public FMassFragment
+struct MASSSAMPLE_API FLineTraceFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	UPROPERTY(Transient)
-	FVector Value;
-};
-
-USTRUCT()
-struct MASSSAMPLE_API FMassFragment_LineTrace : public FMassFragment
-{
-	GENERATED_BODY()
-	//this is honestly a fairly large  struct, do I need the full hitresult? leave it for now I suppose.
 	FHitResult HitResult; 
 };
 
-//TODO: move this elsewhere?
+//TODO: move this elsewhere? It's not entirely projectile specific
 USTRUCT()
-struct MASSSAMPLE_API FMFragment_LifeTime : public FMassFragment
+struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
 {
 	GENERATED_BODY()
 	float Time;
@@ -55,7 +45,8 @@ struct MASSSAMPLE_API FSharedNiagaraSystemFragment : public FMassSharedFragment
 
 	UPROPERTY(EditAnywhere)
 	TWeakObjectPtr<class AMSNiagaraActor> NiagaraManagerActor;
-	
+
+	//This is used to make sure we insert to the right space in the niagara array after iterating a chunk and so on
 	int32 IteratorOffset = 0;
 };
 
@@ -65,12 +56,17 @@ struct MASSSAMPLE_API FSharedNiagaraSystemFragment : public FMassSharedFragment
  *   Tags	
  */
 USTRUCT()
-struct MASSSAMPLE_API FTag_StopMovement : public FMassTag
+struct MASSSAMPLE_API FStopMovementTag : public FMassTag
 {
 	GENERATED_BODY()
 };
 USTRUCT()
-struct MASSSAMPLE_API FMassFragment_CollisionHit : public FMassTag
+struct MASSSAMPLE_API FCollisionHitTag : public FMassTag
+{
+	GENERATED_BODY()
+};
+USTRUCT()
+struct MASSSAMPLE_API FProjectileTag : public FMassTag
 {
 	GENERATED_BODY()
 };

@@ -27,9 +27,11 @@ void UMSMovementProcessor::ConfigureQueries()
 	//must have an FTransformFragment and we are reading and changing it
 	MovementEntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	
-	//must have an FTransformFragment and we are only reading it
+	//must have an FMassForceFragment and we are only reading it
 	MovementEntityQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
-
+	
+	//must have an FMassVelocityFragment and we are reading and changing it
+	MovementEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 
 	/** FIXME: Conceptual - UMassRandomVelocityInitializer might be stealing FMassVelocityFragment,
 	noticed that if I put an input matching what the UMassRandomVelocityInitializer expects
@@ -53,6 +55,8 @@ void UMSMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassE
 		
 		//This one is readonly, so we don't need Mutable
 		const TConstArrayView<FMassForceFragment> ForceList = Context.GetFragmentView<FMassForceFragment>();
+		
+		const TArrayView<FMassVelocityFragment> VelocityList = Context.GetMutableFragmentView<FMassVelocityFragment>();
 
 		//Loop over every entity in the current chunk and do stuff!
 		for (int32 EntityIndex = 0; EntityIndex < NumEntities; ++EntityIndex)
@@ -63,6 +67,9 @@ void UMSMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassE
 			
 			//Multiply the amount to move by delta time from the context.
 			DeltaForce = Context.GetDeltaTimeSeconds() * DeltaForce;
+
+			//velocity serves as an indicator of how far we have moved this frame. 
+			VelocityList[EntityIndex].Value = DeltaForce;
 			
 			TransformToChange.AddToTranslation(DeltaForce);
 		}

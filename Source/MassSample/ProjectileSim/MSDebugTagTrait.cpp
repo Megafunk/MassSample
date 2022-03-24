@@ -9,4 +9,6 @@
 void UMSDebugTagTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {
 	BuildContext.AddTag<FMassSampleDebuggableTag>();
+	BuildContext.AddFragment<FSampleColorFragment>();
+
 }
