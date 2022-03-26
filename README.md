@@ -150,7 +150,7 @@ FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
 #### 4.5.1 Iterating Queries
 
 To actually use the queries we must call their `ForEachEntityChunk` function with a lambda, the Mass subsystem and execution context. Here is an example from inside the `Execute` function of a processor:
-
+```
 //Note that this is a lambda! If you want extra data you may need to pass something into the []
 MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 {
@@ -176,7 +176,7 @@ MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecuti
     TransformToChange.AddToTranslation(DeltaForce);
   }
 });
-                                                        
+```                                                        
 #### 4.5.2 Changing entities with Defer()
                                                         
 Inside of the ForEachEntity we have access to the current execution context. It is the primary way we get entity data and alter their composition. Here is an example where in which we add a tag to any entity that is the has a color fragment that is color red:
