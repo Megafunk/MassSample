@@ -79,23 +79,28 @@ Currently, the sample features the following:
 
 <a name="mass-entities"></a>
 ### 4.1 Entities
+<!-- FIXME: Revise short definition. Shouldn't define entity by employing the term entity. -->
 Unique identifiers for individual entities.
 
 <a name="mass-fragments"></a>
 ### 4.2 Fragments
-Raw data-only UScriptStructs that entities can own and processors can query on. Stored in chunked archetype arrays 
-for quick processing.
+Data-only `UScriptStructs` that entities can own and processors can query on. Stored in chunked archetype arrays for quick processing.
+<!-- FIXME: Elaborate on why chunked archetype arrays are faster (data locality)? Add diagram showcasing mem layout? (Use figma) -->
 
 <a name="mass-tags"></a>
 ### 4.3 Tags
-Fragments that have no data to only be used as tags for filtering. Just bits on an archetype internally.
+<!-- REV: Tags aren't fragments!! Please extend explanation. What filtering? -->
+Empty `UScriptStructs` employed for filtering. 
+Just bits on an archetype internally. <!-- FIXME: vvv Please carify this phrase vvv -->
 
 <a name="mass-processors"></a>
 ### 4.4 Processors
-The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. They can also include rules that define in which order they are called in. Automatically registered with Mass by default. 
+The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. 
+<!-- FIXME: See comment below. -->
+~~They can also include rules that define in which order they are called in.~~ Automatically registered with Mass by default. 
 
-In their constructor they can define rules for their execution order and which types of game client they execute on:
-<!-- FIXME: Is this a good way to describe this? Network mode is something else, right?? I need to look later. -->
+<!-- FIXME: You don't define rules for execution order in the processor. Processors are sorted in groups, and in the processor you can configure to which group the processor belongs to, but the ordering rules are defined at a group and processor level in the ProcessingPhase. See: UMassEntitySettings -->
+In their constructor they can define ~~rules for their execution order~~ and which types of game client they execute on:
 ```c++
 //Using the built-in movement processor group
 ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
@@ -103,6 +108,8 @@ ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
 //This executes only on clients and not the dedicated server
 ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
 ```
+
+<!-- FIXME: Showcase why order is important. Dependencies!! -->
 On initialization, Mass creates a graph of processors using their execution rules so they execute in order.
 
 Remember: you create the queries yourself in the header!
@@ -110,7 +117,21 @@ Remember: you create the queries yourself in the header!
 
 <a name="mass-queries"></a>
 ### 4.5 Queries
-Processors use one or more `FMassEntityQuery` to select entities to iterate on. They are collection of fragments and tags combined with rules to filter for usually defined in `ConfigureQueries` . Queries can exclude certain fragments or even include them optionally.
+Processors use one or more `FMassEntityQuery` to select the entities to iterate on. 
+
+<!-- FIXME: Please rephrase -->
+They are collection of Fragments and Tags combined with rules to filter for usually defined in `ConfigureQueries`. 
+
+<!-- FIXME: In here I would add a table for the different operations we can do with queries in this regard according EMassFragmentAccess. Below you have a prototype you can expand upon -->
+Queries can define presence requirements for Fragments and Tags:
+
+| `EMassFragmentPresence` | Description |
+| ----------- | ----------- |
+| All | Entity |
+| Any | One of the required fragments must be present | 
+| None | None of the required fragments can be present | 
+| Optional | If fragment is present we'll use it, but it missing stop processing of a given archetype | 
+
 
 Here are some basic examples from in which we add rules to a `FMassEntityQuery MoveEntitiesQuery`:
 Generally we filter regular fragments by how we access them and tags by their presence only, as they have no data.
@@ -127,7 +148,7 @@ MoveEntitiesQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
 MoveEntitiesQuery.AddTagRequirement<FStopTag>(EMassFragmentPresence::None);
 ```
 
-Non-tag fragments can be filtered by presence like tags with an additional `EMassFragmentPresence` parameter. It is EMassFragmentPresence::All by default.
+Fragments can be filtered by presence like tags with an additional `EMassFragmentPresence` parameter. It is EMassFragmentPresence::All by default.
 ```c++	
 //Don't include entities with a HitLocation fragment!
 MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::None);
