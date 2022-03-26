@@ -22,6 +22,7 @@ This documentation will be updated often!
 > 4.5 [Queries](#mass-queries)  
 > 4.6 [Traits](#mass-traits)  
 > 4.7 [Shared Fragments](#mass-sf)  
+> 4.8 [Observers](#mass-o)
 > 5. [Mass Plugins and Modules](#mass-pm)  
 > 5.1 [MassEntity](#mass-pm-me)  
 > 5.2 [MassGameplay](#mass-pm-gp)  
@@ -93,11 +94,130 @@ Fragments that have no data to only be used as tags for filtering. Just bits on 
 ### 4.4 Processors
 The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. They can also include rules that define in which order they are called in. Automatically registered with Mass by default. 
 
+In their constructor they can define rules for their execution order and which types of game client they execute on:
+<!-- FIXME: Is this a good way to describe this? Network mode is something else, right?? I need to look later. -->
+```
+//Using the built-in movement processor group
+ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
+  
+//This executes only on clients and not the dedicated server
+ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+
+```
+On initialization, Mass creates a graph of processors using their execution rules so they execute in order.
+
+Remember: you create the queries yourself in the header!
+
+
 <a name="mass-queries"></a>
 ### 4.5 Queries
-A collection of fragments and tags combined with rules to filter for. Can exclude certain fragments or even include them optionally. This section will be expanded on soon!
+Processors use one or more `FMassEntityQuery` to select entities to iterate on. They are collection of fragments and tags combined with rules to filter for usually defined in `ConfigureQueries` . Queries can exclude certain fragments or even include them optionally.
 
-<!-- FIXME: Might be nice minimal code samples for relevant parts + cross ref the simple use case. -->
+Here are some basic examples from in which we add rules to a `FMassEntityQuery MoveEntitiesQuery`:
+Generally we filter regular fragments by how we access them and tags by their presence only, as they have no data.
+```	
+//Entities must have an FTransformFragment and we are reading and changing it (EMassFragmentAccess::ReadWrite)
+MoveEntitiesQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
+	
+//Entities must have an FMassForceFragment and we are only reading it (EMassFragmentAccess::ReadOnly)
+MoveEntitiesQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
+  
+//Entities ALL must have an FMoverTag
+MoveEntitiesQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
+//NONE of the Entities may have an FStopTag
+MoveEntitiesQuery.AddTagRequirement<FStopTag>(EMassFragmentPresence::None);
+```
+
+Non-tag fragments can be filtered by presence like tags with an additional `EMassFragmentPresence` parameter. It is EMassFragmentPresence::All by default.
+```	
+//Don't include entities with a HitLocation fragment!
+MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::None);
+```
+
+ `EMassFragmentPresence::Optional` can be used to get a fragment to iterate on without caring about whether it is present or not.
+```	
+//We don't always have a movement speed modifier, but include it if we do.
+MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
+```
+
+Rarely used but still worth a mention `EMassFragmentPresence::Any` filters for entities that must at least ~one~ of the fragments marked with Any. Here is a contrived example:
+```	
+FarmAnimalsQuery.AddTagRequirement<F>(EMassFragmentPresence::Any);
+FarmAnimalsQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
+FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
+```
+<!--FIXME: less weird Any example? -->
+#### 4.5.1 Iterating Queries
+
+To actually use the queries we must call their `ForEachEntityChunk` function with a lambda, the Mass subsystem and execution context. Here is an example from inside the `Execute` function of a processor:
+
+//Note that this is a lambda! If you want extra data you may need to pass something into the []
+MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+{
+  //Get the length of the entities in our current ExecutionContext
+  const int32 NumEntities = Context.GetNumEntities();
+
+  //These are what let us read and change entity data from the query in the ForEach
+  const TArrayView<FTransformFragment> TransformList = Context.GetMutableFragmentView<FTransformFragment>();
+
+  //This one is readonly, so we don't need Mutable
+  const TConstArrayView<FMassForceFragment> ForceList = Context.GetFragmentView<FMassForceFragment>();
+
+  //Loop over every entity in the current chunk and do stuff!
+  for (int32 EntityIndex = 0; EntityIndex < NumEntities; ++EntityIndex)
+  {
+    FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
+
+    FVector DeltaForce = ForceList[EntityIndex].Value;
+
+    //Multiply the amount to move by delta time from the context.
+    DeltaForce = Context.GetDeltaTimeSeconds() * DeltaForce;\
+
+    TransformToChange.AddToTranslation(DeltaForce);
+  }
+});
+                                                        
+#### 4.5.2 Changing entities with Defer()
+                                                        
+Inside of the ForEachEntity we have access to the current execution context. It is the primary way we get entity data and alter their composition. Here is an example where in which we add a tag to any entity that is the has a color fragment that is color red:
+
+```
+EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+{
+
+  auto ColorList = Context.GetFragmentView<FSampleColorFragment>();
+
+  for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+  {
+
+    if(ColorList[EntityIndex].Color == FColor::Red)
+    {
+      //Using the context, defer adding a tag to this entity after done processing!                                                             
+      Context.Defer().AddTag<FIsRedTag>();
+
+    }
+  }
+
+});
+```
+    <!-- FIXMEE: kind of contrived... better real world example that isn't too crazy? -->
+
+Here are some of the built in basic changes you can defer:
+
+Fragments:
+`Context.Defer().AddFragment<FMyTag>();`
+`Context.Defer().RemoveFragment<FMyTag>();`
+  
+Tags:
+`Context.Defer().AddTag<FMyTag>();`
+`Context.Defer().RemoveTag<FMyTag>();` 
+ 
+Destroying entities:
+`Context.Defer().DestroyEntity(MyEntity);`
+`Context.Defer().BatchDestroyEntities(MyEntitiesArray)`
+  
+  <!-- FIXME: You can create your own and use them with `Context.Defer().EmplaceCommand<>()` but that will be for later -->
+
 
 <a name="mass-traits"></a>
 ### 4.6 Traits
@@ -110,7 +230,19 @@ Traits are often used to add Shared Fragments in the form of settings.
 
 <a name="mass-sf"></a>
 ### 4.7 Shared Fragments
-Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. The archetype only needs to store one copy for many of sharing entities.
+Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. The archetype only needs to store one copy for many entities that share it. Hashes are used to find existing shared fragments nad to create new ones. 
+
+Adding one to query differs from other fragments:
+
+```
+PositionToNiagaraFragmentQuery.AddSharedRequirement<FSharedNiagaraSystemFragment>(EMassFragmentAccess::ReadWrite);
+```
+
+<a name="mass-o"></a>
+### 4.8 Observers
+Observers are processors that derive from (`UMassObserverProcessor`) in order to only operate on entities that have just added or removed one or more specific fragment types they observe. For example, you could create an observer that handles entities that just had an `FColorFragment` added to change their color to something random. They do not run every frame, but for every time a batch of entities is changed in a way that fulfills their observer operations and types. It possible to create any queries you want to use during execution of the process as usual regardless of what fragments are observed. However, have more than one kind of fragment trigger this observer you must overload the `Register` function. 
+
+Note: Currently observers are only called during batched entity actions. This covers processors and spawners but not single entity changes from C++ as demonstrated. 
 
 <a name="mass-pm"></a>
 ## 5. Mass Plugins and Modules
