@@ -96,13 +96,12 @@ The main way fragments are operated on in Mass. Combine one more user-defined qu
 
 In their constructor they can define rules for their execution order and which types of game client they execute on:
 <!-- FIXME: Is this a good way to describe this? Network mode is something else, right?? I need to look later. -->
-```
+```c++
 //Using the built-in movement processor group
 ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
   
 //This executes only on clients and not the dedicated server
 ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
-
 ```
 On initialization, Mass creates a graph of processors using their execution rules so they execute in order.
 
@@ -115,7 +114,7 @@ Processors use one or more `FMassEntityQuery` to select entities to iterate on. 
 
 Here are some basic examples from in which we add rules to a `FMassEntityQuery MoveEntitiesQuery`:
 Generally we filter regular fragments by how we access them and tags by their presence only, as they have no data.
-```	
+```c++	
 //Entities must have an FTransformFragment and we are reading and changing it (EMassFragmentAccess::ReadWrite)
 MoveEntitiesQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	
@@ -129,28 +128,28 @@ MoveEntitiesQuery.AddTagRequirement<FStopTag>(EMassFragmentPresence::None);
 ```
 
 Non-tag fragments can be filtered by presence like tags with an additional `EMassFragmentPresence` parameter. It is EMassFragmentPresence::All by default.
-```	
+```c++	
 //Don't include entities with a HitLocation fragment!
 MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::None);
 ```
 
  `EMassFragmentPresence::Optional` can be used to get a fragment to iterate on without caring about whether it is present or not.
-```	
+```c++	
 //We don't always have a movement speed modifier, but include it if we do.
 MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
 ```
 
 Rarely used but still worth a mention `EMassFragmentPresence::Any` filters for entities that must at least ~one~ of the fragments marked with Any. Here is a contrived example:
-```	
+```c++
 FarmAnimalsQuery.AddTagRequirement<F>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
 ```
-<!--FIXME: less weird Any example? -->
+<!-- FIXME: less weird Any example? -->
 #### 4.5.1 Iterating Queries
 
 To actually use the queries we must call their `ForEachEntityChunk` function with a lambda, the Mass subsystem and execution context. Here is an example from inside the `Execute` function of a processor:
-```
+```c++
 //Note that this is a lambda! If you want extra data you may need to pass something into the []
 MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 {
@@ -181,7 +180,7 @@ MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecuti
                                                         
 Inside of the ForEachEntity we have access to the current execution context. It is the primary way we get entity data and alter their composition. Here is an example where in which we add a tag to any entity that is the has a color fragment that is color red:
 
-```
+```c++
 EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
 {
 
@@ -200,7 +199,8 @@ EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecution
 
 });
 ```
-    <!-- FIXMEE: kind of contrived... better real world example that isn't too crazy? -->
+
+<!-- FIXMEE: kind of contrived... better real world example that isn't too crazy? -->
 
 Here are some of the built in basic changes you can defer:
 
@@ -234,7 +234,7 @@ Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities ca
 
 Adding one to query differs from other fragments:
 
-```
+```c++
 PositionToNiagaraFragmentQuery.AddSharedRequirement<FSharedNiagaraSystemFragment>(EMassFragmentAccess::ReadWrite);
 ```
 
