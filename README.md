@@ -153,27 +153,27 @@ To actually use the queries we must call their `ForEachEntityChunk` function wit
 //Note that this is a lambda! If you want extra data you may need to pass something into the []
 MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 {
-  //Get the length of the entities in our current ExecutionContext
-  const int32 NumEntities = Context.GetNumEntities();
+	//Get the length of the entities in our current ExecutionContext
+	const int32 NumEntities = Context.GetNumEntities();
 
-  //These are what let us read and change entity data from the query in the ForEach
-  const TArrayView<FTransformFragment> TransformList = Context.GetMutableFragmentView<FTransformFragment>();
+	//These are what let us read and change entity data from the query in the ForEach
+	const TArrayView<FTransformFragment> TransformList = Context.GetMutableFragmentView<FTransformFragment>();
 
-  //This one is readonly, so we don't need Mutable
-  const TConstArrayView<FMassForceFragment> ForceList = Context.GetFragmentView<FMassForceFragment>();
+	//This one is readonly, so we don't need Mutable
+	const TConstArrayView<FMassForceFragment> ForceList = Context.GetFragmentView<FMassForceFragment>();
 
-  //Loop over every entity in the current chunk and do stuff!
-  for (int32 EntityIndex = 0; EntityIndex < NumEntities; ++EntityIndex)
-  {
-    FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
+	//Loop over every entity in the current chunk and do stuff!
+	for (int32 EntityIndex = 0; EntityIndex < NumEntities; ++EntityIndex)
+	{
+		FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
 
-    FVector DeltaForce = ForceList[EntityIndex].Value;
+		FVector DeltaForce = ForceList[EntityIndex].Value;
 
-    //Multiply the amount to move by delta time from the context.
-    DeltaForce = Context.GetDeltaTimeSeconds() * DeltaForce;\
+		//Multiply the amount to move by delta time from the context.
+		DeltaForce = Context.GetDeltaTimeSeconds() * DeltaForce;\
 
-    TransformToChange.AddToTranslation(DeltaForce);
-  }
+		TransformToChange.AddToTranslation(DeltaForce);
+	}
 });
 ```                                                        
 #### 4.5.2 Changing entities with Defer()
@@ -183,24 +183,22 @@ Inside of the ForEachEntity we have access to the current execution context. It 
 ```c++
 EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
 {
+	auto ColorList = Context.GetFragmentView<FSampleColorFragment>();
 
-  auto ColorList = Context.GetFragmentView<FSampleColorFragment>();
+	for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+	{
 
-  for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
-  {
-
-    if(ColorList[EntityIndex].Color == FColor::Red)
-    {
-      //Using the context, defer adding a tag to this entity after done processing!                                                             
-      Context.Defer().AddTag<FIsRedTag>();
-
-    }
-  }
+		if(ColorList[EntityIndex].Color == FColor::Red)
+		{
+			//Using the context, defer adding a tag to this entity after done processing!                                                             
+			Context.Defer().AddTag<FIsRedTag>();
+		}
+	}
 
 });
 ```
 
-<!-- FIXMEE: kind of contrived... better real world example that isn't too crazy? -->
+<!-- FIXME: kind of contrived... better real world example that isn't too crazy? -->
 
 Here are some of the built in basic changes you can defer:
 
@@ -216,7 +214,7 @@ Destroying entities:
 `Context.Defer().DestroyEntity(MyEntity);`
 `Context.Defer().BatchDestroyEntities(MyEntitiesArray)`
   
-  <!-- FIXME: You can create your own and use them with `Context.Defer().EmplaceCommand<>()` but that will be for later -->
+<!-- FIXME: You can create your own and use them with `Context.Defer().EmplaceCommand<>()` but that will be for later -->
 
 
 <a name="mass-traits"></a>
