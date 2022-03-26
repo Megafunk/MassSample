@@ -122,52 +122,67 @@ Processors use one or more `FMassEntityQuery` to select the entities to iterate 
 <!-- FIXME: Please rephrase -->
 They are collection of Fragments and Tags combined with rules to filter for usually defined in `ConfigureQueries`. 
 
-<!-- FIXME: In here I would add a table for the different operations we can do with queries in this regard according EMassFragmentAccess. Below you have a prototype you can expand upon -->
-Queries can define presence requirements for Fragments and Tags:
 
-| `EMassFragmentPresence` | Description |
+#### 4.5.1 Access requirements
+
+Queries can define read/write access requirements for Fragments:
+
+| `EMassFragmentAccess` | Description |
 | ----------- | ----------- |
-| All | Entity |
-| Any | One of the required fragments must be present | 
-| None | None of the required fragments can be present | 
-| Optional | If fragment is present we'll use it, but it missing stop processing of a given archetype | 
+| None | No binding required. |
+| ReadOnly | We want to read the data for the fragment. | 
+| ReadWrite | We want to read and write the data for the fragment. | 
 
+Here are some basic examples in which we add access rules in two Fragments from a `FMassEntityQuery MoveEntitiesQuery`:
 
-Here are some basic examples from in which we add rules to a `FMassEntityQuery MoveEntitiesQuery`:
-Generally we filter regular fragments by how we access them and tags by their presence only, as they have no data.
 ```c++	
 //Entities must have an FTransformFragment and we are reading and changing it (EMassFragmentAccess::ReadWrite)
 MoveEntitiesQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	
 //Entities must have an FMassForceFragment and we are only reading it (EMassFragmentAccess::ReadOnly)
 MoveEntitiesQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
-  
-//Entities ALL must have an FMoverTag
+```
+
+Note that Tags **do not have** access requirements, since they don't contain data.
+
+
+#### 4.5.2 Presence requirements
+Queries can define presence requirements for Fragments and Tags:
+
+| `EMassFragmentPresence` | Description |
+| ----------- | ----------- |
+| All | All of the required fragments must be present. Default presence requirement. |
+| Any | One of the required fragments must be present. | 
+| None | None of the required fragments can be present. | 
+| Optional | If fragment is present we'll use it, but it missing stop processing of a given archetype. | 
+
+Here are some basic examples in which we add presence rules in two Tags from a `FMassEntityQuery MoveEntitiesQuery`:
+```
+// All entities must have a FMoverTag
 MoveEntitiesQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
-//NONE of the Entities may have an FStopTag
+// None of the Entities may have a FStopTag
 MoveEntitiesQuery.AddTagRequirement<FStopTag>(EMassFragmentPresence::None);
 ```
-
-Fragments can be filtered by presence like tags with an additional `EMassFragmentPresence` parameter. It is EMassFragmentPresence::All by default.
+Fragments can be filtered by presence with an additional `EMassFragmentPresence` parameter.
 ```c++	
-//Don't include entities with a HitLocation fragment!
-MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::None);
+// Don't include entities with a HitLocation fragment
+MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::None);
 ```
-
- `EMassFragmentPresence::Optional` can be used to get a fragment to iterate on without caring about whether it is present or not.
+<!-- FIXMEVORI: Please Funk review this text below: -->
+`EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of containing the specified Tag or Fragment. If the Tag or Fragment exists, it will be processed.
 ```c++	
-//We don't always have a movement speed modifier, but include it if we do.
+// We don't always have a movement speed modifier, but include it if we do
 MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
 ```
-
+<!-- FIXME: Why is the "one" crossed? Check spelling. -->
 Rarely used but still worth a mention `EMassFragmentPresence::Any` filters for entities that must at least ~one~ of the fragments marked with Any. Here is a contrived example:
 ```c++
-FarmAnimalsQuery.AddTagRequirement<F>(EMassFragmentPresence::Any);
+FarmAnimalsQuery.AddTagRequirement<FHorseTag>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
 ```
 <!-- FIXME: less weird Any example? -->
-#### 4.5.1 Iterating Queries
+#### 4.5.3 Iterating Queries
 
 To actually use the queries we must call their `ForEachEntityChunk` function with a lambda, the Mass subsystem and execution context. Here is an example from inside the `Execute` function of a processor:
 ```c++
@@ -197,7 +212,7 @@ MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecuti
 	}
 });
 ```                                                        
-#### 4.5.2 Changing entities with Defer()
+#### 4.5.4 Changing entities with Defer()
                                                         
 Inside of the ForEachEntity we have access to the current execution context. It is the primary way we get entity data and alter their composition. Here is an example where in which we add a tag to any entity that is the has a color fragment that is color red:
 
