@@ -175,7 +175,7 @@ MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::Read
 MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
 ```
 <!-- FIXME: Why is the "one" crossed? Check spelling. -->
-Rarely used but still worth a mention `EMassFragmentPresence::Any` filters for entities that must at least ~one~ of the fragments marked with Any. Here is a contrived example:
+Rarely used but still worth a mention `EMassFragmentPresence::Any` filters for entities that must at least one of the fragments marked with Any. Here is a contrived example:
 ```c++
 FarmAnimalsQuery.AddTagRequirement<FHorseTag>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
