@@ -152,9 +152,9 @@ Queries can define presence requirements for Fragments and Tags:
 | `EMassFragmentPresence` | Description |
 | ----------- | ----------- |
 | All | All of the required fragments must be present. Default presence requirement. |
-| Any | One of the required fragments must be present. | 
+| Any | At least one of the fragments marked any must be present. | 
 | None | None of the required fragments can be present. | 
-| Optional | If fragment is present we'll use it, but it missing stop processing of a given archetype. | 
+| Optional | If fragment is present we'll use it, but it does not need to be present. | 
 
 Here are some basic examples in which we add presence rules in two Tags from a `FMassEntityQuery MoveEntitiesQuery`:
 ```
