@@ -24,4 +24,7 @@ protected:
 	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
 
 	FMassEntityQuery StopHitsQuery;
+
+	FMassEntityQuery ExtraHitQuery;
+
 };

@@ -35,8 +35,11 @@ void UMSProjectileSimProcessors::ConfigureQueries()
 void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
 
-	LineTraceFromPreviousPosition.ForEachEntityChunk(EntitySubsystem,Context,[this](FMassExecutionContext& Context)
+	LineTraceFromPreviousPosition.ParallelForEachEntityChunk(EntitySubsystem,Context,[this](FMassExecutionContext& Context)
 	{
+
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_LineTraceFromPreviousPosition);
+
 		const auto Linetraces = Context.GetMutableFragmentView<FLineTraceFragment>();
 		const auto Velocities = Context.GetFragmentView<FMassVelocityFragment>();
 		const auto CurrentPositions = Context.GetFragmentView<FTransformFragment>();
@@ -60,7 +63,7 @@ void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, 
 			{
 				Context.Defer().AddTag<FCollisionHitTag>(Context.GetEntity(i));
 
-				UE_LOG( LogTemp, Error, TEXT("BulletManager hit happened on frame: %i"),GFrameCounter);
+				//UE_LOG( LogTemp, Error, TEXT("BulletManager hit happened on frame: %i"),GFrameCounter);
 				
 			}
 				
