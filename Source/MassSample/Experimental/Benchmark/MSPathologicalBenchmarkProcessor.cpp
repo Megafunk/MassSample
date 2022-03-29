@@ -3,27 +3,41 @@
 
 #include "MSPathologicalBenchmarkProcessor.h"
 
+
+constexpr bool benchmark = false;
+
+UMSPathologicalBenchmarkProcessor::UMSPathologicalBenchmarkProcessor()
+{
+	if constexpr (!benchmark)
+	{
+
+		bAutoRegisterWithProcessingPhases = false;
+		
+	}
+}
+
 //This is just to double check my math works out, we don't need it at all.
  void UMSPathologicalBenchmarkProcessor::CombinationsRecursive(UMassEntitySubsystem* EntitySubsystem, int32 length,int32 offset = 0 )
  {
  	if (length ==0)
  	{
  		FString output;
- 		for (const auto ScriptStruct : Combinations)
+ 		for (const auto ScriptStruct : Combination)
  		{
  			if(ScriptStruct !=nullptr) output+=ScriptStruct->GetName();
  		}
 
  		++NumCombinations;
- 		
+ 		Combination.Add(FPathologicFragment::StaticStruct());
+ 		Archetypes.Add(EntitySubsystem->CreateArchetype(Combination));
  		//UE_LOG( LogTemp, Warning, TEXT("MSPathologicalBenchmarkProcessor: %s,%i"),*output,Combinations.Num());
  		return;
  	}
  	for(int i = offset; i<=Provinces.Num() - length; ++i)
  	{
- 		Combinations.Add(Provinces[i]);
+ 		Combination.Add(Provinces[i]);
  		CombinationsRecursive(EntitySubsystem,length-1,i+1);
- 		Combinations.RemoveAt(Combinations.Num()-1);
+ 		Combination.RemoveAt(Combination.Num()-1);
 			
  	}
  }
@@ -32,48 +46,49 @@
 
 
 void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
-{
-	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+ {
+	 UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 
  	//10 Different fragments!
  	//TODO: let us turn this amount up and down?
-	 Provinces = {
-	 	FAlberta::StaticStruct(),
-	 	FBritishColumbia::StaticStruct(),
-	 	FManitoba::StaticStruct(),
-	 	FNewBrunswick::StaticStruct(),
-	 	FNewfoundlandandLabrador::StaticStruct(),
-	 	FNovaScotia::StaticStruct(),
-	 	FOntario::StaticStruct(),
-	 	FPrinceEdwardIsland::StaticStruct(),
-	 	FQuebec::StaticStruct(),
-	 	FSaskatchewan::StaticStruct()};
+ 	Provinces = {
+ 		FAlberta::StaticStruct(),
+		 FBritishColumbia::StaticStruct(),
+		 FManitoba::StaticStruct(),
+		 FNewBrunswick::StaticStruct(),
+		 FNewfoundlandandLabrador::StaticStruct(),
+		 FNovaScotia::StaticStruct(),
+		 FOntario::StaticStruct(),
+		 FPrinceEdwardIsland::StaticStruct(),
+		 FQuebec::StaticStruct(),
+		 FSaskatchewan::StaticStruct()};
 	
 
 
-	for(int i = 1; i<=10; ++i)
-	{
-		Combinations.Empty();
-		CombinationsRecursive(EntitySubsystem,i);
-	}
+ 	for(int i = 1; i<=Provinces.Num(); ++i)
+ 	{
+ 		Combination.Empty();
+ 		CombinationsRecursive(EntitySubsystem,i);
+ 	}
  	
- 	
-
- 	//UE_LOG( LogTemp, Warning, TEXT("MSPathologicalBenchmarkProcessor done! Archetypes possible: %i"),Archetypes.Num());
-
+ 	//the final 1024th archetype I guess?
+ 	Archetypes.Add(EntitySubsystem->CreateArchetype({FPathologicFragment::StaticStruct()}));
 
 
-	//create 1000 entities for now
+ 	UE_LOG( LogTemp, Warning, TEXT("MSPathologicalBenchmarkProcessor done! Archetypes made: %i"),Archetypes.Num());
+
+
+
+	//create 100000 entities for now
  	int v = 0;
 
- 	for(int i = 0; i<100; ++i)
+ 	for(int i = 0; i<100000; ++i)
  	{
- 		for (auto Fragment : Provinces)
- 		{
- 			//For now, we don't actually add the province fragment to the entity
- 			EntitySubsystem->CreateEntity(EntitySubsystem->CreateArchetype({FPathologicFragment::StaticStruct()}));
- 			++v;
- 		}
+ 		const int32 Index = FMath::RandRange(0, Archetypes.Num() - 1);
+
+	    	EntitySubsystem->CreateEntity(Archetypes[Index]);
+ 		
+ 		++v;
  	}
  	
  	UE_LOG( LogTemp, Warning, TEXT("MSPathologicalBenchmarkProcessor done! Entities created: %i"),v);
@@ -85,92 +100,100 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
  void UMSPathologicalBenchmarkProcessor::ConfigureQueries()
  {
 	//quick and dirty way to disable this for now if you want
- 	if constexpr (false)
+ 	if constexpr (benchmark)
  	{
- 		//ideally this would be a tag but that appears to break the query?
- 		PathologicQuery.AddRequirement<FPathologicFragment>(EMassFragmentAccess::ReadWrite);
- 		// PathologicQuery.AddRequirement(FAlberta::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FBritishColumbia::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FManitoba::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FNewBrunswick::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FNewfoundlandandLabrador::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FNovaScotia::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FOntario::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FPrinceEdwardIsland::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FQuebec::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
- 		// PathologicQuery.AddRequirement(FSaskatchewan::StaticStruct(),EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
+ 		PathologicQuery9.AddRequirement<FPathologicFragment>(EMassFragmentAccess::ReadWrite);
+ 		
+ 		PathologicQuery9.AddRequirement(FAlberta::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery9.AddRequirement(FBritishColumbia::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery9.AddRequirement(FManitoba::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery9.AddRequirement(FNewBrunswick::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery9.AddRequirement(FNewfoundlandandLabrador::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery9.AddRequirement(FNovaScotia::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery9.AddRequirement(FOntario::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery9.AddRequirement(FPrinceEdwardIsland::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery9.AddRequirement(FQuebec::StaticStruct(),EMassFragmentAccess::ReadWrite);
+
+ 		PathologicQuery3.AddRequirement<FPathologicFragment>(EMassFragmentAccess::ReadWrite);
+ 		
+ 		PathologicQuery3.AddRequirement(FAlberta::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery3.AddRequirement(FBritishColumbia::StaticStruct(),EMassFragmentAccess::ReadWrite);
+ 		PathologicQuery3.AddRequirement(FManitoba::StaticStruct(),EMassFragmentAccess::ReadWrite);
+
+
  	}
 
  	
-	 //FIXME: this triggers validity errors on the query internally?
-	 // for (auto Fragment : Provinces)
-	 // {
-		//  PathologicQuery.AddRequirement(Fragment,EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
-	 // }
+
  }
 
  void UMSPathologicalBenchmarkProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
- {
+{
+	{
+		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark3);
 
- 	QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_PathologicalBenchmark);
+	
+		PathologicQuery9.ForEachEntityChunk(EntitySubsystem,Context,
+		[&,this](FMassExecutionContext& Context)
+			{
 
- 	PathologicQuery.ForEachEntityChunk(EntitySubsystem,Context,
-		 [&,this](FMassExecutionContext& Context)
-		 {
-		 	
-		 	const int32 QueryLength = Context.GetNumEntities();
+				const int32 QueryLength = Context.GetNumEntities();
 
-		 	for (int32 i = 0; i < QueryLength; ++i)
-		 	{
+				auto Albertas = Context.GetMutableFragmentView<FAlberta>();
+				auto BritishColumbias = Context.GetMutableFragmentView<FBritishColumbia>();
+				auto Manitobas = Context.GetMutableFragmentView<FManitoba>();
+				auto NewBrunswicks = Context.GetMutableFragmentView<FNewBrunswick>();
+				auto NewfoundlandandLabradors = Context.GetMutableFragmentView<FNewfoundlandandLabrador>();
+				auto NovaScotias = Context.GetMutableFragmentView<FNovaScotia>();
+				auto Ontarios = Context.GetMutableFragmentView<FOntario>();
+				auto PrinceEdwardIslands = Context.GetMutableFragmentView<FPrinceEdwardIsland>();
+				auto Quebecs = Context.GetMutableFragmentView<FQuebec>();
 
-		 		auto entity = Context.GetEntity(i);
+				for (int32 i = 0; i < QueryLength; ++i)
+				{
 
-		 		//I cannot think of a better way to do this due to them being templates!
-		 		//Macro time?
-		 		if(FMath::RandBool())
-		 		{
-		 			Context.Defer().AddFragment<FAlberta>(entity);
-		 		}
-		 		if(FMath::RandBool())
-		 		{
-					 Context.Defer().AddFragment<FBritishColumbia>(entity);
-		 		}
-		 		if(FMath::RandBool())
-		 		{
-					 Context.Defer().AddFragment<FManitoba>(entity);
-		 		}
-		 		if(FMath::RandBool())
-		 		{
-					 Context.Defer().AddFragment<FNewBrunswick>(entity);
-		 		}
-		 		if(FMath::RandBool())
-		 		{
-					 Context.Defer().AddFragment<FNewfoundlandandLabrador>(entity);
-		 		}	
-		 		if(FMath::RandBool())
-		 		{
-		 			Context.Defer().AddFragment<FNovaScotia>(entity);
-		 		}
-		 		if(FMath::RandBool())
-		 		{
-					 Context.Defer().AddFragment<FOntario>(entity);
-		 		}
-		 		if(FMath::RandBool())
-		 		{
-					 Context.Defer().AddFragment<FPrinceEdwardIsland>(entity);
-		 		}
-		 		if(FMath::RandBool())
-		 		{
-					 Context.Defer().AddFragment<FQuebec>(entity);
-		 		}
-		 		if(FMath::RandBool())
-		 		{
-					 Context.Defer().AddFragment<FSaskatchewan>(entity);
-		 		}
-		 	}
-		 });
+	
+					Quebecs[i].stuff += 
+					Albertas[i].stuff +
+				   BritishColumbias[i].stuff +
+				   Manitobas[i].stuff +
+				   NewBrunswicks[i].stuff +
+				   NewfoundlandandLabradors[i].stuff +
+				   NovaScotias[i].stuff +
+				   Ontarios [i].stuff +
+				   PrinceEdwardIslands[i].stuff +
+				   Quebecs[i].stuff;
+		 		
 
- 	
 
- 	
+
+				}
+			});
+
+	}
+	{
+		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9);
+
+		PathologicQuery3.ForEachEntityChunk(EntitySubsystem,Context,
+	   [&,this](FMassExecutionContext& Context)
+	   {
+
+		   const int32 QueryLength = Context.GetNumEntities();
+
+		   auto Albertas = Context.GetMutableFragmentView<FAlberta>();
+		   auto BritishColumbias = Context.GetMutableFragmentView<FBritishColumbia>();
+		   auto Manitobas = Context.GetMutableFragmentView<FManitoba>();
+
+
+		   for (int32 i = 0; i < QueryLength; ++i)
+		   {
+
+			   Albertas[i].stuff +=
+			  BritishColumbias[i].stuff +
+			  Manitobas[i].stuff;
+
+
+		   }
+	   });
+	}
  }
