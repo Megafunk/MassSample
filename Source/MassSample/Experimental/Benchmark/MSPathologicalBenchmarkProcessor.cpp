@@ -130,7 +130,7 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
  void UMSPathologicalBenchmarkProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
 	{
-		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark3);
+		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9);
 
 	
 		PathologicQuery9.ForEachEntityChunk(EntitySubsystem,Context,
@@ -172,7 +172,7 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
 
 	}
 	{
-		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9);
+		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark3);
 
 		PathologicQuery3.ForEachEntityChunk(EntitySubsystem,Context,
 	   [&,this](FMassExecutionContext& Context)
