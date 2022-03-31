@@ -266,20 +266,38 @@ It is also possible to create custom mutations by implementing your own commands
 
 <!-- FIXME: Please complete! (later) -->
 
-<!-- VORITODO: Reiew this part -->
 <a name="mass-traits"></a>
 ### 4.6 Traits
-Traits are C++ defined objects that declare a set of fragments and data to use for authoring new entities in a data-driven way. They usually contain fragments and data that go well together to make defining different kinds of entities in the editor simple. 
+Traits are C++ defined objects that declare a set of Fragments, Tags and data for authoring new entities in a data-driven way. 
 
-To start using traits, simply create a `DataAsset` that inherits from 
-`MassEntityConfigAsset` and add new traits to it. Each trait can be expanded to set properties if it has any. There are many built-in traits including an "assorted fragments" trait to add specific fragments without making a new trait. You can also define a parent MassEntityConfigAsset to inherit the fragments from another `DataAsset`.
+To start using traits, create a `DataAsset` that inherits from 
+`MassEntityConfigAsset` and add new traits to it. Each trait can be expanded to set properties if it has any. 
 
+![MassEntityConfigAsset](Images/massentityconfigasset.jpg)
+
+Between the many built-in traits offered by Mass, we can find the `Assorted Fragments` trait, which holds an array of `FInstancedStruct` that enables adding fragments to this trait from the editor without the need of creating a new C++ Trait. 
+
+![AssortedFragments](Images/assortedfragments.jpg)
+
+<!-- FIXME: This is how ue works, I think it's not necessary -->
+~~You can also define a parent MassEntityConfigAsset to inherit the fragments from another `DataAsset`.~~
+
+<!-- FIXME: Please elaborate -->
 Traits are often used to add Shared Fragments in the form of settings.
+
+
+<!-- FIXME: New section, please fill with hello world example -->
+#### 4.6.1 Creating a trait
+You can create C++ traits!
 
 <a name="mass-sf"></a>
 ### 4.7 Shared Fragments
-Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. The archetype only needs to store one copy for many entities that share it. Hashes are used to find existing shared fragments nad to create new ones. 
+Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. 
 
+<!-- FIXME: Which archetype? Which hashes? This is a bit confusing! -->
+The archetype only needs to store one copy for many entities that share it. Hashes are used to find existing shared fragments nad to create new ones. 
+
+<!-- FIXME: Quack? x'D -->
 Adding one to query differs from other fragments:
 
 ```c++
