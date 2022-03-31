@@ -28,16 +28,20 @@ UMSPathologicalBenchmarkProcessor::UMSPathologicalBenchmarkProcessor()
  		}
 
  		++NumCombinations;
- 		Combination.Add(FPathologicFragment::StaticStruct());
- 		Archetypes.Add(EntitySubsystem->CreateArchetype(Combination));
- 		//UE_LOG( LogTemp, Warning, TEXT("MSPathologicalBenchmarkProcessor: %s,%i"),*output,Combinations.Num());
+ 		UE_LOG( LogTemp, Warning, TEXT("MSPathologicalBenchmarkProcessor: %s,%i"),*output,Combination.Num());
+
+ 		TArray<UScriptStruct*> CombinationWithPatholigicFragment = Combination;
+ 		CombinationWithPatholigicFragment.Add(FPathologicFragment::StaticStruct());
+ 		Archetypes.Add(EntitySubsystem->CreateArchetype({CombinationWithPatholigicFragment}));
+ 		
  		return;
  	}
  	for(int i = offset; i<=Provinces.Num() - length; ++i)
  	{
  		Combination.Add(Provinces[i]);
  		CombinationsRecursive(EntitySubsystem,length-1,i+1);
- 		Combination.RemoveAt(Combination.Num()-1);
+ 		Combination.Pop();
+ 		
 			
  	}
  }
@@ -129,13 +133,18 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
 
  void UMSPathologicalBenchmarkProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
+
+	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark9: %i entities found"),PathologicQuery9.GetNumMatchingEntities(EntitySubsystem));
+	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark3: %i entities found"),PathologicQuery3.GetNumMatchingEntities(EntitySubsystem));
+
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9);
 
-	
+
 		PathologicQuery9.ForEachEntityChunk(EntitySubsystem,Context,
 		[&,this](FMassExecutionContext& Context)
 			{
+			QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9Loop);
 
 				const int32 QueryLength = Context.GetNumEntities();
 
@@ -177,6 +186,7 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
 		PathologicQuery3.ForEachEntityChunk(EntitySubsystem,Context,
 	   [&,this](FMassExecutionContext& Context)
 	   {
+	   	QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark3Loop);
 
 		   const int32 QueryLength = Context.GetNumEntities();
 
