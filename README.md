@@ -12,14 +12,16 @@ This documentation will be updated often!
 > 1. [Mass](#mass)  
 > 2. [Entity Component System](#ecs)  
 > 3. [Sample Project](#sample)  
-> 3.1 [Test indent 1](#tocs)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.1.1. [Test indent 2](#tocs)  
 > 4. [Mass Concepts](#massconcepts)  
 > 4.1 [Entities](#mass-entities)   
 > 4.2 [Fragments](#mass-fragments)  
 > 4.3 [Tags](#mass-tags)  
 > 4.4 [Processors](#mass-processors)  
 > 4.5 [Queries](#mass-queries)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.1 [Access requirements](#mass-queries-ar)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.2 [Presence requirements](#mass-queries-pr)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.3 [Iterating Queries](#mass-queries-iq)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.4 [Mutating entities with Defer()](#mass-queries-mq)  
 > 4.6 [Traits](#mass-traits)  
 > 4.7 [Shared Fragments](#mass-sf)  
 > 4.8 [Observers](#mass-o)
@@ -122,7 +124,7 @@ Processors use one or more `FMassEntityQuery` to select the entities to iterate 
 <!-- FIXME: Please rephrase -->
 They are collection of Fragments and Tags combined with rules to filter for usually defined in `ConfigureQueries`. 
 
-
+<a name="mass-queries-ar"></a>
 #### 4.5.1 Access requirements
 
 Queries can define read/write access requirements for Fragments:
@@ -145,7 +147,7 @@ MoveEntitiesQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOn
 
 Note that Tags **do not have** access requirements, since they don't contain data.
 
-
+<a name="mass-queries-pr"></a>
 #### 4.5.2 Presence requirements
 Queries can define presence requirements for Fragments and Tags:
 
@@ -157,7 +159,7 @@ Queries can define presence requirements for Fragments and Tags:
 | Optional | If fragment is present we'll use it, but it does not need to be present. | 
 
 Here are some basic examples in which we add presence rules in two Tags from a `FMassEntityQuery MoveEntitiesQuery`:
-```
+```c++
 // All entities must have a FMoverTag
 MoveEntitiesQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
 // None of the Entities may have a FStopTag
@@ -168,23 +170,23 @@ Fragments can be filtered by presence with an additional `EMassFragmentPresence`
 // Don't include entities with a HitLocation fragment
 MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::None);
 ```
-<!-- FIXMEVORI: Please Funk review this text below: -->
+<!-- REVIEWME: Please Funk review this text below: -->
 `EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of containing the specified Tag or Fragment. If the Tag or Fragment exists, it will be processed.
 ```c++	
 // We don't always have a movement speed modifier, but include it if we do
 MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
 ```
-<!-- FIXME: Why is the "one" crossed? Check spelling. -->
+
 Rarely used but still worth a mention `EMassFragmentPresence::Any` filters for entities that must at least one of the fragments marked with Any. Here is a contrived example:
 ```c++
 FarmAnimalsQuery.AddTagRequirement<FHorseTag>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
 ```
-<!-- FIXME: less weird Any example? -->
-#### 4.5.3 Iterating Queries
 
-To actually use the queries we must call their `ForEachEntityChunk` function with a lambda, the Mass subsystem and execution context. Here is an example from inside the `Execute` function of a processor:
+<a name="mass-queries-iq"></a>
+#### 4.5.3 Iterating Queries
+Queries are executed by calling `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. The following example code lies inside the `Execute` function of a processor:
 ```c++
 //Note that this is a lambda! If you want extra data you may need to pass something into the []
 MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
@@ -212,9 +214,12 @@ MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecuti
 	}
 });
 ```                                                        
-#### 4.5.4 Changing entities with Defer()
+<a name="mass-queries-mq"></a>
+#### 4.5.4 Mutating entities with Defer()
                                                         
-Inside of the ForEachEntity we have access to the current execution context. It is the primary way we get entity data and alter their composition. Here is an example where in which we add a tag to any entity that is the has a color fragment that is color red:
+Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FIsRedTag` to any entity that has a color fragment with its `Color` property set to `Red`:
+
+<!-- REV: Isn't this executed constantly? Wouldn't be adding the tag all the time? Can't we do this just once? -->
 
 ```c++
 EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
@@ -234,25 +239,34 @@ EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecution
 });
 ```
 
-<!-- FIXME: kind of contrived... better real world example that isn't too crazy? -->
-
-Here are some of the built in basic changes you can defer:
+##### 4.5.4.1 Native mutation operations
+The following Listings define the native mutations that you can defer:
 
 Fragments:
-`Context.Defer().AddFragment<FMyTag>();`
-`Context.Defer().RemoveFragment<FMyTag>();`
-  
+```c++
+Context.Defer().AddFragment<FMyTag>();
+Context.Defer().RemoveFragment<FMyTag>();
+```
+
 Tags:
-`Context.Defer().AddTag<FMyTag>();`
-`Context.Defer().RemoveTag<FMyTag>();` 
+```c++
+Context.Defer().AddTag<FMyTag>();
+Context.Defer().RemoveTag<FMyTag>();
+```
  
 Destroying entities:
-`Context.Defer().DestroyEntity(MyEntity);`
-`Context.Defer().BatchDestroyEntities(MyEntitiesArray)`
-  
-<!-- FIXME: You can create your own and use them with `Context.Defer().EmplaceCommand<>()` but that will be for later -->
+```c++
+Context.Defer().DestroyEntity(MyEntity);
+Context.Defer().BatchDestroyEntities(MyEntitiesArray);
+```
 
+##### 4.5.4.2 Custom mutation operations
 
+It is also possible to create custom mutations by implementing your own commands and passing them through `Context.Defer().EmplaceCommand<FMyCustomComand>(...)`.
+
+<!-- FIXME: Please complete! (later) -->
+
+<!-- VORITODO: Reiew this part -->
 <a name="mass-traits"></a>
 ### 4.6 Traits
 Traits are C++ defined objects that declare a set of fragments and data to use for authoring new entities in a data-driven way. They usually contain fragments and data that go well together to make defining different kinds of entities in the editor simple. 
