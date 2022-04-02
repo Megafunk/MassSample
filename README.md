@@ -24,7 +24,8 @@ This documentation will be updated often!
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.4 [Mutating entities with Defer()](#mass-queries-mq)  
 > 4.6 [Traits](#mass-traits)  
 > 4.7 [Shared Fragments](#mass-sf)  
-> 4.8 [Observers](#mass-o)
+> 4.8 [Observers](#mass-o)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observing multiple Fragment/Tags](#mass-o-mft)
 > 5. [Mass Plugins and Modules](#mass-pm)  
 > 5.1 [MassEntity](#mass-pm-me)  
 > 5.2 [MassGameplay](#mass-pm-gp)  
@@ -297,7 +298,7 @@ Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities ca
 <!-- FIXME: Which archetype? Which hashes? This is a bit confusing! -->
 The archetype only needs to store one copy for many entities that share it. Hashes are used to find existing shared fragments nad to create new ones. 
 
-<!-- FIXME: Quack? x'D -->
+<!-- FIXME: Quack? x'D. Please rephrase, can't understand this -->
 Adding one to query differs from other fragments:
 
 ```c++
@@ -306,9 +307,66 @@ PositionToNiagaraFragmentQuery.AddSharedRequirement<FSharedNiagaraSystemFragment
 
 <a name="mass-o"></a>
 ### 4.8 Observers
-Observers are processors that derive from (`UMassObserverProcessor`) in order to only operate on entities that have just added or removed one or more specific fragment types they observe. For example, you could create an observer that handles entities that just had an `FColorFragment` added to change their color to something random. They do not run every frame, but for every time a batch of entities is changed in a way that fulfills their observer operations and types. It possible to create any queries you want to use during execution of the process as usual regardless of what fragments are observed. However, have more than one kind of fragment trigger this observer you must overload the `Register` function. 
+The `UMassObserverProcessor` is a type of processor that operates on entities that have just performed a `EMassObservedOperation` over the Fragment/Tag type observed:
 
-Note: Currently observers are only called during batched entity actions. This covers processors and spawners but not single entity changes from C++ as demonstrated. 
+| `EMassObservedOperation` | Description |
+| ----------- | ----------- |
+| Add | The observed Fragment/Tag was added to an entity. |
+| Remove | The observed Fragment/Tag was removed from an entity. | 
+
+Observers do not run every frame, but every time a batch of entities is changed in a way that fulfills the observer requirements.
+
+For example, you could create an observer that handles entities that just had an `FColorFragment` added to change their color:
+
+```c++
+UMSObserverOnAdd::UMSObserverOnAdd()
+{
+	ObservedType = FSampleColorFragment::StaticStruct();
+	Operation = EMassObservedOperation::Add;
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
+}
+
+void UMSObserverOnAdd::ConfigureQueries()
+{
+	EntityQuery.AddRequirement<FSampleColorFragment>(EMassFragmentAccess::ReadWrite);
+}
+
+void UMSObserverOnAdd::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+{
+	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+	{
+		auto Colors = Context.GetMutableFragmentView<FSampleColorFragment>();
+		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		{
+			// When a color is added, make it random!
+			Colors[EntityIndex].Color = FColor::MakeRandomColor();
+		}
+	});
+}
+```
+
+It is also possible to create [queries](#mass-queries) to use during the execution process regardless the observed Fragment/Tag.
+
+**Note:** _Currently_ observers are only called during batched entity actions. This covers processors and spawners but not single entity changes from C++. 
+
+<a name="mass-o-mft"></a>
+#### 4.8.1 Observing multiple Fragment/Tags
+Observers can also be used to observe multiple operations and/or types. For that, override the `Register` function in `UMassObserverProcessor`: 
+
+```c++
+void UMyMassObserverProcessor::Register()
+{
+	check(ObservedType);
+	check(MyObservedType);
+
+	UMassObserverRegistry::GetMutable().RegisterObserver(*ObservedType, Operation, GetClass());
+	UMassObserverRegistry::GetMutable().RegisterObserver(*ObservedType, MyOperation, GetClass());
+	UMassObserverRegistry::GetMutable().RegisterObserver(*MyObservedType, MyOperation, GetClass());
+	UMassObserverRegistry::GetMutable().RegisterObserver(*MyObservedType, Operation, GetClass());
+	UMassObserverRegistry::GetMutable().RegisterObserver(*MyObservedType, EMassObservedOperation::Add, GetClass());
+}
+```
+As noted above, it is possible to reuse the same `EMassObservedOperation` operation for multiple observed types, and vice-versa.
 
 <a name="mass-pm"></a>
 ## 5. Mass Plugins and Modules
