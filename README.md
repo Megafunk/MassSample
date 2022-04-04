@@ -2,7 +2,7 @@
 Our very WIP understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are not affiliated with Epic Games and this system is actively being changed often so this information might not be accurate.
 If something is wrong feel free to PR!
 
-Currently built for the Unreal Engine 5.0 preview 2 binary from the Epic launcher.
+Currently built for the Unreal Engine 5.0 preview 2 binary from the Epic Games launcher.
 
 This documentation will be updated often!
 
@@ -370,40 +370,91 @@ As noted above, it is possible to reuse the same `EMassObservedOperation` operat
 
 <a name="mass-pm"></a>
 ## 5. Mass Plugins and Modules
-The Mass framework is divided into many different plugins and modules. Here's my quick overview:
+This Section overviews the three main Mass plugins and their different modules:
+
+> 5.1 [`MassEntity`](#mass-pm-me)  
+> 5.2 [`MassGameplay`](#mass-pm-gp)  
+> 5.3 [`MassAI`](#mass-pm-ai)  
 
 <a name="mass-pm-me"></a>
-### 5.1 MassEntity
-The core plugin+modules manages all entity creation and storage. You should store a pointer to this subsystem in your code.
+### 5.1 `MassEntity`
+`MassEntity` is the main plugin that manages everything regarding Entity creation and storage.
+
+<!-- FIXME: Please clarify. Why shall I store a pointer? Add an example. Crossing out until its clear -->
+~~You should store a pointer to this subsystem in your code.~~
 
 <a name="mass-pm-gp"></a>
-### 5.2 MassGameplay 
-A plugin with many modules with many useful fragments and processors is used throughout the framework. 
-- **MassCommon**
+### 5.2 `MassGameplay `
+The `MassGameplay` plugin compiles a number of useful Fragments and Processors that are used in different parts of the Mass framework. It is divided into the following modules:
+
+> 5.2.1 [`MassCommon`](#mass-pm-gp-mc)  
+> 5.2.2 [`MassMovement`](#mass-pm-gp-mm)  
+> 5.2.3 [`MassRepresentation`](#mass-pm-gp-mr)  
+> 5.2.4 [`MassSpawner`](#mass-pm-gp-ms)  
+> 5.2.5 [`MassActors`](#mass-pm-gp-ma)  
+> 5.2.6 [`MassLOD`](#mass-pm-gp-ml)  
+> 5.2.7 [`MassReplication`](#mass-pm-gp-mre)  
+> 5.2.8 [`MassSignals`](#mass-pm-gp-msi)  
+> 5.2.9 [`MassSmartObjects`](#mass-pm-gp-mso)  
+
+<!-- FIXME: Since there are some modules more interesting than others we will format them in a subsection manner, so we can extend the interesting one easier. -->
+<!-- FIXME: Vori, review this text. -->
+<a name="mass-pm-gp-mc"></a>
+#### 5.2.1 `MassCommon`
 Basic fragments like `FTransformFragment`.
-- **MassMovement**
+
+<a name="mass-pm-gp-mm"></a>
+#### 5.2.2 `MassMovement`
 Features an important `UMassApplyMovementProcessor` processor that moves entities based on their velocity and force. Also includes a very basic sample.
-- **MassRepresentation**
+
+<a name="mass-pm-gp-mr"></a>
+#### 5.2.3 `MassRepresentation`
 Processors and fragments for rendering entities in the world. They generally use an ISMC to do so.
-- **MassSpawner** 
+
+<a name="mass-pm-gp-ms"></a>
+#### 5.2.4 `MassSpawner`
 A highly configurable actor type that can spawn specific entities where you want. 
-- **MassActors**
+
+<a name="mass-pm-gp-ma"></a>
+#### 5.2.5 `MassActors`
 A bridge between the general UE5 actor framework and Mass. A type of fragment that turns entities into "Agents" that can exchange data in either direction (or both).
-- **MassLOD**
+
+<a name="mass-pm-gp-ml"></a>
+#### 5.2.6 `MassLOD`
 LOD Processors that can manage different kinds of levels of detail, from rendering to ticking at different rates based on fragment settings.
-- **MassReplication**
+
+<a name="mass-pm-gp-mre"></a>
+#### 5.2.7 `MassReplication`
 Replication support for Mass! Other modules override `UMassReplicatorBase` to replicate stuff. Entities are given a separate Network ID that gets
-- **MassSignals** 
+
+<a name="mass-pm-gp-msi"></a>
+#### 5.2.8 `MassSignals`
 A system that lets entities send named signals to each other.
-- **MassSmartObjects** 
+
+<a name="mass-pm-gp-mso"></a>
+#### 5.2.9 `MassSmartObjects`
 Lets entities "claim" SmartObjects to interact with them.
 
 <!-- This section explicitly for AI specific modules-->
 <a name="mass-pm-ai"></a>
 ### 5.3 MassAI
-There are more modules that implement AI features that I will document with more detail when I get around to it.
+`MassAI` is a plugin that provides AI features for Mass within a series of modules:
 
-- **Zonegraph**
+> 5.3.1 [`ZoneGraph`](#mass-pm-ai-zg)  
+> 5.3.2 [`StateTree`](#mass-pm-ai-st)  
+> 5.3.3 ...
+
+This Section, as the rest of the document is still work in progress.
+
+<!-- FIXME: Ideally, this section should be like the previous one. -->
+<!-- FIXME: To what extent do we want to cover the AI side of mass. -->
+
+<a name="mass-pm-ai-zg"></a>
+#### 5.3.1 `ZoneGraph`
+<!-- FIXME: Add screenshots and examples. -->
 In-level splines and shapes that use config defined lanes to direct crowd entities around! Think sidewalks, roads etc.
-- **StateTree**
+
+<a name="mass-pm-ai-st"></a>
+#### 5.3.2 `StateTree`
+<!-- FIXME: Add screenshots and examples. -->
 A new lightweight AI statemachine that can work in conjunction with Mass Crowds. One of them is used to give movement targets to the cones in the parade in the sample.
