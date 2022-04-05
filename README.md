@@ -2,7 +2,7 @@
 Our very WIP understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are not affiliated with Epic Games and this system is actively being changed often so this information might not be accurate.
 If something is wrong feel free to PR!
 
-Currently built for the Unreal Engine 5.0 preview 2 binary from the Epic Games launcher.
+Currently built for the Unreal Engine 5.0 binary from the Epic Games launcher.
 
 This documentation will be updated often!
 
