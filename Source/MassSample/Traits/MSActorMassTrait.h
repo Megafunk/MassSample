@@ -19,22 +19,6 @@ class MASSSAMPLE_API UMSActorMassTrait : public UMassEntityTraitBase
 protected:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 	
-	UPROPERTY(EditAnywhere)
-	AActor* Actor;
-	UPROPERTY(EditAnywhere)
-	bool bIsOwnedByMass;
 	
 };
 
-UCLASS()
-class MASSSAMPLE_API UMSActorMassInitializer : public UMassObserverProcessor
-{
-	GENERATED_BODY()
-protected:
-
-	UMSActorMassInitializer();
-	
-	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
-	FMassEntityQuery EntityQuery;
-};

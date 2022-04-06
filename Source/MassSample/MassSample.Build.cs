@@ -36,9 +36,11 @@ public class MassSample : ModuleRules
 				"MassMovement",
 				"MassActors",
 				"MassSpawner",
-				"MassRepresentation",
+				"MassGameplayDebug",
 				"MassSignals",
 				"MassCrowd",
+				"MassActors",
+				"MassRepresentation",
 				"MassReplication",
 				//needed for replication setup
 				"NetCore",
