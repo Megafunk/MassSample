@@ -23,7 +23,7 @@ void UMSProjectileHitObserver::ConfigureQueries()
 	StopHitsQuery.AddRequirement<FLineTraceFragment>(EMassFragmentAccess::ReadOnly);
 	StopHitsQuery.AddTagRequirement<FCollisionHitTag>(EMassFragmentPresence::All);
 
-	//You can always add another query for different in the same observer proecssor!
+	//You can always add another query for different in the same observer processor!
 	ExtraHitQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 }
 
@@ -46,16 +46,16 @@ void UMSProjectileHitObserver::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 
 					Transform.SetTranslation(LineTraces[EntityIndex].HitResult.Location);
 					
-					UE_LOG( LogTemp, Warning, TEXT("%i FCollisionHitTag Observer fired on frame %i"),Context.GetEntity(EntityIndex).Index,GFrameCounter);
 				}
 
 			});
-
+	
+			//Just an example of a second query foreach
 			ExtraHitQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
 			{
 				for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 				{
-					UE_LOG( LogTemp, Warning, TEXT("%i FTransformFragment Observer fired on frame %i"),Context.GetEntity(EntityIndex).Index,GFrameCounter);
+					//UE_LOG( LogTemp, Warning, TEXT("%i FTransformFragment Observer fired on frame %i"),Context.GetEntity(EntityIndex).Index,GFrameCounter);
 				}
 			});
 }

@@ -40,6 +40,10 @@ public class MassSample : ModuleRules
 				"MassSignals",
 				"MassCrowd",
 				"MassReplication",
+				//needed for replication setup
+				"NetCore",
+				"AIModule",
+
 				"ZoneGraph",
 				"MassGameplayDebug",
 				"MassZoneGraphNavigation", 
