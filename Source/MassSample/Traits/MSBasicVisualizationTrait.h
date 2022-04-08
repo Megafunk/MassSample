@@ -7,12 +7,20 @@
 #include "MSBasicVisualizationTrait.generated.h"
 
 
+USTRUCT()
+struct FBasicVisualizationTag : public FMassTag
+{
+	GENERATED_BODY()
+	
+};
+ 
 
 UCLASS(meta=(DisplayName="Sample Visualization"))
 class MASSSAMPLE_API UMSBasicVisualizationTrait : public UMassVisualizationTrait
 {
 	GENERATED_BODY()
-	
+public:
+	UMSBasicVisualizationTrait();
 protected:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 };
