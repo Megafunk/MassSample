@@ -26,7 +26,6 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	});
 
 	
-	//TODO: query examples
 	//TODO: simple blueprint functions for interacting with mass for fun
 	
 	
