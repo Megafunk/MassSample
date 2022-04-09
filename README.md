@@ -2,7 +2,9 @@
 Our very WIP understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are not affiliated with Epic Games and this system is actively being changed often so this information might not be accurate.
 If something is wrong feel free to PR!
 
-Currently built for the Unreal Engine 5.0 binary from the Epic Games launcher.
+Currently built for the Unreal Engine 5.0 binary from the Epic Games launcher. 
+
+Requires git LFS to be installed to clone.
 
 This documentation will be updated often!
 
@@ -62,6 +64,8 @@ Currently, the sample features the following:
 - A bare minimum movement processor to show how to set up processors.
 - An entity spawner that uses a special mass-specific data asset to spawn entities in a circle defined in an Environmental Query System (EQS).
 - A Mass-simulated crowd of cones that parades around the level following a ZoneGraph shape with lanes.
+- A linetraced projectile simulation example  
+- Grouped niagara rendering for entities
 
 
 <!-- FIXME: Let's figure out first an index to later fill with content if you agree. -->
@@ -100,10 +104,11 @@ Just bits on an archetype internally. <!-- FIXME: vvv Please carify this phrase 
 ### 4.4 Processors
 The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. 
 <!-- FIXME: See comment below. -->
-~~They can also include rules that define in which order they are called in.~~ Automatically registered with Mass by default. 
+They can also include rules that define in which order they are called in. Automatically registered with Mass by default.
 
 <!-- FIXME: You don't define rules for execution order in the processor. Processors are sorted in groups, and in the processor you can configure to which group the processor belongs to, but the ordering rules are defined at a group and processor level in the ProcessingPhase. See: UMassEntitySettings -->
-In their constructor they can define ~~rules for their execution order~~ and which types of game client they execute on:
+<!-- FIXYOU: I'm pretty sure you can define processor-specific rules? You can definie specific processors to depend on for example. Try looking at the exported dependecy graph or just UMassStandingAvoidanceProcessor::UMassStandingAvoidanceProcessor  -->
+In their constructor they can define rules for their execution order and which types of game client they execute on:
 ```c++
 //Using the built-in movement processor group
 ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
@@ -113,17 +118,25 @@ ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionF
 ```
 
 <!-- FIXME: Showcase why order is important. Dependencies!! -->
-On initialization, Mass creates a graph of processors using their execution rules so they execute in order.
+On initialization, Mass creates a graph of processors using their execution rules so they execute in order. For example, we make sure to move entities before we render them.
+
+<!-- FIXME: Is this a good place to mention this? -->
+ Some specific processors that come with Mass that are designed to be derived from to express your own logic. The visualization and LOD modules are both designed to be used this way.
 
 Remember: you create the queries yourself in the header!
 
 
 <a name="mass-queries"></a>
 ### 4.5 Queries
-Processors use one or more `FMassEntityQuery` to select the entities to iterate on. 
+Processors use one or more `FMassEntityQuery` to select the entities to iterate on.
 
 <!-- FIXME: Please rephrase -->
-They are collection of Fragments and Tags combined with rules to filter for usually defined in `ConfigureQueries`. 
+They are a set of Fragment and Tag types combined with rules to act as a filter for entities in our ECS subsystem we want to change or read the data of.
+
+In processors we add rules to queries by overriding the `ConfigureQueries` function and adding rules to the queries we defined in the header.
+
+<!-- FIXME: Is this just confusing? -->
+Queries can exist and be iterated outside of processors but there aren't many usecases for that I am aware of.
 
 <a name="mass-queries-ar"></a>
 #### 4.5.1 Access requirements
@@ -172,7 +185,8 @@ Fragments can be filtered by presence with an additional `EMassFragmentPresence`
 MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::None);
 ```
 <!-- REVIEWME: Please Funk review this text below: -->
-`EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of containing the specified Tag or Fragment. If the Tag or Fragment exists, it will be processed.
+<!-- REVIEW: Uhhh... maybe we should show how to check for the presence of the oprional fragment? I'll look later. -->
+`EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of actually containing the specified Tag or Fragment. If the Tag or Fragment exists, it will be processed.
 ```c++	
 // We don't always have a movement speed modifier, but include it if we do
 MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
@@ -284,7 +298,7 @@ Between the many built-in traits offered by Mass, we can find the `Assorted Frag
 ~~You can also define a parent MassEntityConfigAsset to inherit the fragments from another `DataAsset`.~~
 
 <!-- FIXME: Please elaborate -->
-Traits are often used to add Shared Fragments in the form of settings.
+Traits are often used to add Shared Fragments in the form of settings. For example, our visualization traits save space by sharing which mesh they are displaying, parameters etc.
 
 
 <!-- FIXME: New section, please fill with hello world example -->
