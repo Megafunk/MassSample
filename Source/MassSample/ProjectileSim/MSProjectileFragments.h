@@ -18,7 +18,7 @@ struct MASSSAMPLE_API FDamageFragment : public FMassFragment
 	float Damage;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSSAMPLE_API FLineTraceFragment : public FMassFragment
 {
 	GENERATED_BODY()
