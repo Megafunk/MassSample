@@ -16,8 +16,6 @@ AMSDocumentationActor::AMSDocumentationActor()
 void AMSDocumentationActor::NavigateToFunctionSource(const FString SymbolName, const FString ModuleName)
 {
 	auto MassSampleModuleFileName = FModuleManager::Get().GetModuleFilename( "MassSample" );
-	//L"UnrealEditor-MassSample-Win64-DebugGame"
-	//L"../../../../../Unreal Projects/MassSample-main/Binaries/Win64/UnrealEditor-MassSample-Win64-DebugGame.dll"
 	
 	MassSampleModuleFileName = FPaths::GetBaseFilename(MassSampleModuleFileName);
 
