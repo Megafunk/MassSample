@@ -50,7 +50,10 @@ public class MassSample : ModuleRules
 				"MassGameplayDebug",
 				"MassZoneGraphNavigation", 
 				"Niagara",
-				"DeveloperSettings"
+				"DeveloperSettings",
+				
+				//todo: maybe do thee editor only stuff on another module?
+				"UnrealEd"
 			}
 		);
 	}
