@@ -106,12 +106,12 @@ The main way fragments are operated on in Mass. Combine one more user-defined qu
 <!-- FIXME: See comment below. -->
 They can also include rules that define in which order they are called in. Automatically registered with Mass by default.
 
-<!-- FIXME: You don't define rules for execution order in the processor. Processors are sorted in groups, and in the processor you can configure to which group the processor belongs to, but the ordering rules are defined at a group and processor level in the ProcessingPhase. See: UMassEntitySettings -->
-<!-- FIXYOU: I'm pretty sure you can define processor-specific rules? You can definie specific processors to depend on for example. Try looking at the exported dependecy graph or just UMassStandingAvoidanceProcessor::UMassStandingAvoidanceProcessor  -->
+
 In their constructor they can define rules for their execution order and which types of game client they execute on:
 ```c++
 //Using the built-in movement processor group
 ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
+ExecutionOrder.ExecuteAfter.Add(TEXT("MSMovementProcessor"));
   
 //This executes only on clients and not the dedicated server
 ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
