@@ -247,7 +247,7 @@ EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecution
 		if(ColorList[EntityIndex].Color == FColor::Red)
 		{
 			//Using the context, defer adding a tag to this entity after done processing!                                                             
-			Context.Defer().AddTag<FIsRedTag>();
+			Context.Defer().AddTag<FIsRedTag>(Context.GetEntity(EntityIndex));
 		}
 	}
 
@@ -259,14 +259,14 @@ The following Listings define the native mutations that you can defer:
 
 Fragments:
 ```c++
-Context.Defer().AddFragment<FMyTag>();
-Context.Defer().RemoveFragment<FMyTag>();
+Context.Defer().AddFragment<FMyTag>(Entity);
+Context.Defer().RemoveFragment<FMyTag>(Entity);
 ```
 
 Tags:
 ```c++
-Context.Defer().AddTag<FMyTag>();
-Context.Defer().RemoveTag<FMyTag>();
+Context.Defer().AddTag<FMyTag>(Entity);
+Context.Defer().RemoveTag<FMyTag>(Entity);
 ```
  
 Destroying entities:
