@@ -111,6 +111,7 @@ In their constructor they can define rules for their execution order and which t
 ```c++
 //Using the built-in movement processor group
 ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
+//You can also define other processors that we require to run before or after this one
 ExecutionOrder.ExecuteAfter.Add(TEXT("MSMovementProcessor"));
   
 //This executes only on clients and not the dedicated server
