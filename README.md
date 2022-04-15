@@ -137,7 +137,7 @@ The following Figure represents the archetypes from the example above in memory:
 
 ![MassArchetypeMemory](Images/arche-mem.png)
 
-By having this pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) data layout divided in multiple chunks, we are allowing a great number of whole-entities to fit onto line. 
+By having this pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) data layout divided in multiple chunks, we are allowing a great number of whole-entities to fit in cache. 
 
 This is thanks to the chunk partitoning, since without it, we wouldn't have as many whole-entities fit in cache as the following diagram displays:
 
