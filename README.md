@@ -18,15 +18,18 @@ This documentation will be updated often!
 > 4.1 [Entities](#mass-entities)   
 > 4.2 [Fragments](#mass-fragments)  
 > 4.3 [Tags](#mass-tags)  
-> 4.4 [Processors](#mass-processors)  
-> 4.5 [Queries](#mass-queries)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.1 [Access requirements](#mass-queries-ar)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.2 [Presence requirements](#mass-queries-pr)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.3 [Iterating Queries](#mass-queries-iq)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.4 [Mutating entities with Defer()](#mass-queries-mq)  
-> 4.6 [Traits](#mass-traits)  
-> 4.7 [Shared Fragments](#mass-sf)  
-> 4.8 [Observers](#mass-o)  
+> 4.4 [The archetype model](#mass-arch-mod)   
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.4.1 [Tags in the archetype model](#mass-arch-mod-tags)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.4.2 [Fragments in the archetype model](#mass-arch-mod-fragments)  
+> 4.5 [Processors](#mass-processors)  
+> 4.6 [Queries](#mass-queries)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.1 [Access requirements](#mass-queries-ar)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.2 [Presence requirements](#mass-queries-pr)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.3 [Iterating Queries](#mass-queries-iq)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.4 [Mutating entities with Defer()](#mass-queries-mq)  
+> 4.7 [Traits](#mass-traits)  
+> 4.8 [Shared Fragments](#mass-sf)  
+> 4.9 [Observers](#mass-o)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observing multiple Fragment/Tags](#mass-o-mft)
 > 5. [Mass Plugins and Modules](#mass-pm)  
 > 5.1 [MassEntity](#mass-pm-me)  
@@ -35,7 +38,7 @@ This documentation will be updated often!
 
 <a name="mass"></a>
 ## 1. Mass
-Mass is Unreal's new in-house ECS framework! Technically, [Sequencer](https://docs.unrealengine.com/4.26/en-US/AnimatingObjects/Sequencer/Overview/) already used one internally but it wasn't intended for gameplay code. Mass was created by the AI team at Epic Games to facilitate massive crowd simulations but has grown to include many other features as well. It was featured in the new [Matrix demo](https://www.unrealengine.com/en-US/blog/introducing-the-matrix-awakens-an-unreal-engine-5-experience) Epic released recently.
+Mass is Unreal's new in-house ECS framework! Technically, [Sequencer](https://docs.unrealengine.com/4.26/en-US/AnimatingObjects/Sequencer/Overview/) already used one internally but it wasn't intended for gameplay code. Mass was created by the AI team at Epic Games to facilitate massive crowd simulations, but has grown to include many other features as well. It was featured in the new [Matrix demo](https://www.unrealengine.com/en-US/blog/introducing-the-matrix-awakens-an-unreal-engine-5-experience) Epic released recently.
 
 <a name="ecs"></a>
 ## 2. Entity Component System 
@@ -68,8 +71,8 @@ Currently, the sample features the following:
 - Grouped niagara rendering for entities
 
 
-<!-- (check)FIXME: Let's figure out first an index to later fill with content if you agree. -->
-<!-- FIXME: I'd say we can keep the majority of content we have in here, but we should define first an index. -->
+<!-- (check) FIXMEFUNK: I'd say we can keep the majority of content we have in here, but we should define first an index. -->
+<!-- FIXMEVORI: I think it's already getting shaped, we need to keep on going iterating on the most relevant sections, such as the processors. -->
 
 <a name="massconcepts"></a>
 ## 4. Mass Concepts
@@ -79,19 +82,23 @@ Currently, the sample features the following:
 > 4.1 [Entities](#mass-entities)  
 > 4.2 [Fragments](#mass-fragments)  
 > 4.3 [Tags](#mass-tags)  
-> 4.4 [Processors](#mass-processors)  
-> 4.5 [Queries](#mass-queries)  
-> 4.6 [Traits](#mass-traits)  
-> 4.7 [Shared Fragments](#mass-sf)  
+> 4.4 [The archetype model](#mass-arch-mod)   
+> 4.5 [Processors](#mass-processors)  
+> 4.6 [Queries](#mass-queries)  
+> 4.7 [Traits](#mass-traits)  
+> 4.8 [Shared Fragments](#mass-sf)  
+> 4.9 [Observers](#mass-o)
 
 <a name="mass-entities"></a>
 ### 4.1 Entities
-<!-- (check) FIXME: Revise short definition. Shouldn't define entity by employing the term entity. -->
-Small unique identifiers that point to a combination of fragments and tags in memory. Entities are mainly an simple integer ID. For example, entity 103 might point to a single projectile with transform, velocity, and damage data.
+Small unique identifiers that point to a combination of [fragments](#mass-fragments) and [tags](#mass-tags) in memory. Entities are mainly a simple integer ID. For example, entity 103 might point to a single projectile with transform, velocity, and damage data.
 
 <a name="mass-fragments"></a>
 ### 4.2 Fragments
-Data-only `UScriptStructs` that entities can own and processors can query on. Because of tight way fragment data is stored in memory they are extremely fast to iterate on. This is because the CPU will rarely need to leave the cache to find the memory it needs to operate on. Internally they are split into chunks of memory based on the size of the fragments of the current archetype.
+Data-only `UScriptStructs` that entities can own and processors can query on. 
+
+
+
 <!-- (checkl) FIXME: Elaborate on why chunked archetype arrays are faster (data locality)? Add diagram showcasing mem layout? (Use figma) -->
 
 <a name="mass-tags"></a>
@@ -100,8 +107,52 @@ Data-only `UScriptStructs` that entities can own and processors can query on. Be
 Empty `UScriptStructs` employed for filtering based on presence only.
 Internally they are just a bitset on the archetype. <!-- FIXME: vvv Please carify this phrase vvv -->
 
+<!-- REVIEWMEVORI: Take a read Funk :) Maybe I put something wrong? -->
+<a name="mass-arch-mod"></a>
+### 4.4 The archetype model
+As mentioned previously, an entity is a unique combination of fragments and tags. Mass calls each of these combinations archetypes. For example, given three different combinations employed in our entities, we would generate three archetypes:
+
+<!-- Not doing transparent bg's in case of GH dark mode -->
+![MassArchetypeDefinition](Images/arche-entity-type.png)
+
+The `FMassArchetypeData` struct represents an archetype in Mass. 
+
+<a name="mass-arch-mod-tags"></a>
+#### 4.4.1 Tags in the archetype model
+Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<FMassTag>`) that constains the tag presence information, whereas each bit in the bitset represents whether a tag exists in the archetype or not.
+
+![MassArchetypeTags](Images/arche-tags.png)
+
+Following the previous example, *Archetype 0* and *Archetype 2* contains the tags: *TagA*, *TagC* and *TagD*; while *Archetype 1* contains *TagC* and *TagD*. Which makes the combination of *Fragment A* and *Fragment B* to be split in two different archetypes.
+
+<a name="mass-arch-mod-fragments"></a>
+#### 4.4.2 Fragments in the archetype model
+At the same time, each archetype contains an array of chunks (`FMassArchetypeChunk`) holding fragment data.
+
+Each chunk contains a subset of the entities included in our archetype where data is organized in a pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) way:
+
+![MassArchetypeChunks](Images/arche-chunks.png)
+
+The following Figure represents the archetypes from the example above in memory:
+
+![MassArchetypeMemory](Images/arche-mem.png)
+
+By having this pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) data layout divided in multiple chunks, we are allowing a great number of whole-entities to fit onto line. 
+
+This is thanks to the chunk partitoning, since without it, we wouldn't have as many whole-entities fit in cache as the following diagram displays:
+
+![MassArchetypeCache](Images/arche-cache-friendly.png)
+
+In the above example, the Chunked Archetype gets whole-entities in the cache line, while the Linear Archetype gets all the *A Fragments* in cache, but doesn't get any whole-entity. 
+
+The latest approach would be fast if we would only access *A Fragments* when iterating our entities, however, this is almost never the case. Usually, when we iterate entities we tend to access multiple fragments, so it is convenient to have them all in cache, which is what the chunk partitioning provides.
+
+The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on next-gen cache sizes (128 bytes per line and 1024 cache lines).
+
+**Note:** It is relevant to note that a cache miss would be produced every time we want to access a fragment that isn't on cache for a given entity.
+
 <a name="mass-processors"></a>
-### 4.4 Processors
+### 4.5 Processors
 The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. 
 <!-- (check) FIXME: See comment below. -->
 They can also include rules that define in which order they are called in. Automatically registered with Mass by default.
@@ -128,7 +179,7 @@ Remember: you create the queries yourself in the header!
 
 
 <a name="mass-queries"></a>
-### 4.5 Queries
+### 4.6 Queries
 Processors use one or more `FMassEntityQuery` to select the entities to iterate on.
 
 <!-- FIXME: Please rephrase -->
@@ -140,7 +191,7 @@ In processors we add rules to queries by overriding the `ConfigureQueries` funct
 To be clear, queries can be created iterated on outside of processors but there is little reason to do so.
 
 <a name="mass-queries-ar"></a>
-#### 4.5.1 Access requirements
+#### 4.6.1 Access requirements
 
 Queries can define read/write access requirements for Fragments:
 
@@ -163,7 +214,7 @@ MoveEntitiesQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOn
 Note that Tags **do not have** access requirements, since they don't contain data.
 
 <a name="mass-queries-pr"></a>
-#### 4.5.2 Presence requirements
+#### 4.6.2 Presence requirements
 Queries can define presence requirements for Fragments and Tags:
 
 | `EMassFragmentPresence` | Description |
@@ -201,7 +252,7 @@ FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
 ```
 
 <a name="mass-queries-iq"></a>
-#### 4.5.3 Iterating Queries
+#### 4.6.3 Iterating Queries
 Queries are executed by calling `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. The following example code lies inside the `Execute` function of a processor:
 ```c++
 //Note that this is a lambda! If you want extra data you may need to pass something into the []
@@ -231,7 +282,7 @@ MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecuti
 });
 ```                                                        
 <a name="mass-queries-mq"></a>
-#### 4.5.4 Mutating entities with Defer()
+#### 4.6.4 Mutating entities with Defer()
                                                         
 Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FIsRedTag` to any entity that has a color fragment with its `Color` property set to `Red`:
 
@@ -255,7 +306,7 @@ EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecution
 });
 ```
 
-##### 4.5.4.1 Native mutation operations
+##### 4.6.4.1 Native mutation operations
 The following Listings define the native mutations that you can defer:
 
 Fragments:
@@ -276,14 +327,14 @@ Context.Defer().DestroyEntity(MyEntity);
 Context.Defer().BatchDestroyEntities(MyEntitiesArray);
 ```
 
-##### 4.5.4.2 Custom mutation operations
+##### 4.6.4.2 Custom mutation operations
 
 It is also possible to create custom mutations by implementing your own commands and passing them through `Context.Defer().EmplaceCommand<FMyCustomComand>(...)`.
 
 <!-- FIXME: Please complete! (later) -->
 
 <a name="mass-traits"></a>
-### 4.6 Traits
+### 4.7 Traits
 Traits are C++ defined objects that declare a set of Fragments, Tags and data for authoring new entities in a data-driven way. 
 
 To start using traits, create a `DataAsset` that inherits from 
@@ -303,11 +354,11 @@ Traits are often used to add Shared Fragments in the form of settings. For examp
 
 
 <!-- FIXME: New section, please fill with hello world example -->
-#### 4.6.1 Creating a trait
+#### 4.7.1 Creating a trait
 You can create C++ traits!
 
 <a name="mass-sf"></a>
-### 4.7 Shared Fragments
+### 4.8 Shared Fragments
 Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. 
 
 <!-- FIXME: Which archetype? Which hashes? This is a bit confusing! -->
@@ -321,7 +372,7 @@ PositionToNiagaraFragmentQuery.AddSharedRequirement<FSharedNiagaraSystemFragment
 ```
 
 <a name="mass-o"></a>
-### 4.8 Observers
+### 4.9 Observers
 The `UMassObserverProcessor` is a type of processor that operates on entities that have just performed a `EMassObservedOperation` over the Fragment/Tag type observed:
 
 | `EMassObservedOperation` | Description |
@@ -365,7 +416,7 @@ It is also possible to create [queries](#mass-queries) to use during the executi
 **Note:** _Currently_ observers are only called during batched entity actions. This covers processors and spawners but not single entity changes from C++. 
 
 <a name="mass-o-mft"></a>
-#### 4.8.1 Observing multiple Fragment/Tags
+#### 4.9.1 Observing multiple Fragment/Tags
 Observers can also be used to observe multiple operations and/or types. For that, override the `Register` function in `UMassObserverProcessor`: 
 
 ```c++
