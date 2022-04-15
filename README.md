@@ -68,7 +68,7 @@ Currently, the sample features the following:
 - Grouped niagara rendering for entities
 
 
-<!-- FIXME: Let's figure out first an index to later fill with content if you agree. -->
+<!-- (check)FIXME: Let's figure out first an index to later fill with content if you agree. -->
 <!-- FIXME: I'd say we can keep the majority of content we have in here, but we should define first an index. -->
 
 <a name="massconcepts"></a>
@@ -86,24 +86,24 @@ Currently, the sample features the following:
 
 <a name="mass-entities"></a>
 ### 4.1 Entities
-<!-- FIXME: Revise short definition. Shouldn't define entity by employing the term entity. -->
-Unique identifiers for individual entities.
+<!-- (check) FIXME: Revise short definition. Shouldn't define entity by employing the term entity. -->
+Small unique identifiers that point to a combination of fragments and tags in memory. Entities are mainly an simple integer ID. For example, entity 103 might point to a single projectile with transform, velocity, and damage data.
 
 <a name="mass-fragments"></a>
 ### 4.2 Fragments
-Data-only `UScriptStructs` that entities can own and processors can query on. Stored in chunked archetype arrays for quick processing.
-<!-- FIXME: Elaborate on why chunked archetype arrays are faster (data locality)? Add diagram showcasing mem layout? (Use figma) -->
+Data-only `UScriptStructs` that entities can own and processors can query on. Because of tight way fragment data is stored in memory they are extremely fast to iterate on. This is because the CPU will rarely need to leave the cache to find the memory it needs to operate on. Internally they are split into chunks of memory based on the size of the fragments of the current archetype.
+<!-- (checkl) FIXME: Elaborate on why chunked archetype arrays are faster (data locality)? Add diagram showcasing mem layout? (Use figma) -->
 
 <a name="mass-tags"></a>
 ### 4.3 Tags
-<!-- REV: Tags aren't fragments!! Please extend explanation. What filtering? -->
-Empty `UScriptStructs` employed for filtering. 
-Just bits on an archetype internally. <!-- FIXME: vvv Please carify this phrase vvv -->
+<!-- (check) REV: Tags aren't fragments!! Please extend explanation. What filtering? -->
+Empty `UScriptStructs` employed for filtering based on presence only.
+Internally they are just a bitset on the archetype. <!-- FIXME: vvv Please carify this phrase vvv -->
 
 <a name="mass-processors"></a>
 ### 4.4 Processors
 The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. 
-<!-- FIXME: See comment below. -->
+<!-- (check) FIXME: See comment below. -->
 They can also include rules that define in which order they are called in. Automatically registered with Mass by default.
 
 
@@ -136,8 +136,8 @@ They are a set of Fragment and Tag types combined with rules to act as a filter 
 
 In processors we add rules to queries by overriding the `ConfigureQueries` function and adding rules to the queries we defined in the header.
 
-<!-- FIXME: Is this just confusing? -->
-Queries can exist and be iterated outside of processors but there aren't many usecases for that I am aware of.
+<!-- (check)FIXME: Is this just confusing? -->
+To be clear, queries can be created iterated on outside of processors but there is little reason to do so.
 
 <a name="mass-queries-ar"></a>
 #### 4.5.1 Access requirements
@@ -396,7 +396,7 @@ This Section overviews the three main Mass plugins and their different modules:
 `MassEntity` is the main plugin that manages everything regarding Entity creation and storage.
 
 <!-- FIXME: Please clarify. Why shall I store a pointer? Add an example. Crossing out until its clear -->
-~~You should store a pointer to this subsystem in your code.~~
+<!-- FIXMEFUNK: You know what? I don't think we need to tell Mass users to cache a subsystem pointer lol -->
 
 <a name="mass-pm-gp"></a>
 ### 5.2 `MassGameplay `
@@ -413,7 +413,7 @@ The `MassGameplay` plugin compiles a number of useful Fragments and Processors t
 > 5.2.9 [`MassSmartObjects`](#mass-pm-gp-mso)  
 
 <!-- FIXME: Since there are some modules more interesting than others we will format them in a subsection manner, so we can extend the interesting one easier. -->
-<!-- FIXME: Vori, review this text. -->
+<!-- (Check)FIXMEFUNK: Vori, review this text. (unless you already did) -->
 <a name="mass-pm-gp-mc"></a>
 #### 5.2.1 `MassCommon`
 Basic fragments like `FTransformFragment`.
@@ -463,6 +463,7 @@ This Section, as the rest of the document is still work in progress.
 
 <!-- FIXME: Ideally, this section should be like the previous one. -->
 <!-- FIXME: To what extent do we want to cover the AI side of mass. -->
+<!-- FIXMEFUNK: I think we should cover a brief overview at the minimum. most of Mass is attached to the AI stuff so we kind of have to at least mention all of it. The Zonegraph cones are a good short example. We should suggest to check out the CitySample at least. -->
 
 <a name="mass-pm-ai-zg"></a>
 #### 5.3.1 `ZoneGraph`
