@@ -18,13 +18,29 @@ struct MASSSAMPLE_API FDamageFragment : public FMassFragment
 	float Damage;
 };
 
+//todo-performance investigate making part of this shared? it's going to be very common besides the ignored actors etc?
 USTRUCT(BlueprintType)
 struct MASSSAMPLE_API FLineTraceFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	FHitResult HitResult; 
-};
+	FCollisionQueryParams QueryParams = FCollisionQueryParams();
 
+	
+};
+USTRUCT()
+struct MASSSAMPLE_API FHitResultFragment : public FMassFragment
+{
+	FHitResultFragment() = default;
+
+	explicit FHitResultFragment(const FHitResult& HitResult)
+		: HitResult(HitResult)
+	{
+	}
+
+	GENERATED_BODY()
+	FHitResult HitResult;
+
+};
 //TODO: move this elsewhere? It's not entirely projectile specific
 USTRUCT()
 struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
@@ -60,13 +76,18 @@ struct MASSSAMPLE_API FStopMovementTag : public FMassTag
 {
 	GENERATED_BODY()
 };
+
 USTRUCT()
-struct MASSSAMPLE_API FCollisionHitTag : public FMassTag
+struct MASSSAMPLE_API FProjectileTag : public FMassTag
 {
 	GENERATED_BODY()
 };
+
+
+
+
 USTRUCT()
-struct MASSSAMPLE_API FProjectileTag : public FMassTag
+struct MASSSAMPLE_API FFireHitEventTag : public FMassTag
 {
 	GENERATED_BODY()
 };

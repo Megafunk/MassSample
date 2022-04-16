@@ -5,12 +5,12 @@
 
 #include "MassCommonFragments.h"
 #include "MassMovementFragments.h"
+#include "MassProjectileHitInterface.h"
 #include "MSProjectileFragments.h"
-#include "Fragments/MSFragments.h"
 
 UMSProjectileHitObserver::UMSProjectileHitObserver()
 {
-	ObservedType = FCollisionHitTag::StaticStruct();
+	ObservedType = FHitResultFragment::StaticStruct();
 	Operation = EMassObservedOperation::Add;
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }
@@ -21,41 +21,58 @@ void UMSProjectileHitObserver::ConfigureQueries()
 	StopHitsQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 	StopHitsQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	StopHitsQuery.AddRequirement<FLineTraceFragment>(EMassFragmentAccess::ReadOnly);
-	StopHitsQuery.AddTagRequirement<FCollisionHitTag>(EMassFragmentPresence::All);
+	StopHitsQuery.AddRequirement<FHitResultFragment>(EMassFragmentAccess::ReadOnly);
 
 	//You can always add another query for different in the same observer processor!
-	ExtraHitQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
+	CollisionHitEventQuery.AddTagRequirement<FFireHitEventTag>(EMassFragmentPresence::All);
+	CollisionHitEventQuery.AddRequirement<FHitResultFragment>(EMassFragmentAccess::ReadOnly);
+
 }
 
 void UMSProjectileHitObserver::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
+	
 			StopHitsQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
 			{
 
-				auto Velocities = Context.GetMutableFragmentView<FTransformFragment>();
+				auto Transforms = Context.GetMutableFragmentView<FTransformFragment>();
 
-				auto LineTraces = Context.GetFragmentView<FLineTraceFragment>();
+				auto HitResults = Context.GetFragmentView<FHitResultFragment>();
 
 
 				for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 				{
+					FTransformFragment& TransformFragment = Transforms[EntityIndex];
+
+					auto HitLocation = HitResults[EntityIndex].HitResult.ImpactPoint;
+					Transforms[EntityIndex].GetMutableTransform().SetTranslation(HitLocation);
+
 
 					Context.Defer().RemoveFragment<FMassVelocityFragment>(Context.GetEntity(EntityIndex));
+					Context.Defer().RemoveFragment<FLineTraceFragment>(Context.GetEntity(EntityIndex));
 
-					auto Transform = Velocities[EntityIndex].GetMutableTransform();
-
-					Transform.SetTranslation(LineTraces[EntityIndex].HitResult.Location);
 					
 				}
 
 			});
 	
-			//Just an example of a second query foreach
-			ExtraHitQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+			CollisionHitEventQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
 			{
+
+				auto HitResults = Context.GetFragmentView<FHitResultFragment>();
+
 				for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 				{
-					//UE_LOG( LogTemp, Warning, TEXT("%i FTransformFragment Observer fired on frame %i"),Context.GetEntity(EntityIndex).Index,GFrameCounter);
+					auto Hitresult = HitResults[EntityIndex].HitResult;
+					
+					if(Hitresult.GetActor()->Implements<UMassProjectileHitInterface>())
+					{
+						IMassProjectileHitInterface::Execute_ProjectileHit(
+							Hitresult.GetActor(),
+							FEntityHandleWrapper{Context.GetEntity(EntityIndex)},
+							Hitresult);
+						
+					}
 				}
 			});
 }

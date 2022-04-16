@@ -42,6 +42,7 @@ public class MassSample : ModuleRules
 				"MassActors",
 				"MassRepresentation",
 				"MassReplication",
+				"MassNavigation",
 				//needed for replication setup
 				"NetCore",
 				"AIModule",
@@ -51,6 +52,7 @@ public class MassSample : ModuleRules
 				"MassZoneGraphNavigation", 
 				"Niagara",
 				"DeveloperSettings",
+				"GeometryCore",
 				
 				//todo: maybe do thee editor only stuff on another module?
 				"UnrealEd"

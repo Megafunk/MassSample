@@ -25,6 +25,6 @@ protected:
 
 	FMassEntityQuery StopHitsQuery;
 
-	FMassEntityQuery ExtraHitQuery;
+	FMassEntityQuery CollisionHitEventQuery;
 
 };

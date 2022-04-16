@@ -24,9 +24,6 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		FTransformFragment::StaticStruct(),
 		FMassVelocityFragment::StaticStruct()
 	});
-
-	
-	//TODO: simple blueprint functions for interacting with mass for fun
 	
 	
 }

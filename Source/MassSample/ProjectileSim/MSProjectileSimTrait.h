@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
-#include "MSProjectileFragments.h"
-#include "NiagaraSystem.h"
 #include "MSProjectileSimTrait.generated.h"
 
 /**
@@ -18,7 +16,8 @@ class MASSSAMPLE_API UMSProjectileSimTrait : public UMassEntityTraitBase
 	GENERATED_BODY()
 public:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
-	
 
+	UPROPERTY(EditAnywhere)
+	bool bFiresHitEventToActors = true;
 };
 

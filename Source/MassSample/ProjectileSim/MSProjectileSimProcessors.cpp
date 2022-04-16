@@ -4,6 +4,7 @@
 #include "MSProjectileSimProcessors.h"
 
 #include "MassCommonFragments.h"
+#include "MassObserverRegistry.h"
 #include "MSProjectileFragments.h"
 #include "MassRepresentationTypes.h"
 #include "Fragments/MSFragments.h"
@@ -29,7 +30,6 @@ void UMSProjectileSimProcessors::ConfigureQueries()
 	LineTraceFromPreviousPosition.AddTagRequirement<FProjectileTag>(EMassFragmentPresence::All);
 
 	//LineTraceFromPreviousPosition.AddTagRequirement<FNotMovingTag>(EMassFragmentPresence::None);
-
 }
 
 void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
@@ -42,28 +42,40 @@ void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, 
 
 		const auto Linetraces = Context.GetMutableFragmentView<FLineTraceFragment>();
 		const auto Velocities = Context.GetFragmentView<FMassVelocityFragment>();
-		const auto CurrentPositions = Context.GetFragmentView<FTransformFragment>();
-			
+		const auto Transforms = Context.GetFragmentView<FTransformFragment>();
+
 		for (int32 i = 0; i < Context.GetNumEntities(); ++i)
 		{
+			FHitResult HitResult;
 
-			FVector CurrentLocation = CurrentPositions[i].GetTransform().GetTranslation();
+			FVector CurrentLocation = Transforms[i].GetTransform().GetTranslation();
 			
-			FCollisionQueryParams QueryParams;
-			QueryParams.bReturnPhysicalMaterial = true;
-			
-			//If we hit something, add a new tag that says we did so!
+			//If we hit something, add a new fragment with the data!
 			if(GetWorld()->
 				LineTraceSingleByChannel(
-					Linetraces[i].HitResult,
+					HitResult,
 					
 					CurrentLocation - Velocities[i].Value,
 					CurrentLocation,
-					ECollisionChannel::ECC_Camera, QueryParams))
+					ECollisionChannel::ECC_Camera,
+					Linetraces[i].QueryParams
+				))
 			{
-				Context.Defer().AddTag<FCollisionHitTag>(Context.GetEntity(i));
 
-				//UE_LOG( LogTemp, Error, TEXT("BulletManager hit happened on frame: %i"),GFrameCounter);
+				FMassEntityHandle Entity = Context.GetEntity(i);
+				
+
+
+				//Context.Defer().AddFragment<FHitResultFragment>(Entity);
+				//todo: is this really the only way to do this cleanly? I must be missing something?
+
+				//GetWorld()->GetSubsystem<UMassObserverRegistry>()
+
+
+				auto HitResultConstStruct = FConstStructView::Make(FHitResultFragment(HitResult));
+
+				Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResultConstStruct));
+
 				
 			}
 				

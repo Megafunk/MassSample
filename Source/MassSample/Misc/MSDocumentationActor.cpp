@@ -15,11 +15,13 @@ AMSDocumentationActor::AMSDocumentationActor()
 
 void AMSDocumentationActor::NavigateToFunctionSource(const FString SymbolName, const FString ModuleName)
 {
-	auto MassSampleModuleFileName = FModuleManager::Get().GetModuleFilename( "MassSample" );
+	FString ModuleFileName = FModuleManager::Get().GetModuleFilename(FName(ModuleName));
 	
-	MassSampleModuleFileName = FPaths::GetBaseFilename(MassSampleModuleFileName);
-
-	FSourceCodeNavigation::NavigateToFunctionSourceAsync( SymbolName, MassSampleModuleFileName, false);
+	ModuleFileName = FPaths::GetBaseFilename(ModuleFileName);
+#if WITH_EDITOR
+	FSourceCodeNavigation::NavigateToFunctionSourceAsync( SymbolName, ModuleFileName, false);
+#endif
+	
 }
 // Called when the game starts or when spawned
 void AMSDocumentationActor::BeginPlay()

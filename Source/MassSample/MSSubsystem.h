@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntitySubsystem.h"
-#include "UObject/Object.h"
+#include "Fragments/MSHashGridFragments.h"
 #include "MSSubsystem.generated.h"
 
 /**
@@ -21,6 +21,7 @@ public:
 	UMassEntitySubsystem* EntitySystem;
 	FMassArchetypeHandle MoverArchetype;
 
+	FMSHashGrid3D HashGrid = FMSHashGrid3D(100.0f,FMassEntityHandle());
 
 	UFUNCTION(BlueprintCallable)
 	int32 SpawnEntity();
