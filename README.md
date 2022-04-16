@@ -95,26 +95,40 @@ Currently, the sample features the following:
 ### 4.1 Entities
 Small unique identifiers that point to a combination of [fragments](#mass-fragments) and [tags](#mass-tags) in memory. Entities are mainly a simple integer ID. For example, entity 103 might point to a single projectile with transform, velocity, and damage data.
 
+<!-- FIXMEVORI: Probably a new section of creating a complete entity once Fragments and Tags have been defined? -->
+
 <a name="mass-fragments"></a>
 ### 4.2 Fragments
-Data-only `UScriptStructs` that entities can own and processors can query on. 
+Data-only `UScriptStructs` that entities can own and processors can query on. To create a fragment, inherit from [`FMassFragment`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassFragment/). 
 
-
-
-<!-- (checkl) FIXME: Elaborate on why chunked archetype arrays are faster (data locality)? Add diagram showcasing mem layout? (Use figma) -->
+```c++
+USTRUCT()
+struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
+{
+	GENERATED_BODY()
+	float Time;
+};
+```
 
 <a name="mass-tags"></a>
 ### 4.3 Tags
-<!-- (check) REV: Tags aren't fragments!! Please extend explanation. What filtering? -->
-Empty `UScriptStructs` employed for filtering based on presence only.
-Internally they are just a bitset on the archetype. <!-- FIXME: vvv Please carify this phrase vvv -->
+<!-- REVIEWMEVORI: "...that processors can use to filter entities to process based on presence/absence" sounds good? I just added it to further clarify what we wanted to convey. If it's okay, delete the comment! :) -->
+Empty `UScriptStructs` that [processors](#mass-processors) can use to filter entities to process based on presence/absence. To create a tag, inherit from [`FMassTag`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassTag/). 
+
+```c++
+USTRUCT()
+struct MASSSAMPLE_API FProjectileTag : public FMassTag
+{
+	GENERATED_BODY()
+};
+```
+**Note:** Tags should never contain any member properties.
 
 <!-- REVIEWMEVORI: Take a read Funk :) Maybe I put something wrong? -->
 <a name="mass-arch-mod"></a>
 ### 4.4 The archetype model
 As mentioned previously, an entity is a unique combination of fragments and tags. Mass calls each of these combinations archetypes. For example, given three different combinations employed in our entities, we would generate three archetypes:
 
-<!-- Not doing transparent bg's in case of GH dark mode -->
 ![MassArchetypeDefinition](Images/arche-entity-type.png)
 
 The `FMassArchetypeData` struct represents an archetype in Mass. 
@@ -125,11 +139,11 @@ Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<F
 
 ![MassArchetypeTags](Images/arche-tags.png)
 
-Following the previous example, *Archetype 0* and *Archetype 2* contains the tags: *TagA*, *TagC* and *TagD*; while *Archetype 1* contains *TagC* and *TagD*. Which makes the combination of *Fragment A* and *Fragment B* to be split in two different archetypes.
+Following the previous example, *Archetype 0* and *Archetype 2* contain the tags: *TagA*, *TagC* and *TagD*; while *Archetype 1* contains *TagC* and *TagD*. Which makes the combination of *Fragment A* and *Fragment B* to be split in two different archetypes.
 
 <a name="mass-arch-mod-fragments"></a>
 #### 4.4.2 Fragments in the archetype model
-At the same time, each archetype contains an array of chunks (`FMassArchetypeChunk`) holding fragment data.
+At the same time, each archetype holds an array of chunks (`FMassArchetypeChunk`) with fragment data.
 
 Each chunk contains a subset of the entities included in our archetype where data is organized in a pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) way:
 
@@ -141,13 +155,13 @@ The following Figure represents the archetypes from the example above in memory:
 
 By having this pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) data layout divided in multiple chunks, we are allowing a great number of whole-entities to fit in cache. 
 
-This is thanks to the chunk partitoning, since without it, we wouldn't have as many whole-entities fit in cache as the following diagram displays:
+This is thanks to the chunk partitoning, since without it, we wouldn't have as many whole-entities fit in cache, as the following diagram displays:
 
 ![MassArchetypeCache](Images/arche-cache-friendly.png)
 
-In the above example, the Chunked Archetype gets whole-entities in the cache line, while the Linear Archetype gets all the *A Fragments* in cache, but doesn't get any whole-entity. 
+In the above example, the Chunked Archetype gets whole-entities in cache, while the Linear Archetype gets all the *A Fragments* in cache, but doesn't get any whole-entity. 
 
-The latest approach would be fast if we would only access *A Fragments* when iterating our entities, however, this is almost never the case. Usually, when we iterate entities we tend to access multiple fragments, so it is convenient to have them all in cache, which is what the chunk partitioning provides.
+The latest approach would be fast if we would only access *A Fragments* when iterating entities, however, this is almost never the case. Usually, when we iterate entities we tend to access multiple fragments, so it is convenient to have them all in cache, which is what the chunk partitioning provides.
 
 The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on next-gen cache sizes (128 bytes per line and 1024 cache lines).
 
