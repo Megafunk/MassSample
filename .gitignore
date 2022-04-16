@@ -75,4 +75,4 @@ DerivedDataCache/*
 
 # Rider stuff
 .idea/
-*.uproject.DotSettings.user
+*.user
