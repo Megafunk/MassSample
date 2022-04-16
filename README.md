@@ -65,10 +65,12 @@ Internally, Mass is similar to the existing [Unity DOTS](https://docs.unity3d.co
 Currently, the sample features the following:
 
 - A bare minimum movement processor to show how to set up processors.
-- An entity spawner that uses a special mass-specific data asset to spawn entities in a circle defined in an Environmental Query System (EQS).
-- A Mass-simulated crowd of cones that parades around the level following a ZoneGraph shape with lanes.
-- A linetraced projectile simulation example  
-- Grouped niagara rendering for entities
+- An example of how to use Mass spawners for zonegraph and EQS.
+- Mass-simulated crowd of cones that parades around the level following a ZoneGraph shape with lanes.
+- Linetraced projectile simulation example.
+- Simple 3d hashgrid for entities.
+- Very basic Mass blueprint integration.
+- Grouped niagara rendering for entities.
 
 
 <!-- (check) FIXMEFUNK: I'd say we can keep the majority of content we have in here, but we should define first an index. -->
