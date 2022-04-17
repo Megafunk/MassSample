@@ -74,8 +74,8 @@ void UMSProjectileHitObserver::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 
 					auto Entity = Context.GetEntity(EntityIndex);
 
-					AActor* Owner;
-					UMassEntityConfigAsset* EntityConfig;
+					AActor* Owner = nullptr;
+					UMassEntityConfigAsset* EntityConfig = nullptr;
 					const FMassEntityTemplate* EntityTemplate = EntityConfig->GetConfig().GetOrCreateEntityTemplate(*Owner, *EntityConfig);
 						
 					const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetCompositionDescriptor();

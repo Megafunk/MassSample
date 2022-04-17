@@ -95,10 +95,6 @@ Currently, the sample features the following:
 ### 4.1 Entities
 Small unique identifiers that point to a combination of [fragments](#mass-fragments) and [tags](#mass-tags) in memory. Entities are mainly a simple integer ID. For example, entity 103 might point to a single projectile with transform, velocity, and damage data.
 
-<!-- FIXMEVORI: Probably a new section of creating a complete entity once Fragments and Tags have been defined? -->
-<!-- (check) FIXMEFUNK: I'm a little hesistant to even keep the original "raw C++" stuff because it almost seems wrong to use. 
-I guess a "hello world" is not a bad idea. Most ECS libs do a quick entity+fragment+query example. However, it's a little misleading because Mass is not designed to be used in such a raw line-by-line way from what I can tell. -->
-
 <a name="mass-fragments"></a>
 ### 4.2 Fragments
 Data-only `UScriptStructs` that entities can own and processors can query on. To create a fragment, inherit from [`FMassFragment`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassFragment/). 
@@ -114,9 +110,7 @@ struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
 
 <a name="mass-tags"></a>
 ### 4.3 Tags
-<!-- REVIEWMEVORI: "...that processors can use to filter entities to process based on presence/absence" sounds good? I just added it to further clarify what we wanted to convey. If it's okay, delete the comment! :) -->
-<!-- REVIEWMEFUNK: "can use to filter entities to process based on their presence/absence" -->
-Empty `UScriptStructs` that [processors](#mass-processors) can use to filter entities to process based on their presence/absence . To create a tag, inherit from [`FMassTag`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassTag/). Remember: No data allowed!
+Empty `UScriptStructs` that [processors](#mass-processors) can use to filter entities to process based on their presence/absence. To create a tag, inherit from [`FMassTag`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassTag/).
 
 ```c++
 USTRUCT()
@@ -127,8 +121,6 @@ struct MASSSAMPLE_API FProjectileTag : public FMassTag
 ```
 **Note:** Tags should never contain any member properties.
 
-<!-- REVIEWMEVORI: Take a read Funk :) Maybe I put something wrong? -->
-<!-- REVIEWMEFUNK: "grammar changes here and there... " -->
 
 <a name="mass-arch-mod"></a>
 ### 4.4 The archetype model
@@ -143,6 +135,7 @@ The `FMassArchetypeData` struct represents an archetype in Mass internally.
 Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<FMassTag>`) that constains the tag presence information, whereas each bit in the bitset represents whether a tag exists in the archetype or not.
 
 <!-- FIXMEFUNK: "What happens if we have like 100 different tags? Is there a limit?" -->
+<!-- (check) FIXMEVORI: "Good point! Will add it to the list to things to reasearch!" -->
 ![MassArchetypeTags](Images/arche-tags.png)
 
 Following the previous example, *Archetype 0* and *Archetype 2* contain the tags: *TagA*, *TagC* and *TagD*; while *Archetype 1* contains *TagC* and *TagD*. Which makes the combination of *Fragment A* and *Fragment B* to be split in two different archetypes.
@@ -159,36 +152,39 @@ The following Figure represents the archetypes from the example above in memory:
 
 ![MassArchetypeMemory](Images/arche-mem.png)
 
-By having this pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) data layout divided in multiple chunks, we are allowing a great number of whole-entities to fit in the CPUcache. 
+By having this pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) data layout divided in multiple chunks, we are allowing a great number of whole-entities to fit in the CPU cache. 
 
 This is thanks to the chunk partitoning, since without it, we wouldn't have as many whole-entities fit in cache, as the following diagram displays:
 
 ![MassArchetypeCache](Images/arche-cache-friendly.png)
 
-In the above example, the Chunked Archetype gets whole-entities in cache, while the Linear Archetype gets all the *A Fragments* in cache, but can't fit every fragment from one entity. 
+In the above example, the Chunked Archetype gets whole-entities in cache, while the Linear Archetype gets all the *A Fragments* in cache, but cannot fit each fragment of an entity.
 
 The Linear approach would be fast if we would only access the *A Fragment* when iterating entities, however, this is almost never the case. Usually, when we iterate entities we tend to access multiple fragments, so it is convenient to have them all in cache, which is what the chunk partitioning provides.
 
-The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on next-gen cache sizes (128 bytes per line and 1024 cache lines). This means that archetypes with more bits of fragment data to store will have less total entities per chunk.
+The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on next-gen cache sizes (128 bytes per line and 1024 cache lines). This means that archetypes with more bits of fragment data will contain less entities per chunk.
 
 **Note:** It is relevant to note that a cache miss would be produced every time we want to access a fragment that isn't on cache for a given entity.
 
 <a name="mass-processors"></a>
 ### 4.5 Processors
 The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. 
-<!-- (check) FIXME: See comment below. -->
-They can also include rules that define in which order they are called in. Automatically registered with Mass by default.
 
+They can also include rules that define in which order they are called in. 
+<!-- FIXMEVORI: Uh? This phrase is a bit dangling, reads a bit weird.-->
+Automatically registered with Mass by default.
 
 In their constructor they can define rules for their execution order and which types of game client they execute on:
 ```c++
-//Using the built-in movement processor group
-ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
-//You can also define other processors that we require to run before or after this one
-ExecutionOrder.ExecuteAfter.Add(TEXT("MSMovementProcessor"));
-  
-//This executes only on clients and not the dedicated server
-ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+UMyProcessor::UMyProcessor()
+{
+	//Using the built-in movement processor group
+	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
+	//You can also define other processors that we require to run before or after this one
+	ExecutionOrder.ExecuteAfter.Add(TEXT("MSMovementProcessor"));
+	//This executes only on Clients and Standalone
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+}
 ```
 
 On initialization, Mass creates a graph of processors using their execution rules so they execute in order. For example, we make sure to move entities before we render them.
@@ -201,16 +197,23 @@ Remember: you create the queries yourself in the header!
 
 <a name="mass-queries"></a>
 ### 4.6 Queries
-Processors use one or more `FMassEntityQuery` to select the entities to iterate on.
+Queries filter and iterate entities given a series of rules based on fragment and tag presence.
 
-<!-- FIXME: Please rephrase -->
-<!-- REVIEWMEFUNK: rephrased? -->
+Processors can define one or more `FMassEntityQuery` to select the entities to iterate on.
 
-Queries are specific set of Fragment and Tag types that act as a filter for entities. Queries are fast to iterate on and are the main way data is operated on in Mass.
+Processors should override the `ConfigureQueries` function in order to add rules to the different queries defined in the processor's header:
 
-In processors we add rules to queries by overriding the `ConfigureQueries` function and adding rules to the queries we defined in the header.
+```c++
+void UMSMovementProcessor::ConfigureQueries()
+{
+	MovementEntityQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
+	MovementEntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
+	MovementEntityQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
+	MovementEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
+}
+```
 
-To be clear, queries can be created iterated on outside of processors but there is little reason to do so.
+**Note:** Queries can also be created and iterated outside processors.
 
 <a name="mass-queries-ar"></a>
 #### 4.6.1 Access requirements
@@ -258,21 +261,27 @@ Fragments can be filtered by presence with an additional `EMassFragmentPresence`
 // Don't include entities with a HitLocation fragment
 MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::None);
 ```
-<!-- REVIEWME: Please Funk review this text below: -->
-<!-- REVIEW: Uhhh... maybe we should show how to check for the presence of the oprional fragment? I'll look later. -->
-`EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of actually containing the specified Tag or Fragment. You can check the length of the optional fragment's `TArrayView` to consider whether it has data to operate on or not. 
-```c++	
-// We don't always have a movement speed modifier, but include it if we do
-MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
-```
 
-Rarely used but still worth a mention `EMassFragmentPresence::Any` filters for entities that must at least one of the fragments marked with Any. Here is a contrived example:
+`EMassFragmentPresence::Any` filters entities that must at least have one of the fragments marked with `Any`. Here is a contrived example:
 ```c++
 FarmAnimalsQuery.AddTagRequirement<FHorseTag>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
 FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
 ```
 
+`EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of actually containing the specified Tag or Fragment.
+```c++	
+// We don't always have a movement speed modifier, but include it if we do
+MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
+```
+
+<!-- FIXMEVORI: I'd phrase this this way: "To consider if an entity should compute a fragment within a query that marks it optional, it is possible to check the length of the optional fragment's `TArrayView`": -->
+You can check the length of the optional fragment's `TArrayView` to consider whether it has data to operate on or not:
+
+<!-- FIXMEVORI: Please provide code below on how to do this. -->
+```c++
+[TODO]
+```
 <a name="mass-queries-iq"></a>
 #### 4.6.3 Iterating Queries
 Queries are executed by calling `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. The following example code lies inside the `Execute` function of a processor:
@@ -352,7 +361,7 @@ Context.Defer().BatchDestroyEntities(MyEntitiesArray);
 ##### 4.6.4.2 Advanced mutation operations
 There is a built in set of `FCommandBufferEntryBase` derived commands that you can use to defer some more useful entity mutations. Here is a list with some short examples using different styles. 
 
-##### FMassCommandAddFragmentInstanceList
+###### 4.6.4.2.1 FMassCommandAddFragmentInstanceList
 Adds a list of instanced struct fragments with data you can make in `FConstStructView`s or `FStructView`s. Here's an example with a new `FHitResultFragment` with HitResult data and an `FSampleColorFragment` fragment with a new color. 
 ```c++
 FConstStructView HitResulStruct = FConstStructView::Make(FHitResultFragment(HitResult));
@@ -364,10 +373,11 @@ Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(Entity,
 	));
 ```
 
-##### FMassCommandAddFragmentInstance (singular)
+##### 4.6.4.2.2 FMassCommandAddFragmentInstance (singular)
 Identical to FMassCommandAddFragmentInstanceList besides only taking a single fragment as input instead of a list.
 <!--(check) FIXMEFUNK when does FStructView being const matter? Should this use a different code style or not?-->
-##### FBuildEntityFromFragmentInstances 
+
+##### 4.6.4.2.3 FBuildEntityFromFragmentInstances 
 Similar to AddFragmentInstances, this uses a list of `FConstStructView`s to create a whole new entity. 
 Here we make the `FStructView`s inline.
 ```c++
@@ -381,10 +391,10 @@ Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(Entity,
 	{FStructView::Make(ColorFragment),FStructView::Make(ThingyFragment)}
 	));
 ```
-##### FBuildEntityFromFragmentInstance (singular)
+##### 4.6.4.2.4 FBuildEntityFromFragmentInstance (singular)
 Identical to FBuildEntityFromFragmentInstances besides only taking a single fragment as input instead of a list.
 
-##### FCommandSwapTags 
+##### 4.6.4.2.5 FCommandSwapTags 
 Removes the first tag (`FOffTag` in this example) and adds the second to the entity. (`FOnTag`)
 
 ```c++
@@ -394,7 +404,7 @@ Context.Defer().PushCommand(FCommandSwapTags(Entity,
 	));
 ```
 
-##### FCommandRemoveComposition
+##### 4.6.4.2.6 FCommandRemoveComposition
 <!--(check) FIXMEFUNK wait... we should mention this in the archetype section!! -->
 <!--(check) FIXMEFUNK also, this example is a little contrived? -->
 
@@ -414,6 +424,7 @@ Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
 
 Note that the commands that mutate entities change the value of ECommandBufferOperationType in their decleration in order to pass their changes to relevant observers when commands are flushed. They also manually add their changes to the observed changes list by implementing `AppendAffectedEntitiesPerType`. 
 
+##### 4.6.4.2.7 Custom mutation operations
 It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
 ```c++
 Context.Defer().EmplaceCommand<FMyCustomComand>(...)
