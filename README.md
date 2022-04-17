@@ -113,7 +113,8 @@ struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
 <a name="mass-tags"></a>
 ### 4.3 Tags
 <!-- REVIEWMEVORI: "...that processors can use to filter entities to process based on presence/absence" sounds good? I just added it to further clarify what we wanted to convey. If it's okay, delete the comment! :) -->
-Empty `UScriptStructs` that [processors](#mass-processors) can use to filter entities to process based on presence/absence. To create a tag, inherit from [`FMassTag`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassTag/). 
+<!-- REVIEWMEFUNK: "can use to filter entities to process based on their presence/absence" -->
+Empty `UScriptStructs` that [processors](#mass-processors) can use to filter entities to process based on their presence/absence . To create a tag, inherit from [`FMassTag`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassTag/). Remember: No data allowed!
 
 ```c++
 USTRUCT()
@@ -125,18 +126,21 @@ struct MASSSAMPLE_API FProjectileTag : public FMassTag
 **Note:** Tags should never contain any member properties.
 
 <!-- REVIEWMEVORI: Take a read Funk :) Maybe I put something wrong? -->
+<!-- REVIEWMEFUNK: "grammar changes here and there... " -->
+
 <a name="mass-arch-mod"></a>
 ### 4.4 The archetype model
-As mentioned previously, an entity is a unique combination of fragments and tags. Mass calls each of these combinations archetypes. For example, given three different combinations employed in our entities, we would generate three archetypes:
+As mentioned previously, an entity is a unique combination of fragments and tags. Mass calls each of these combinations archetypes. For example, given three different combinations used by our entities, we would generate three archetypes:
 
 ![MassArchetypeDefinition](Images/arche-entity-type.png)
 
-The `FMassArchetypeData` struct represents an archetype in Mass. 
+The `FMassArchetypeData` struct represents an archetype in Mass internally. 
 
 <a name="mass-arch-mod-tags"></a>
 #### 4.4.1 Tags in the archetype model
 Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<FMassTag>`) that constains the tag presence information, whereas each bit in the bitset represents whether a tag exists in the archetype or not.
 
+<!-- FIXMEFUNK: "What happens if we have like 100 different tags? Is there a limit?" -->
 ![MassArchetypeTags](Images/arche-tags.png)
 
 Following the previous example, *Archetype 0* and *Archetype 2* contain the tags: *TagA*, *TagC* and *TagD*; while *Archetype 1* contains *TagC* and *TagD*. Which makes the combination of *Fragment A* and *Fragment B* to be split in two different archetypes.
@@ -153,17 +157,17 @@ The following Figure represents the archetypes from the example above in memory:
 
 ![MassArchetypeMemory](Images/arche-mem.png)
 
-By having this pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) data layout divided in multiple chunks, we are allowing a great number of whole-entities to fit in cache. 
+By having this pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) data layout divided in multiple chunks, we are allowing a great number of whole-entities to fit in the CPUcache. 
 
 This is thanks to the chunk partitoning, since without it, we wouldn't have as many whole-entities fit in cache, as the following diagram displays:
 
 ![MassArchetypeCache](Images/arche-cache-friendly.png)
 
-In the above example, the Chunked Archetype gets whole-entities in cache, while the Linear Archetype gets all the *A Fragments* in cache, but doesn't get any whole-entity. 
+In the above example, the Chunked Archetype gets whole-entities in cache, while the Linear Archetype gets all the *A Fragments* in cache, but can't fit every fragment from one entity. 
 
-The latest approach would be fast if we would only access *A Fragments* when iterating entities, however, this is almost never the case. Usually, when we iterate entities we tend to access multiple fragments, so it is convenient to have them all in cache, which is what the chunk partitioning provides.
+The Linear approach would be fast if we would only access the *A Fragment* when iterating entities, however, this is almost never the case. Usually, when we iterate entities we tend to access multiple fragments, so it is convenient to have them all in cache, which is what the chunk partitioning provides.
 
-The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on next-gen cache sizes (128 bytes per line and 1024 cache lines).
+The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on next-gen cache sizes (128 bytes per line and 1024 cache lines). This means that archetypes with more bits of fragment data to store will have less total entities per chunk.
 
 **Note:** It is relevant to note that a cache miss would be produced every time we want to access a fragment that isn't on cache for a given entity.
 
@@ -254,7 +258,7 @@ MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::Read
 ```
 <!-- REVIEWME: Please Funk review this text below: -->
 <!-- REVIEW: Uhhh... maybe we should show how to check for the presence of the oprional fragment? I'll look later. -->
-`EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of actually containing the specified Tag or Fragment. If the Tag or Fragment exists, it will be processed.
+`EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of actually containing the specified Tag or Fragment. You can check the length of the optional fragment's `TArrayView` to consider whether it has data to operate on or not. 
 ```c++	
 // We don't always have a movement speed modifier, but include it if we do
 MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
@@ -347,7 +351,7 @@ Context.Defer().BatchDestroyEntities(MyEntitiesArray);
 There is a built in set of `FCommandBufferEntryBase` derived commands that you can use to defer some more useful entity mutations. Here is a list with some short examples using different styles. 
 
 ##### FMassCommandAddFragmentInstanceList
-Adds an instanced struct fragment with data you can make in an `FConstStructView` or `FStructView`. Here's an example with a new `FHitResultFragment` with HitResult data and an `FSampleColorFragment` fragment with a new color. 
+Adds a list of instanced struct fragments with data you can make in `FConstStructView`s or `FStructView`s. Here's an example with a new `FHitResultFragment` with HitResult data and an `FSampleColorFragment` fragment with a new color. 
 ```c++
 FConstStructView HitResulStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 
