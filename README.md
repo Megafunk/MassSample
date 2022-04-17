@@ -96,6 +96,8 @@ Currently, the sample features the following:
 Small unique identifiers that point to a combination of [fragments](#mass-fragments) and [tags](#mass-tags) in memory. Entities are mainly a simple integer ID. For example, entity 103 might point to a single projectile with transform, velocity, and damage data.
 
 <!-- FIXMEVORI: Probably a new section of creating a complete entity once Fragments and Tags have been defined? -->
+<!-- (check) FIXMEFUNK: I'm a little hesistant to even keep the original "raw C++" stuff because it almost seems wrong to use. 
+I guess a "hello world" is not a bad idea. Most ECS libs do a quick entity+fragment+query example. However, it's a little misleading because Mass is not designed to be used in such a raw line-by-line way from what I can tell. -->
 
 <a name="mass-fragments"></a>
 ### 4.2 Fragments
@@ -189,7 +191,6 @@ ExecutionOrder.ExecuteAfter.Add(TEXT("MSMovementProcessor"));
 ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
 ```
 
-<!-- FIXME: Showcase why order is important. Dependencies!! -->
 On initialization, Mass creates a graph of processors using their execution rules so they execute in order. For example, we make sure to move entities before we render them.
 
 <!-- FIXME: Is this a good place to mention this? -->
@@ -203,11 +204,12 @@ Remember: you create the queries yourself in the header!
 Processors use one or more `FMassEntityQuery` to select the entities to iterate on.
 
 <!-- FIXME: Please rephrase -->
-They are a set of Fragment and Tag types combined with rules to act as a filter for entities in our ECS subsystem we want to change or read the data of.
+<!-- REVIEWMEFUNK: rephrased? -->
+
+Queries are specific set of Fragment and Tag types that act as a filter for entities. Queries are fast to iterate on and are the main way data is operated on in Mass.
 
 In processors we add rules to queries by overriding the `ConfigureQueries` function and adding rules to the queries we defined in the header.
 
-<!-- (check)FIXME: Is this just confusing? -->
 To be clear, queries can be created iterated on outside of processors but there is little reason to do so.
 
 <a name="mass-queries-ar"></a>
@@ -432,25 +434,39 @@ Between the many built-in traits offered by Mass, we can find the `Assorted Frag
 ![AssortedFragments](Images/assortedfragments.jpg)
 
 <!-- FIXME: This is how ue works, I think it's not necessary -->
-~~You can also define a parent MassEntityConfigAsset to inherit the fragments from another `DataAsset`.~~
+<!-- REVIEWMEFUNK: We talk about composition over inheritance earlier so I think it's worth pointing out "inheritance" is still technically possible in Mass at least at a prefab level. Also, I think the child config's traits can override values set by the parent if they are the same? I need to test that out. -->
+
+You can also define a parent MassEntityConfigAsset to inherit the fragments from another `DataAsset`.
 
 <!-- FIXME: Please elaborate -->
-Traits are often used to add Shared Fragments in the form of settings. For example, our visualization traits save space by sharing which mesh they are displaying, parameters etc.
+<!-- REVIEWMEFUNK kind of hard to talk about it too much here with the other section existing -->
+Traits are often used to add Shared Fragments in the form of settings. For example, our visualization traits save memory by sharing which mesh they are displaying, parameters etc. Configs with the same settings will share the same Shared Fragment.
 
 
 <!-- FIXME: New section, please fill with hello world example -->
-#### 4.7.1 Creating a trait
-You can create C++ traits!
+<!-- REVIEWMEFUNK this section is going to be huge... maybe it should be 4.9 after Shared Fragments?-->
 
+#### 4.7.1 Creating a trait
+ Here is a partial BuildTemplate example for a shared struct:
+```cpp
+//this function would call MassSubsystem->GetOrCreateSharedFragment with a hash of our ThingSettings struct
+	FSharedStruct SharedFragment = 
+		MyAwesomeSubSystem->GetOrCreateSharedFragmentAwesomeType(SharedThingSettings);
+	
+	BuildContext.AddSharedFragment(SharedFragment);
+```
 <a name="mass-sf"></a>
 ### 4.8 Shared Fragments
-Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime. 
+Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime, like LOD settings and the like.
 
 <!-- FIXME: Which archetype? Which hashes? This is a bit confusing! -->
-The archetype only needs to store one copy for many entities that share it. Hashes are used to find existing shared fragments nad to create new ones. 
+<!-- REVIEWMEFUNK: Fixed!!! -->
+
+The Mass Entity subsystem only needs to store one Shared Fragment for the entities that use it. Hashes of the `FMassSharedFragment`'s values are used to find existing shared fragments and to create new ones. 
 
 <!-- FIXME: Quack? x'D. Please rephrase, can't understand this -->
-Adding one to query differs from other fragments:
+<!-- REVIEWMEFUNK: I just want to make it really obvious a different function is used here -->
+Adding one to a query can be done with `AddSharedRequirement`:
 
 ```c++
 PositionToNiagaraFragmentQuery.AddSharedRequirement<FSharedNiagaraSystemFragment>(EMassFragmentAccess::ReadWrite);
@@ -531,8 +547,6 @@ This Section overviews the three main Mass plugins and their different modules:
 ### 5.1 `MassEntity`
 `MassEntity` is the main plugin that manages everything regarding Entity creation and storage.
 
-<!-- FIXME: Please clarify. Why shall I store a pointer? Add an example. Crossing out until its clear -->
-<!-- FIXMEFUNK: You know what? I don't think we need to tell Mass users to cache a subsystem pointer lol -->
 
 <a name="mass-pm-gp"></a>
 ### 5.2 `MassGameplay `
