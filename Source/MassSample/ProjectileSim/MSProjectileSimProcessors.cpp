@@ -72,7 +72,7 @@ void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, 
 				//GetWorld()->GetSubsystem<UMassObserverRegistry>()
 
 
-				auto HitResultConstStruct = FConstStructView::Make(FHitResultFragment(HitResult));
+				FConstStructView HitResultConstStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 
 				Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResultConstStruct));
 

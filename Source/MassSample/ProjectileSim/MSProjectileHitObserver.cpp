@@ -47,7 +47,7 @@ void UMSProjectileHitObserver::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 					auto HitLocation = HitResults[EntityIndex].HitResult.ImpactPoint;
 					Transforms[EntityIndex].GetMutableTransform().SetTranslation(HitLocation);
 
-
+					//todo: should probably think of a messy goofy way to stop the projectile. Good enough for now?
 					Context.Defer().RemoveFragment<FMassVelocityFragment>(Context.GetEntity(EntityIndex));
 					Context.Defer().RemoveFragment<FLineTraceFragment>(Context.GetEntity(EntityIndex));
 
@@ -71,6 +71,16 @@ void UMSProjectileHitObserver::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 							Hitresult.GetActor(),
 							FEntityHandleWrapper{Context.GetEntity(EntityIndex)},
 							Hitresult);
+
+					auto Entity = Context.GetEntity(EntityIndex);
+
+					AActor* Owner;
+					UMassEntityConfigAsset* EntityConfig;
+					const FMassEntityTemplate* EntityTemplate = EntityConfig->GetConfig().GetOrCreateEntityTemplate(*Owner, *EntityConfig);
+						
+					const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetCompositionDescriptor();
+						
+					Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
 						
 					}
 				}
