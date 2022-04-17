@@ -322,7 +322,7 @@ EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecution
 });
 ```
 
-##### 4.6.4.1 Native mutation operations
+##### 4.6.4.1 Basic mutation operations
 The following Listings define the native mutations that you can defer:
 
 Fragments:
@@ -343,9 +343,71 @@ Context.Defer().DestroyEntity(MyEntity);
 Context.Defer().BatchDestroyEntities(MyEntitiesArray);
 ```
 
-##### 4.6.4.2 Custom mutation operations
+##### 4.6.4.2 Advanced mutation operations
+There is a built in set of `FCommandBufferEntryBase` derived commands that you can use to defer some more useful entity mutations. Here is a list with some short examples using different styles. 
 
-It is also possible to create custom mutations by implementing your own commands and passing them through `Context.Defer().EmplaceCommand<FMyCustomComand>(...)`.
+##### FMassCommandAddFragmentInstanceList
+Adds an instanced struct fragment with data you can make in an `FConstStructView` or `FStructView`. Here's an example with a new `FHitResultFragment` with HitResult data and an `FSampleColorFragment` fragment with a new color. 
+```c++
+FConstStructView HitResulStruct = FConstStructView::Make(FHitResultFragment(HitResult));
+
+FStructView ColorStruct = FStructView::Make(FSampleColorFragment(Color));
+
+Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(Entity, 
+	{HitResulStruct,ColorStruct}
+	));
+```
+
+##### FMassCommandAddFragmentInstance (singular)
+Identical to FMassCommandAddFragmentInstanceList besides only taking a single fragment as input instead of a list.
+<!--(check) FIXMEFUNK when does FStructView being const matter? Should this use a different code style or not?-->
+##### FBuildEntityFromFragmentInstances 
+Similar to AddFragmentInstances, this uses a list of `FConstStructView`s to create a whole new entity. 
+Here we make the `FStructView`s inline.
+```c++
+FSampleColorFragment ColorFragment;
+ColorFragment.Color = FColor::Green;
+
+FTransformFragment TransformFragment;
+TransformFragment.SetTransform(SpawnTransform);
+
+Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(Entity,
+	{FStructView::Make(ColorFragment),FStructView::Make(ThingyFragment)}
+	));
+```
+##### FBuildEntityFromFragmentInstance (singular)
+Identical to FBuildEntityFromFragmentInstances besides only taking a single fragment as input instead of a list.
+
+##### FCommandSwapTags 
+Removes the first tag (`FOffTag` in this example) and adds the second to the entity. (`FOnTag`)
+
+```c++
+Context.Defer().PushCommand(FCommandSwapTags(Entity, 
+	FOffTag::StaticStruct(), 
+	FOnTag::StaticStruct()
+	));
+```
+
+##### FCommandRemoveComposition
+<!--(check) FIXMEFUNK wait... we should mention this in the archetype section!! -->
+<!--(check) FIXMEFUNK also, this example is a little contrived? -->
+
+The `FMassArchetypeCompositionDescriptor` is a struct that defines a set of fragments and tags that make up an archetype. For example, we can get one from a given archetype handle or template. In this example we get one from a `UMassEntityConfigAsset` pointer.
+
+```c++
+const FMassEntityTemplate* EntityTemplate = 
+	EntityConfig->GetConfig().GetOrCreateEntityTemplate(*Owner, *EntityConfig);
+	
+const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetCompositionDescriptor();
+	
+Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
+```
+
+
+
+Note that the commands that mutate entities change the value of ECommandBufferOperationType in their decleration in order to pass their changes to relevant observers when commands are flushed. They also manually add their changes to the observed changes list by implementing `AppendAffectedEntitiesPerType`. 
+
+It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
 
 <!-- FIXME: Please complete! (later) -->
 
