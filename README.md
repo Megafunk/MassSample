@@ -407,13 +407,16 @@ const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetComp
 Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
 ```
 
+<!-- FIXME: Add the lambda one in here!!!! -->
 
 
 Note that the commands that mutate entities change the value of ECommandBufferOperationType in their decleration in order to pass their changes to relevant observers when commands are flushed. They also manually add their changes to the observed changes list by implementing `AppendAffectedEntitiesPerType`. 
 
 It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
+```c++
+Context.Defer().EmplaceCommand<FMyCustomComand>(...)
+```
 
-<!-- FIXME: Please complete! (later) -->
 
 <a name="mass-traits"></a>
 ### 4.7 Traits
