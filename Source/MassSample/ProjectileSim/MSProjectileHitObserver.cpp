@@ -71,17 +71,6 @@ void UMSProjectileHitObserver::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 							Hitresult.GetActor(),
 							FEntityHandleWrapper{Context.GetEntity(EntityIndex)},
 							Hitresult);
-
-					auto Entity = Context.GetEntity(EntityIndex);
-
-					AActor* Owner = nullptr;
-					UMassEntityConfigAsset* EntityConfig = nullptr;
-					const FMassEntityTemplate* EntityTemplate = EntityConfig->GetConfig().GetOrCreateEntityTemplate(*Owner, *EntityConfig);
-						
-					const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetCompositionDescriptor();
-						
-					Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
-						
 					}
 				}
 			});
