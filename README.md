@@ -1,3 +1,27 @@
+
+# Wacky AI
+
+Things do now
++ Added more to pathfinding
++ Pathfinding will now cache found paths on the pathfrom trait
++ "FindCachedPathTask" will use the currently stored path from "PathfindingProcessor" and return the next move target location for the MassAI "ZG Path Follow" to use. Currently only returns fail/success when path end is reached.
++ Setup the necessery assets to demonstrate the inbuilt MassAI ZoneGraph avoidance annotation tag functionality.
++ ZoneGraph Example player can press "E" to trigger a danger.
++ Added MassAI Crowd State Tree (needs some fixes).
++ Added MassAI StateTree nodes "ShowLanePosition", .
++ Added MassConfig setups for AI with HOD stuff (a lot of traits and things ("the works" and sometimes the not works))
++ "MSZoneGraphPathTestProcessor" test actor for pathing has been replaced by the "PathfindingProcessor".
++ Added "MSEntityActorExampleSubsystem" and "MSEntityActorExampleComponent" to show and remind me of how some of how the EntityActor "slap it on" functions for actor components and actor references (will be fixing up to work with MassAI statetree nodes and with a test processor).
+
+Things to do next
++ Fix up rest of example functions
++ Clean up and remove some of the older stuff
+
+After that
++ Make some yummy docs
++ With pictures or something idk
+
+
 # Community Mass Sample
 Our very WIP understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are not affiliated with Epic Games and this system is actively being changed often so this information might not be accurate.
 If something is wrong feel free to PR!
