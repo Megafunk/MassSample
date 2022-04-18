@@ -21,7 +21,7 @@ void UMSProjectileSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 FSharedStruct UMSProjectileSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem)
 {
 
-	//we only want to key these based off of unique type sof niagara systems! Usually the entire thing would be hashed.
+	//we only want to key these based off of unique types of niagara systems! Usually the entire fragment would be hashed.
 	uint32 ParamsHash = PointerHash(NiagaraSystem);
 
 	FSharedNiagaraSystemFragment SharedStructToReturn;

@@ -73,9 +73,6 @@ Currently, the sample features the following:
 - Grouped niagara rendering for entities.
 
 
-<!-- (check) FIXMEFUNK: I'd say we can keep the majority of content we have in here, but we should define first an index. -->
-<!-- FIXMEVORI: I think it's already getting shaped, we need to keep on going iterating on the most relevant sections, such as the processors. -->
-
 <a name="massconcepts"></a>
 ## 4. Mass Concepts
 
@@ -170,14 +167,16 @@ The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on 
 ### 4.5 Processors
 The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. 
 
-They can also include rules that define in which order they are called in. 
 <!-- FIXMEVORI: Uh? This phrase is a bit dangling, reads a bit weird.-->
-Automatically registered with Mass by default.
+<!-- REVIEWMEFUNK: How about now? -->
+They can also include rules that define in which order they are called in. Processors are automatically registered with Mass and added to the PrePhsysics processing phase dependency graph by default. 
 
 In their constructor they can define rules for their execution order and which types of game client they execute on:
 ```c++
 UMyProcessor::UMyProcessor()
 {
+	//This processor is registered with mass by just existing! This is actually the default of all processors.
+	bAutoRegisterWithProcessingPhases = true;
 	//Using the built-in movement processor group
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
 	//You can also define other processors that we require to run before or after this one
@@ -192,7 +191,7 @@ On initialization, Mass creates a graph of processors using their execution rule
 <!-- FIXME: Is this a good place to mention this? -->
  Some specific processors that come with Mass that are designed to be derived from to express your own logic. The visualization and LOD modules are both designed to be used this way.
 
-Remember: you create the queries yourself in the header!
+Remember: you create the queries to iterate on yourself in the header!
 
 
 <a name="mass-queries"></a>
@@ -276,11 +275,24 @@ MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::Re
 ```
 
 <!-- FIXMEVORI: I'd phrase this this way: "To consider if an entity should compute a fragment within a query that marks it optional, it is possible to check the length of the optional fragment's `TArrayView`": -->
-You can check the length of the optional fragment's `TArrayView` to consider whether it has data to operate on or not:
-
+<!-- REVIEWMEFUNK: I think mentioning that it's per chunk is useful? -->
+To consider if a ForEachChunk should read or change data on an optional fragment in the current chunk iteration, it is possible to check the length of the optional fragment's `TArrayView`
 <!-- FIXMEVORI: Please provide code below on how to do this. -->
+<!-- REVIEWMEFUNK: Done!! -->
+
 ```c++
-[TODO]
+//Inside of a ForEachChunk
+const TArrayView<FMyOptionalFragment> OptionalFragmentList = Context.GetMutableFragmentView<FMyOptionalFragment>();
+
+for (int32 i = 0; i < Context.GetNumEntities(); ++i)
+{
+	//an optional fragment array is actually present in our current chunk if it isn't empty
+	if(OptionalFragmentList.Num() > 0)
+	{
+		//now that we know it is safe to do so, we can use it
+		OptionalFragmentList[i].DoOptionalStuff();
+	}		
+}
 ```
 <a name="mass-queries-iq"></a>
 #### 4.6.3 Iterating Queries
@@ -454,17 +466,53 @@ You can also define a parent MassEntityConfigAsset to inherit the fragments from
 Traits are often used to add Shared Fragments in the form of settings. For example, our visualization traits save memory by sharing which mesh they are displaying, parameters etc. Configs with the same settings will share the same Shared Fragment.
 
 
-<!-- FIXME: New section, please fill with hello world example -->
-<!-- REVIEWMEFUNK this section is going to be huge... maybe it should be 4.9 after Shared Fragments?-->
 
 #### 4.7.1 Creating a trait
- Here is a partial BuildTemplate example for a shared struct:
+Traits are created be creating a new C++ class derived from `UMassEntityTraitBase` and overriding `BuildTemplate`. Here is a very basic example:
+```c++
+UCLASS(meta = (DisplayName = "Debug Printing"))
+class MASSSAMPLE_API UMSDebugTagTrait : public UMassEntityTraitBase
+{
+	GENERATED_BODY()
+public:
+	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override
+	{
+		//Adding a tag
+		BuildContext.AddTag<FMassSampleDebuggableTag>();
+		
+		//Adding a fragment
+		BuildContext.AddFragment<FTransformFragment>();
+
+		//_GetRef here lets us actually change stuff about the fragment.
+		BuildContext.AddFragment_GetRef<FSampleColorFragment>().Color = UserSetColor;
+	};
+
+	//Editable in the editor!
+	UPROPERTY(EditAnywhere)
+	FColor UserSetColor;
+
+};
+```
+I would suggest looking at the many existing traits in this sample and the mass modules for examples. They are mostly fairly simple UObjects that occasionally call subsystems for bookkeeping. There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that just raises errors.
+###### Shared Fragments
+ <!--FIXMEFUNK This ordering is so weird, oh well....-->
+
+ Here is a partial `BuildTemplate` example for a shared struct, which requires some extra work on your part to see if a shared fragment identical to the new one already exists:
 ```cpp
-//this function would call MassSubsystem->GetOrCreateSharedFragment with a hash of our ThingSettings struct
-	FSharedStruct SharedFragment = 
-		MyAwesomeSubSystem->GetOrCreateSharedFragmentAwesomeType(SharedThingSettings);
+
+	//Create the actual fragment struct and set up the data for it however you like 
+	FMySharedSettings MyFragment;
+	MyFragment.MyValue = UserSetValue;
+
+	//Get a hash of a FConstStructView of said fragment and store it
+	uint32 MySharedFragmentHash = UE::StructUtils::GetStructCrc32(FConstStructView::Make(MyFragment));
 	
-	BuildContext.AddSharedFragment(SharedFragment);
+	//Search the Mass Entity subsystem for an identical struct with the hash. If there are none, make a new one with the set fragment.
+	FSharedStruct MySharedFragment = 
+		EntitySubsystem->GetOrCreateSharedFragment<FMySharedSettings>(MySharedFragmentHash, MyFragment);
+
+	//Finally, add the shared fragment to the BuildContext!
+	BuildContext.AddSharedFragment(MySharedFragment);
 ```
 <a name="mass-sf"></a>
 ### 4.8 Shared Fragments
@@ -601,7 +649,7 @@ LOD Processors that can manage different kinds of levels of detail, from renderi
 
 <a name="mass-pm-gp-mre"></a>
 #### 5.2.7 `MassReplication`
-Replication support for Mass! Other modules override `UMassReplicatorBase` to replicate stuff. Entities are given a separate Network ID that gets
+Replication support for Mass! Other modules override `UMassReplicatorBase` to replicate stuff. Entities are given a separate Network ID that gets passed over the network, rather than the EntityHandle. An example showing this is planned for much later.
 
 <a name="mass-pm-gp-msi"></a>
 #### 5.2.8 `MassSignals`
@@ -629,7 +677,7 @@ This Section, as the rest of the document is still work in progress.
 <a name="mass-pm-ai-zg"></a>
 #### 5.3.1 `ZoneGraph`
 <!-- FIXME: Add screenshots and examples. -->
-In-level splines and shapes that use config defined lanes to direct crowd entities around! Think sidewalks, roads etc.
+In-level splines and shapes that use config defined lanes to direct zonegraph pathing things around! Think sidewalks, roads etc.
 
 <a name="mass-pm-ai-st"></a>
 #### 5.3.2 `StateTree`
