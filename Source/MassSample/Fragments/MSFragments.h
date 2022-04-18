@@ -36,25 +36,7 @@ struct MASSSAMPLE_API FMassSampleDebuggableTag : public FMassTag
 };
 
 
-// Test AI Stuff
 
-
-USTRUCT()
-struct MASSSAMPLE_API FZoneGraphPathTestFromFragment : public FMassFragment
-{
-	GENERATED_BODY()
-
-	FTransform FromTransform;
-	
-};
-
-USTRUCT()
-struct MASSSAMPLE_API FZoneGraphPathTestToFragment : public FMassFragment
-{
-	GENERATED_BODY()
-	
-	FTransform ToTransform;
-};
 
 
 

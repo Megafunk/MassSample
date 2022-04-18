@@ -5,7 +5,8 @@
 
 #include "MassCommonFragments.h"
 #include "ZoneGraphSubsystem.h"
-#include "Fragments/MSFragments.h"
+//#include "Fragments/MSFragments.h"
+#include "ZoneGraphExample/Fragments/MSZoneGraphExampleFragments.h"
 
 UMSZoneGraphPathTestProcessor::UMSZoneGraphPathTestProcessor()
 {

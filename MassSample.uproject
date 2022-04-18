@@ -10,7 +10,9 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"MassEntity",
-				"MassSpawner"
+				"MassSpawner",
+				"CoreUObject",
+				"Engine"
 			]
 		}
 	],

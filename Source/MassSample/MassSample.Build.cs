@@ -24,7 +24,12 @@ public class MassSample : ModuleRules
 				"Core", 
 				"CoreUObject", 
 				"Engine", 
-				"InputCore" 
+				"InputCore",
+				
+				
+				
+				
+				
 			}
 		);
 
@@ -46,13 +51,21 @@ public class MassSample : ModuleRules
 				//needed for replication setup
 				"NetCore",
 				"AIModule",
+				"MassAIBehavior",
 
 				"ZoneGraph",
+				"ZoneGraphDebug",
+				"MassZoneGraphNavigation",
+				"ZoneGraphAnnotations",
+				"MassSimulation",
+				
 				"MassGameplayDebug",
-				"MassZoneGraphNavigation", 
 				"Niagara",
 				"DeveloperSettings",
 				"GeometryCore",
+				"AITestSuite",
+				
+				"StateTreeModule",
 				
 				//todo: maybe do thee editor only stuff on another module?
 				"UnrealEd"

@@ -5,7 +5,8 @@
 
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
-#include "Fragments/MSFragments.h"
+//#include "Fragments/MSFragments.h"
+#include "ZoneGraphExample/Fragments/MSZoneGraphExampleFragments.h"
 
 void UMSZoneGraphPathTestFromTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {
