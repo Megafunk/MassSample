@@ -4,7 +4,7 @@
 #include "MSPathologicalBenchmarkProcessor.h"
 
 
-constexpr bool benchmark = true;
+constexpr bool benchmark = false;
 
 UMSPathologicalBenchmarkProcessor::UMSPathologicalBenchmarkProcessor()
 {
