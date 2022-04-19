@@ -165,21 +165,19 @@ The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on 
 
 <a name="mass-processors"></a>
 ### 4.5 Processors
-The main way fragments are operated on in Mass. Combine one more user-defined queries with functions that operate on the data inside them. 
+Processors combine multiple user-defined [queries](#mass-queries) with functions that compute entities.
 
-<!-- FIXMEVORI: Uh? This phrase is a bit dangling, reads a bit weird.-->
-<!-- REVIEWMEFUNK: How about now? -->
-They can also include rules that define in which order they are called in. Processors are automatically registered with Mass and added to the PrePhsysics processing phase dependency graph by default. 
+Processors are automatically registered with Mass and added to the `PrePhsysics` processing phase by default.
 
-In their constructor they can define rules for their execution order and which types of game client they execute on:
+In their constructor they can define rules for their execution order and which type of game clients they execute on:
 ```c++
 UMyProcessor::UMyProcessor()
 {
-	//This processor is registered with mass by just existing! This is actually the default of all processors.
+	//This processor is registered with mass by just existing! This is the default behaviour of all processors.
 	bAutoRegisterWithProcessingPhases = true;
 	//Using the built-in movement processor group
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
-	//You can also define other processors that we require to run before or after this one
+	//You can also define other processors that require to run before or after this one
 	ExecutionOrder.ExecuteAfter.Add(TEXT("MSMovementProcessor"));
 	//This executes only on Clients and Standalone
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
@@ -188,19 +186,14 @@ UMyProcessor::UMyProcessor()
 
 On initialization, Mass creates a graph of processors using their execution rules so they execute in order. For example, we make sure to move entities before we render them.
 
-<!-- FIXME: Is this a good place to mention this? -->
- Some specific processors that come with Mass that are designed to be derived from to express your own logic. The visualization and LOD modules are both designed to be used this way.
-
-Remember: you create the queries to iterate on yourself in the header!
-
+<!-- FIXMEVORI: You meant "The visualization and LOD modules processors..." right?  -->
+**Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD modules are both designed to be used this way. 
 
 <a name="mass-queries"></a>
 ### 4.6 Queries
-Queries filter and iterate entities given a series of rules based on fragment and tag presence.
+Queries (`FMassEntityQuery`) filter and iterate entities given a series of rules based on fragment and tag presence.
 
-Processors can define one or more `FMassEntityQuery` to select the entities to iterate on.
-
-Processors should override the `ConfigureQueries` function in order to add rules to the different queries defined in the processor's header:
+Processors can define multiple `FMassEntityQuery`s and should override the `ConfigureQueries` function in order to add rules to the different queries defined in the processor's header:
 
 ```c++
 void UMSMovementProcessor::ConfigureQueries()
@@ -270,33 +263,31 @@ FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
 
 `EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of actually containing the specified Tag or Fragment.
 ```c++	
-// We don't always have a movement speed modifier, but include it if we do
-MoveEntitiesQuery.AddRequirement<FMovementSpeedModifier>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
+MyQuery.AddRequirement<FMyOptionalFragment>(EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
 ```
 
-<!-- FIXMEVORI: I'd phrase this this way: "To consider if an entity should compute a fragment within a query that marks it optional, it is possible to check the length of the optional fragment's `TArrayView`": -->
-<!-- REVIEWMEFUNK: I think mentioning that it's per chunk is useful? -->
-To consider if a ForEachChunk should read or change data on an optional fragment in the current chunk iteration, it is possible to check the length of the optional fragment's `TArrayView`
-<!-- FIXMEVORI: Please provide code below on how to do this. -->
-<!-- REVIEWMEFUNK: Done!! -->
+`ForEachChunk`s can use the length of the optional fragment's `TArrayView` to determine if the current chunk contains the optional Fragment/Tag before accessing it:
 
 ```c++
-//Inside of a ForEachChunk
-const TArrayView<FMyOptionalFragment> OptionalFragmentList = Context.GetMutableFragmentView<FMyOptionalFragment>();
-
-for (int32 i = 0; i < Context.GetNumEntities(); ++i)
+MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 {
-	//an optional fragment array is actually present in our current chunk if it isn't empty
-	if(OptionalFragmentList.Num() > 0)
+	const TArrayView<FMyOptionalFragment> OptionalFragmentList = Context.GetMutableFragmentView<FMyOptionalFragment>();
+
+	for (int32 i = 0; i < Context.GetNumEntities(); ++i)
 	{
-		//now that we know it is safe to do so, we can use it
-		OptionalFragmentList[i].DoOptionalStuff();
-	}		
+		// An optional fragment array is present in our current chunk if the OptionalFragmentList isn't empty
+		if(OptionalFragmentList.Num() > 0)
+		{
+			// Now that we know it is safe to do so, we can compute
+			OptionalFragmentList[i].DoOptionalStuff();
+		}		
+	}
 }
 ```
 <a name="mass-queries-iq"></a>
 #### 4.6.3 Iterating Queries
 Queries are executed by calling `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. The following example code lies inside the `Execute` function of a processor:
+
 ```c++
 //Note that this is a lambda! If you want extra data you may need to pass something into the []
 MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
@@ -323,7 +314,8 @@ MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecuti
 		TransformToChange.AddToTranslation(DeltaForce);
 	}
 });
-```                                                        
+```
+s                                                        
 <a name="mass-queries-mq"></a>
 #### 4.6.4 Mutating entities with Defer()
                                                         
@@ -419,6 +411,7 @@ Context.Defer().PushCommand(FCommandSwapTags(Entity,
 ##### 4.6.4.2.6 FCommandRemoveComposition
 <!--(check) FIXMEFUNK wait... we should mention this in the archetype section!! -->
 <!--(check) FIXMEFUNK also, this example is a little contrived? -->
+<!-- FIXMEVORI: Requires offline discussion -->
 
 The `FMassArchetypeCompositionDescriptor` is a struct that defines a set of fragments and tags that make up an archetype. For example, we can get one from a given archetype handle or template. In this example we get one from a `UMassEntityConfigAsset` pointer.
 
@@ -468,7 +461,8 @@ Traits are often used to add Shared Fragments in the form of settings. For examp
 
 
 #### 4.7.1 Creating a trait
-Traits are created be creating a new C++ class derived from `UMassEntityTraitBase` and overriding `BuildTemplate`. Here is a very basic example:
+Traits are created by inheriting `UMassEntityTraitBase` and overriding `BuildTemplate`. Here is a very basic example:
+
 ```c++
 UCLASS(meta = (DisplayName = "Debug Printing"))
 class MASSSAMPLE_API UMSDebugTagTrait : public UMassEntityTraitBase
@@ -477,23 +471,33 @@ class MASSSAMPLE_API UMSDebugTagTrait : public UMassEntityTraitBase
 public:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override
 	{
-		//Adding a tag
+		// Adding a tag
 		BuildContext.AddTag<FMassSampleDebuggableTag>();
 		
-		//Adding a fragment
+		// Adding a fragment
 		BuildContext.AddFragment<FTransformFragment>();
 
-		//_GetRef here lets us actually change stuff about the fragment.
+		// _GetRef lets us mutate the fragment
 		BuildContext.AddFragment_GetRef<FSampleColorFragment>().Color = UserSetColor;
 	};
 
-	//Editable in the editor!
+	// Editable in the editor
 	UPROPERTY(EditAnywhere)
 	FColor UserSetColor;
-
 };
 ```
-I would suggest looking at the many existing traits in this sample and the mass modules for examples. They are mostly fairly simple UObjects that occasionally call subsystems for bookkeeping. There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that just raises errors.
+<!-- FIXMEVORI: What do you mean by bookkeeping? Maybe clarify? -->
+**Note:** We recommend looking at the many existing traits in this sample and the mass modules for a better overview. For the most part, they are fairly simple UObjects that occasionally call subsystems for bookkeeping. 
+
+#### 4.7.2 Validating traits
+<!-- FIXMEVORI: Clarify and provide example. I'll rewrite it once all the info is in place :) -->
+There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that just raises errors.
+
+```c++
+[TODO]
+```
+
+<!-- FIXMEVORI: Is this supposed to be part of the traits section? If so please clarify! Better title? -->
 ###### Shared Fragments
  <!--FIXMEFUNK This ordering is so weird, oh well....-->
 
@@ -514,6 +518,8 @@ I would suggest looking at the many existing traits in this sample and the mass 
 	//Finally, add the shared fragment to the BuildContext!
 	BuildContext.AddSharedFragment(MySharedFragment);
 ```
+
+
 <a name="mass-sf"></a>
 ### 4.8 Shared Fragments
 Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime, like LOD settings and the like.
