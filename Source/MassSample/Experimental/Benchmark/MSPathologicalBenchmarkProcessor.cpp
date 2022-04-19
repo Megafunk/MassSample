@@ -4,7 +4,7 @@
 #include "MSPathologicalBenchmarkProcessor.h"
 
 
-constexpr bool benchmark = false;
+constexpr bool benchmark = true;
 
 UMSPathologicalBenchmarkProcessor::UMSPathologicalBenchmarkProcessor()
 {
@@ -138,10 +138,9 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
 	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark3: %i entities found"),PathologicQuery3.GetNumMatchingEntities(EntitySubsystem));
 
 	{
-		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9);
 
 
-		PathologicQuery9.ForEachEntityChunk(EntitySubsystem,Context,
+		PathologicQuery9.ParallelForEachEntityChunk(EntitySubsystem,Context,
 		[&,this](FMassExecutionContext& Context)
 			{
 			QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9Loop);
@@ -172,18 +171,14 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
 				   Ontarios [i].stuff +
 				   PrinceEdwardIslands[i].stuff +
 				   Quebecs[i].stuff;
-		 		
-
-
-
+					
 				}
 			});
 
 	}
 	{
-		QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark3);
 
-		PathologicQuery3.ForEachEntityChunk(EntitySubsystem,Context,
+		PathologicQuery3.ParallelForEachEntityChunk(EntitySubsystem,Context,
 	   [&,this](FMassExecutionContext& Context)
 	   {
 	   	QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark3Loop);

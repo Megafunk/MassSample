@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "MassProcessor.h"
-#include "UObject/Object.h"
 #include "MSMovementProcessor.generated.h"
 
 // FIXME: This hello world is perfect as is, we just need to investigate the velocity fragment missbehav and document it.

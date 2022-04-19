@@ -5,7 +5,6 @@
 
 #include "NiagaraComponent.h"
 #include "MSNiagaraActor.h"
-#include "NiagaraSystem.h"
 
 UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
 {

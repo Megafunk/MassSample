@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
-#include "NiagaraSystem.h"
 #include "MSDebugTagTrait.generated.h"
 
 /**

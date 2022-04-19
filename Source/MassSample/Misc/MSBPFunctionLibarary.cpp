@@ -8,7 +8,6 @@
 #include "MassEntityTemplateRegistry.h"
 #include "MassExecutor.h"
 #include "MassMovementFragments.h"
-#include "MassNavigationSubsystem.h"
 #include "MSSubsystem.h"
 #include "AI/NavigationSystemBase.h"
 
@@ -91,11 +90,10 @@ void UMSBPFunctionLibarary::FindHashGridEntitiesInSphere(const FVector Location,
 	if(auto MassSampleSystem = WorldContextObject->GetWorld()->GetSubsystem<UMSSubsystem>())
 	{
 		auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-		//this is a fancy templated wrapper that has the template inside of it
 		TArray<FMassEntityHandle> EntitiesFound;
 		
 		int32 numfound = MassSampleSystem->HashGrid.FindPointsInBall(Location,Radius,
-			//todo-performance it feels bad to get random entities to query... Oh well? 
+		//todo-performance it feels bad to get random entities to query... 
 		[&,Location](const FMassEntityHandle Entity)
 		{
 			const FVector EntityLocation = EntitySystem->GetFragmentDataPtr<FTransformFragment>(Entity)->GetTransform().GetLocation();
