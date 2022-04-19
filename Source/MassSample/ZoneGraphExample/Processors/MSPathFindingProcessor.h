@@ -32,8 +32,8 @@ public:
 	void DrawLineBetweenTwoPoints(FTransform FromTransform, FTransform ToTransform, FColor PathColor = FColor::Green, float LineThickness = 5.f);
 	void DrawLineBetweenTwoPoints(FVector FromLocation, FVector ToLocation, FColor PathColor = FColor::Green, float LineThickness = 5.f);
 
-	bool DFTFindPath(FZoneGraphLaneHandle& StartLaneLocationHandle, FZoneGraphLaneHandle& EndLaneLocationHandle, TArray<FZoneGraphLinkedLane>& OutPathLinkedLanes);
-	bool DFT_ZoneGraph_Origin(FZoneGraphLaneHandle& StartLaneLocationHandle, FZoneGraphLaneHandle& EndLaneLocationHandle, TArray<FZoneGraphLinkedLane>& OutPathLinkedLanes, TSet<int>& InProgressLaneIndices);
+	bool DFTFindPath(FZoneGraphLaneHandle& StartLaneLocationHandle, FZoneGraphLaneHandle& EndLaneLocationHandle, TMap<int, FZoneGraphLinkedLane>& OutPathLinkedLanes);
+	bool DFT_ZoneGraph_Origin(FZoneGraphLaneHandle& StartLaneLocationHandle, FZoneGraphLaneHandle& EndLaneLocationHandle, TMap<int, FZoneGraphLinkedLane>& OutPathLinkedLanes, TSet<int>& InProgressLaneIndices);
 
 
 	FMassEntityQuery FromQuery;

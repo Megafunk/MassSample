@@ -17,6 +17,7 @@
 
 #include "MassZoneGraphAnnotationTypes.h"
 #include "MassZoneGraphNavigationTypes.h"
+#include "ZoneGraphQuery.h"
 
 
 bool FShowLanePositionTask::Link(FStateTreeLinker& Linker)
@@ -29,7 +30,7 @@ bool FShowLanePositionTask::Link(FStateTreeLinker& Linker)
 	
 
 	// NOTE: Handle – Reference to TStateTreeExternalDataHandle<> with USTRUCT type to link to.
-	Linker.LinkExternalData(ZoneGraphLaneLocationFragmentHandle);
+	//Linker.LinkExternalData(ZoneGraphLaneLocationFragmentHandle);
 
 
 
@@ -66,15 +67,20 @@ EStateTreeRunStatus FShowLanePositionTask::EnterState(FStateTreeExecutionContext
 		return EStateTreeRunStatus::Failed;
 	}
 
+	int32 OutSegIndex;
+	UE::ZoneGraph::Query::CalculateLaneSegmentIndexAtDistance(*GraphStorage, LaneHandle, TargetLocation.TargetDistance, OutSegIndex);
+	
 	
 	// Highlight the segment the entity is on
 	const FZoneLaneData DestZoneLaneData = GraphStorage->Lanes[LaneHandle.Index];
-	for (int32 i = DestZoneLaneData.PointsBegin; i < DestZoneLaneData.PointsEnd - 1; i++)
+
+	// Debug draw at the lane target position
+	for (int32 i = DestZoneLaneData.PointsBegin; i < OutSegIndex - 1; i++)//DestZoneLaneData.PointsEnd
 	{
 		const FVector& SegStart = GraphStorage->LanePoints[i];
 		const FVector& SegEnd = GraphStorage->LanePoints[i + 1];
 		const UWorld* World = &ZoneGraphSubsystem.GetWorldRef();
-		DrawDebugLine(World, SegStart, SegEnd, FColor::Orange, false, 5.0f, 2, 8.f);
+		DrawDebugLine(World, SegStart, SegEnd, FColor::Orange, false, 5.0f, 2, 10.f);
 	}
 
 

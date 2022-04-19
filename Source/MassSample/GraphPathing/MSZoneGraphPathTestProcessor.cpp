@@ -30,6 +30,7 @@ void UMSZoneGraphPathTestProcessor::Execute(UMassEntitySubsystem& EntitySubsyste
 {
 	//Super::Execute(EntitySubsystem, Context);
 
+	return;
 
 	const UWorld* World = GetWorld();
 

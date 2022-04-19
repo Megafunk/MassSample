@@ -56,22 +56,22 @@ void UMSEntityActorExampleSubsystem::Initialize(FSubsystemCollectionBase& Collec
 }
 
 
-void UMSEntityActorExampleSubsystem::RegisterForComponent(const FMassEntityHandle Entity, UMSEntityActorExampleComponent& TeamTrackingComponent)
+void UMSEntityActorExampleSubsystem::RegisterForComponent(const FMassEntityHandle Entity, UMSEntityActorExampleComponent& EntityActorExampleComponent)
 {
-	EntityToComponentMap.Add(Entity, &TeamTrackingComponent);
-	ComponentToEntityMap.Add(&TeamTrackingComponent, Entity);
+	EntityToComponentMap.Add(Entity, &EntityActorExampleComponent);
+	ComponentToEntityMap.Add(&EntityActorExampleComponent, Entity);
 
-	AActor* Owner = TeamTrackingComponent.GetOwner();
+	AActor* Owner = EntityActorExampleComponent.GetOwner();
 
 	const TObjectKey<const AActor> Ownera = Owner;
 
 	ActorSubsystem->SetHandleForActor(Ownera, Entity);
 }
 
-void UMSEntityActorExampleSubsystem::UnregisterForComponent(const FMassEntityHandle Entity, UMSEntityActorExampleComponent& TeamTrackingComponent)
+void UMSEntityActorExampleSubsystem::UnregisterForComponent(const FMassEntityHandle Entity, UMSEntityActorExampleComponent& EntityActorExampleComponent)
 {
 	EntityToComponentMap.Remove(Entity);
-	ComponentToEntityMap.Remove(&TeamTrackingComponent);
+	ComponentToEntityMap.Remove(&EntityActorExampleComponent);
 }
 
 void UMSEntityActorExampleSubsystem::Deinitialize()

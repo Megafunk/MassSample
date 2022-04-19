@@ -27,7 +27,6 @@
 // };
 
 
-class UPath2PathSubsystem;
 class UZoneGraphAnnotationSubsystem;
 class UMassCrowdSubsystem;
 class UZoneGraphSubsystem;
@@ -63,7 +62,6 @@ protected:
 	
 	//TStateTreeExternalDataHandle<FMassZoneGraphLaneLocationFragment> LocationHandle;
 	TStateTreeExternalDataHandle<UZoneGraphSubsystem> ZoneGraphSubsystemHandle;
-	TStateTreeExternalDataHandle<UPath2PathSubsystem> Path2PathSubsystemHandle;
 	TStateTreeExternalDataHandle<UMassEntitySubsystem> MassEntitySubsystemHandle;
 	TStateTreeExternalDataHandle<UZoneGraphAnnotationSubsystem> ZoneGraphAnnotationSubsystemHandle;
 	TStateTreeExternalDataHandle<UMassCrowdSubsystem> MassCrowdSubsystemHandle;
@@ -74,7 +72,7 @@ protected:
 	
 	TStateTreeInstanceDataPropertyHandle<FMassZoneGraphTargetLocation> FollowPathTargetLocationHandle;
 
-	TStateTreeExternalDataHandle<FZoneGraphPathTestFromFragment> Path2FromFragmentHandle;
+	TStateTreeExternalDataHandle<FZoneGraphPathTestFromFragment> PathFromFragmentHandle;
 
 	UPROPERTY(EditAnywhere, Category = Parameter)
 	FZoneGraphTag DisturbanceAnnotationTag = FZoneGraphTag::None;

@@ -6,6 +6,7 @@
 
 #include "MassEntityTypes.h"
 #include "ZoneGraphTypes.h"
+#include "Tasks/MassZoneGraphPathFollowTask.h"
 
 #include "MSZoneGraphExampleFragments.generated.h"
 
@@ -21,9 +22,13 @@ struct MASSSAMPLE_API FZoneGraphPathTestFromFragment : public FMassFragment
 
 	FTransform FromTransform;
 
-	TArray<FZoneGraphLinkedLane> OutPathLinkedLanes;
+	//TArray<FZoneGraphLinkedLane> OutPathLinkedLanes;
+	TMap<int, FZoneGraphLinkedLane> OutPathLinkedLanes;
 
 	bool CurrentlyCachedMovement = false;
+
+	FZoneGraphLanePath ZoneGraphLanePath;
+	
 	
 };
 

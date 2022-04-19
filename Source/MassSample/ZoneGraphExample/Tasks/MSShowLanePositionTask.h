@@ -39,7 +39,7 @@ struct MASSSAMPLE_API FShowLanePositionTaskData
 	GENERATED_BODY()
 	
 
-	UPROPERTY(VisibleAnywhere, Category = Output)
+	UPROPERTY(VisibleAnywhere, Category = Parameter)
 	FMassZoneGraphTargetLocation TargetLocation;
 };
 
@@ -60,7 +60,7 @@ protected:
 
 	TStateTreeInstanceDataPropertyHandle<FMassZoneGraphTargetLocation> TargetLocationHandle;
 
-	TStateTreeExternalDataHandle<FMassZoneGraphLaneLocationFragment> ZoneGraphLaneLocationFragmentHandle;
+	//TStateTreeExternalDataHandle<FMassZoneGraphLaneLocationFragment> ZoneGraphLaneLocationFragmentHandle;
 
 	
 

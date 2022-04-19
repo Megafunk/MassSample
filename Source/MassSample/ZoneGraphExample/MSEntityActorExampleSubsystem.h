@@ -20,7 +20,12 @@ class UCapsuleComponent;
 class UMSEntityActorExampleComponent;
 
 /**
- * 
+ * This subsytem demonstates 2 forms of actor/component(object) tacking and storage.
+ * The 1st is the setting of EntityHandles for the owners of any actors that have a "UMSEntityActorExampleComponent" component. This applies for any actor with a MassAgent Component,
+ * and the process of setting the handles is added via the "AgentSubsystem->GetOnMassAgentComponentEntityAssociated()" lambda.
+ * This is just an example it nice setup here: "UMSBPFunctionLibarary".
+ * The 2nd is the use of a TMap to setup direct maps from component to entity within this subsystem, the advantage of this im assuming is that it keeps the referencing and functionality,
+ * that the subsystem may be intended for within this place, anytime I might want to run Mass stuff relating to 'Gorbo' the 'GorboComponents' and other stuff is gonna be here.
  */
 UCLASS()
 class MASSSAMPLE_API UMSEntityActorExampleSubsystem : public UWorldSubsystem
@@ -35,8 +40,8 @@ public:
 	virtual void Deinitialize() override;
 
 
-	void RegisterForComponent(const FMassEntityHandle Entity, UMSEntityActorExampleComponent& TeamTrackingComponent);
-	void UnregisterForComponent(FMassEntityHandle Entity, UMSEntityActorExampleComponent& TeamTrackingComponent);
+	void RegisterForComponent(const FMassEntityHandle Entity, UMSEntityActorExampleComponent& EntityActorExampleComponent);
+	void UnregisterForComponent(FMassEntityHandle Entity, UMSEntityActorExampleComponent& EntityActorExampleComponent);
 	
 	
 	

@@ -31,7 +31,7 @@ bool FFindCachedPathTask::Link(FStateTreeLinker& Linker)
 
 	Linker.LinkExternalData(LocationHandle);
 
-	Linker.LinkExternalData(Path2FromFragmentHandle);
+	Linker.LinkExternalData(PathFromFragmentHandle);
 
 
 	Linker.LinkInstanceDataProperty(FollowPathTargetLocationHandle, STATETREE_INSTANCEDATA_PROPERTY(FFindCachedPathTaskData, FollowPathTargetLocation));
@@ -68,9 +68,11 @@ EStateTreeRunStatus FFindCachedPathTask::EnterState(FStateTreeExecutionContext& 
 
 
 	// Get from fragment to retrieve cached pathing data
-	FZoneGraphPathTestFromFragment& Path2FromFragment = Context.GetExternalData(Path2FromFragmentHandle);
+	FZoneGraphPathTestFromFragment& ZoneGraphPathTestFromFragment = Context.GetExternalData(PathFromFragmentHandle);
 
-	TArray<FZoneGraphLinkedLane>& CachedLinkedLanes = Path2FromFragment.OutPathLinkedLanes;
+	TMap<int, FZoneGraphLinkedLane>& CachedLinkedLanes = ZoneGraphPathTestFromFragment.OutPathLinkedLanes;
+
+	//TMap<int, FZoneGraphLinkedLane> OutPathLinkedLanes;
 	
 
 	if (CachedLinkedLanes.IsEmpty())
@@ -85,7 +87,7 @@ EStateTreeRunStatus FFindCachedPathTask::EnterState(FStateTreeExecutionContext& 
 		UE_LOG(LogTemp, Warning, TEXT("Invalid lane location."));
 		return EStateTreeRunStatus::Failed;
 	}
-			
+	
 	const FZoneGraphStorage* ZoneGraphStorage = ZoneGraphSubsystem.GetZoneGraphStorage(LaneLocation.LaneHandle.DataHandle);
 	if (!ZoneGraphStorage)
 	{
@@ -109,32 +111,18 @@ EStateTreeRunStatus FFindCachedPathTask::EnterState(FStateTreeExecutionContext& 
 
 	EStateTreeRunStatus Status = EStateTreeRunStatus::Running;
 
-	//FZoneGraphLinkedLane& LaneLink
-
 	// TODO: Make the lane caching a TMap<int(lane index), FZoneGraphLinkedLane> so that this nested for can be replaced with o1
-	FZoneGraphLinkedLane& CurrentPathLaneLink = CachedLinkedLanes[0];
+	FZoneGraphLinkedLane CurrentPathLaneLink;// = CachedLinkedLanes[0];
 	bool bNextLaneFound = false;
-	// Find which lane we are currently in and the next lanelink
-	for (FZoneGraphLinkedLane& LaneLink : CachedLinkedLanes)
+
+	if (CachedLinkedLanes.Contains(LaneLocation.LaneHandle.Index))
 	{
-		//bool bNextLaneFound = (LaneLink.DestLane.Index == LaneLocation.LaneHandle.Index);
+		CurrentPathLaneLink = CachedLinkedLanes[LaneLocation.LaneHandle.Index];
 
-		TArray<FZoneGraphLinkedLane> OutLinkedLanes;
-		
-		UE::ZoneGraph::Query::GetLinkedLanes(*ZoneGraphStorage, LaneLocation.LaneHandle.Index, EZoneLaneLinkType::Outgoing, EZoneLaneLinkFlags::All, EZoneLaneLinkFlags::None, OutLinkedLanes);
-
-		for (FZoneGraphLinkedLane& OutLaneLink : OutLinkedLanes)
+		// If not on the last repeating index
+		if (LaneLocation.LaneHandle.Index != CurrentPathLaneLink.DestLane.Index)
 		{
-			if (OutLaneLink.DestLane.Index == LaneLink.DestLane.Index)
-			{
-				bNextLaneFound = true;
-				CurrentPathLaneLink = LaneLink;
-				break;
-			}
-		}
-		if (bNextLaneFound)
-		{
-			break;
+			bNextLaneFound = true;
 		}
 	}
 
@@ -155,14 +143,15 @@ EStateTreeRunStatus FFindCachedPathTask::EnterState(FStateTreeExecutionContext& 
 			Status = EStateTreeRunStatus::Failed;
 
 			// Set the cache to be emptied
-			Path2FromFragment.CurrentlyCachedMovement = false;
-			Path2FromFragment.OutPathLinkedLanes.Empty();
+			ZoneGraphPathTestFromFragment.CurrentlyCachedMovement = false;
+			ZoneGraphPathTestFromFragment.OutPathLinkedLanes.Empty();
 		}
 		else
 		{
 			WanderTargetLocation.NextLaneHandle = CurrentPathLaneLink.DestLane;
 		}
 	}
+	
 	
 	return Status;
 }
