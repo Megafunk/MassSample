@@ -36,11 +36,6 @@ void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySub
 				const auto& Transforms = Context.GetFragmentView<FTransformFragment>().GetData();
 				auto& SharedNiagaraFragment = Context.GetMutableSharedFragment<FSharedNiagaraSystemFragment>();
 				
-				// AMSNiagaraActor* NiagaraActor =  SharedNiagaraFragment.NiagaraManagerActor.Get();
-				// if(!NiagaraActor) return;
-				// SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticlePositions.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
-				// SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticleDirectionVectors.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
-				Context.DoesArchetypeHaveTag<>()
 				//todo-performance: shrink this with GC timing?
 				bool bAllowShrinking = false;
 
