@@ -256,21 +256,18 @@ void UMyProcessor::ConfigureQueries()
 Find below the following two functions employed in context:
 
 ```c++
-void UMyProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 {
-	MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
-	{
-		const auto TransformList = Context.GetMutableFragmentView<FTransformFragment>();
-		const auto ForceList = Context.GetMutableFragmentView<FMassForceFragment>();
+	const auto TransformList = Context.GetMutableFragmentView<FTransformFragment>();
+	const auto ForceList = Context.GetMutableFragmentView<FMassForceFragment>();
 
-		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
-		{
-			FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
-			const FVector DeltaForce = Context.GetDeltaTimeSeconds() * ForceList[EntityIndex].Value;
-			TransformToChange.AddToTranslation(DeltaForce);
-		}
-	});
-}
+	for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+	{
+		FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
+		const FVector DeltaForce = Context.GetDeltaTimeSeconds() * ForceList[EntityIndex].Value;
+		TransformToChange.AddToTranslation(DeltaForce);
+	}
+});
 ```
 
 **Note:** Tags do not have access requirements since they don't contain data.
@@ -291,21 +288,32 @@ To add presence rules to Tags, use `AddTagRequirement`.
 ```c++
 void UMyProcessor::ConfigureQueries()
 {
-	// All entities must have a FMoverTag
-	MyQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
-	// Entities can have a FOptionalTag
+	// Entities are considered for iteration without the need of containing the specified Tag
 	MyQuery.AddTagRequirement<FOptionalTag>(EMassFragmentPresence::Optional);
+	// Entities must at least have the FHorseTag or the FSheepTag
+	MyQuery.AddTagRequirement<FHorseTag>(EMassFragmentPresence::Any);
+	MyQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
 }
 ```
-
-`ForEachChunk`s can use `DoesArchetypeHaveTag` to determine if the current processed archetype contains the the Tag:
+<!-- FIXMEVORI: This passes in the context, does it work in a per chunk granularity??? -->
+`ForEachChunk`s can use `DoesArchetypeHaveTag` to determine if the current archetype contains the the Tag:
 
 ```c++
 MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 {
-	if(Context.DoesArchetypeHaveTag<FMoverTag>())
+	if(Context.DoesArchetypeHaveTag<FOptionalTag>())
 	{
 		// I do have the FOptionalTag tag!!
+	}
+
+	// Same with Tags marked with Any
+	if(Context.DoesArchetypeHaveTag<FHorseTag>())
+	{
+		// I do have the FHorseTag tag!!
+	}
+	if(Context.DoesArchetypeHaveTag<FSheepTag>())
+	{
+		// I do have the FSheepTag tag!!
 	}
 });
 ```
@@ -316,8 +324,11 @@ Fragments can define presence rules in an additional `EMassFragmentPresence` par
 ```c++
 void UMyProcessor::ConfigureQueries()
 {
-	// Don't include entities with a HitLocation fragment
-	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::None);
+	// Entities are considered for iteration without the need of containing the specified Fragment
+	MyQuery.AddRequirement<FMyOptionalFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
+	// Entities must at least have the FHorseFragment or the FSheepFragment
+	MyQuery.AddRequirement<FHorseFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Any);
+	MyQuery.AddRequirement<FSheepFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Any);
 }
 ```
 
@@ -327,8 +338,8 @@ void UMyProcessor::ConfigureQueries()
 MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 {
 	const auto OptionalFragmentList = Context.GetMutableFragmentView<FMyOptionalFragment>();
-	const auto HorseFragmentList = Context.GetMutableFragmentView<FHorseTag>();	
-	const auto SheepFragmentList = Context.GetMutableFragmentView<FSheepTag>();
+	const auto HorseFragmentList = Context.GetMutableFragmentView<FHorseFragment>();	
+	const auto SheepFragmentList = Context.GetMutableFragmentView<FSheepFragment>();
 	for (int32 i = 0; i < Context.GetNumEntities(); ++i)
 	{
 		// An optional fragment array is present in our current chunk if the OptionalFragmentList isn't empty
