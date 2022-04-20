@@ -40,6 +40,10 @@ class MASSSAMPLE_API UMSBPFunctionLibarary : public UBlueprintFunctionLibrary
 	//todo: Lazy fragment-specific versions until we can think of something nicer
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static void SetEntityTransform(const FEntityHandleWrapper EntityHandle,const FTransform Transform, const UObject* WorldContextObject);
+	
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
+	static void SetEntityCollisionQueryIgnoredActors(const FEntityHandleWrapper EntityHandle,const TArray<AActor*> IgnoredActors,const UObject* WorldContextObject);
+
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static FTransform GetEntityTransform(FEntityHandleWrapper EntityHandle, const UObject* WorldContextObject);

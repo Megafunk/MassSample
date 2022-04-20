@@ -10,9 +10,10 @@
 #include "MassMovementFragments.h"
 #include "MSSubsystem.h"
 #include "AI/NavigationSystemBase.h"
+#include "ProjectileSim/MSProjectileFragments.h"
 
 FEntityHandleWrapper UMSBPFunctionLibarary::SpawnEntityFromEntityConfig(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
-	const UObject* WorldContextObject)
+                                                                        const UObject* WorldContextObject)
 {
 
 	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
@@ -47,11 +48,24 @@ void UMSBPFunctionLibarary::SetEntityTransform(const FEntityHandleWrapper Entity
 	
 	if(const auto TransformFragmentPtr =  EntitySubSystem->GetFragmentDataPtr<FTransformFragment>(EntityHandle.Entity))
 	{
-		return TransformFragmentPtr->SetTransform(Transform);
+		TransformFragmentPtr->SetTransform(Transform);
 	}
 	
 }
 
+void UMSBPFunctionLibarary::SetEntityCollisionQueryIgnoredActors(const FEntityHandleWrapper EntityHandle,const TArray<AActor*> IgnoredActors,const UObject* WorldContextObject)
+{
+	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	
+	check(EntitySubSystem)
+
+	
+	if(const auto CollisionQueryFragment =  EntitySubSystem->GetFragmentDataPtr<FLineTraceFragment>(EntityHandle.Entity))
+	{
+		CollisionQueryFragment->QueryParams.AddIgnoredActors(IgnoredActors);
+	}
+	
+}
 FTransform UMSBPFunctionLibarary::GetEntityTransform(const FEntityHandleWrapper EntityHandle,const UObject* WorldContextObject)
 {
 	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();

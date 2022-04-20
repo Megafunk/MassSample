@@ -40,7 +40,7 @@ void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, 
 {
 
 	
-	LineTraceFromPreviousPosition.ParallelForEachEntityChunk(EntitySubsystem,Context,[this](FMassExecutionContext& Context)
+	LineTraceFromPreviousPosition.ForEachEntityChunk(EntitySubsystem,Context,[this](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_LineTraceFromPreviousPosition);
 
