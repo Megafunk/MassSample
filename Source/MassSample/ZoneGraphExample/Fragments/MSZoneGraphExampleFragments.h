@@ -23,11 +23,16 @@ struct MASSSAMPLE_API FZoneGraphPathTestFromFragment : public FMassFragment
 	FTransform FromTransform;
 
 	//TArray<FZoneGraphLinkedLane> OutPathLinkedLanes;
-	TMap<int, FZoneGraphLinkedLane> OutPathLinkedLanes;
+	//TMap<int, FZoneGraphLinkedLane> OutPathLinkedLanes;
+	TMap<int, int> OutPathLinkedLanes;
 
 	bool CurrentlyCachedMovement = false;
 
-	FZoneGraphLanePath ZoneGraphLanePath;
+	//FZoneGraphLanePath ZoneGraphLanePath;
+
+	FZoneGraphLaneLocation TargetLocation;
+
+	int CurrentPathIndex;
 	
 	
 };

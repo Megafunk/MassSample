@@ -66,25 +66,24 @@ EStateTreeRunStatus FFindCachedPathTask::EnterState(FStateTreeExecutionContext& 
 	// This entities lane location
 	const FMassZoneGraphLaneLocationFragment& LaneLocation = Context.GetExternalData(LocationHandle);
 
+	
+	
+	
 
 	// Get from fragment to retrieve cached pathing data
 	FZoneGraphPathTestFromFragment& ZoneGraphPathTestFromFragment = Context.GetExternalData(PathFromFragmentHandle);
 
-	TMap<int, FZoneGraphLinkedLane>& CachedLinkedLanes = ZoneGraphPathTestFromFragment.OutPathLinkedLanes;
 
-	//TMap<int, FZoneGraphLinkedLane> OutPathLinkedLanes;
+	TMap<int, int>& CachedLinkedLanes = ZoneGraphPathTestFromFragment.OutPathLinkedLanes;
 	
-
-	if (CachedLinkedLanes.IsEmpty())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Path Completed"));
-		return EStateTreeRunStatus::Succeeded;
-	}
 
 
 	if (!LaneLocation.LaneHandle.IsValid())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Invalid lane location."));
+		// Set the cache to be emptied
+		ZoneGraphPathTestFromFragment.CurrentlyCachedMovement = false;
+		ZoneGraphPathTestFromFragment.OutPathLinkedLanes.Empty();
 		return EStateTreeRunStatus::Failed;
 	}
 	
@@ -100,6 +99,7 @@ EStateTreeRunStatus FFindCachedPathTask::EnterState(FStateTreeExecutionContext& 
 
 	// Follow Path
 	FMassZoneGraphTargetLocation& WanderTargetLocation = Context.GetInstanceData(FollowPathTargetLocationHandle);
+	
 
 	WanderTargetLocation.LaneHandle = LaneLocation.LaneHandle;
 	WanderTargetLocation.TargetDistance = LaneLocation.DistanceAlongLane + MoveDistance;
@@ -107,51 +107,70 @@ EStateTreeRunStatus FFindCachedPathTask::EnterState(FStateTreeExecutionContext& 
 	WanderTargetLocation.NextLaneHandle.Reset();
 	WanderTargetLocation.bMoveReverse = false;
 	WanderTargetLocation.EndOfPathIntent = EMassMovementAction::Move;
+	
+
+	
+	
 
 
-	EStateTreeRunStatus Status = EStateTreeRunStatus::Running;
+	//FZoneGraphLinkedLane CurrentPathLaneLink;
+	FZoneLaneLinkData CurrentPathLaneLink;
+	float TargetLaneLength = LaneLocation.LaneLength;
+	bool bNextLaneFound = true;
+	int CurrentPathIndex = ZoneGraphPathTestFromFragment.CurrentPathIndex;
 
-	// TODO: Make the lane caching a TMap<int(lane index), FZoneGraphLinkedLane> so that this nested for can be replaced with o1
-	FZoneGraphLinkedLane CurrentPathLaneLink;// = CachedLinkedLanes[0];
-	bool bNextLaneFound = false;
+
+
+	
+
 
 	if (CachedLinkedLanes.Contains(LaneLocation.LaneHandle.Index))
 	{
-		CurrentPathLaneLink = CachedLinkedLanes[LaneLocation.LaneHandle.Index];
-
-		// If not on the last repeating index
-		if (LaneLocation.LaneHandle.Index != CurrentPathLaneLink.DestLane.Index)
-		{
-			bNextLaneFound = true;
-		}
-	}
-
-
-	// When close to end of a lane, choose next lane.
-	if (WanderTargetLocation.TargetDistance > LaneLocation.LaneLength)
-	{
-		WanderTargetLocation.TargetDistance = FMath::Min(WanderTargetLocation.TargetDistance, LaneLocation.LaneLength);
-
-		// Set to next type
+		CurrentPathLaneLink = ZoneGraphStorage->LaneLinks[CachedLinkedLanes[LaneLocation.LaneHandle.Index]];
+		WanderTargetLocation.TargetDistance = LaneLocation.DistanceAlongLane + MoveDistance;
 		WanderTargetLocation.NextExitLinkType = CurrentPathLaneLink.Type;
-
-		// If failed to find a path position
-		if (!bNextLaneFound)
+		const FZoneGraphLaneHandle NextLaneHandle = FZoneGraphLaneHandle(CurrentPathLaneLink.DestLaneIndex, ZoneGraphStorage->DataHandle);
+		WanderTargetLocation.NextLaneHandle = NextLaneHandle;
+		if (WanderTargetLocation.TargetDistance >= TargetLaneLength)
 		{
-			// Could not find next lane, fail.
-			WanderTargetLocation.Reset();
-			Status = EStateTreeRunStatus::Failed;
+			WanderTargetLocation.TargetDistance = FMath::Min(WanderTargetLocation.TargetDistance, TargetLaneLength);
+		}
+		
+	}
+	else if (LaneLocation.LaneHandle.Index == ZoneGraphPathTestFromFragment.TargetLocation.LaneHandle.Index)
+		//&& LaneLocation.DistanceAlongLane < ZoneGraphPathTestFromFragment.TargetLocation.DistanceAlongLane
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Your time has come, End of the line!"));
+		WanderTargetLocation.TargetDistance = FMath::Min(ZoneGraphPathTestFromFragment.TargetLocation.DistanceAlongLane, TargetLaneLength);
+		WanderTargetLocation.EndOfPathIntent = EMassMovementAction::Stand;
 
-			// Set the cache to be emptied
+		// TODO/NOTE: This is here because with such a setup, follow path does not provide a direct response.
+		if (LaneLocation.DistanceAlongLane > ZoneGraphPathTestFromFragment.TargetLocation.DistanceAlongLane - (MoveDistance / 2))
+		{
 			ZoneGraphPathTestFromFragment.CurrentlyCachedMovement = false;
 			ZoneGraphPathTestFromFragment.OutPathLinkedLanes.Empty();
+			WanderTargetLocation.Reset();
+			UE_LOG(LogTemp, Warning, TEXT("Failed or End"));
+			
+			return EStateTreeRunStatus::Failed;
 		}
-		else
-		{
-			WanderTargetLocation.NextLaneHandle = CurrentPathLaneLink.DestLane;
-		}
+		
+		return EStateTreeRunStatus::Succeeded;
 	}
+	else
+	{
+		// Set the cache to be emptied
+		ZoneGraphPathTestFromFragment.CurrentlyCachedMovement = false;
+		ZoneGraphPathTestFromFragment.OutPathLinkedLanes.Empty();
+		UE_LOG(LogTemp, Warning, TEXT("Failed or End"));
+		return EStateTreeRunStatus::Failed;
+	}
+
+
+	UE_LOG(LogTemp, Warning, TEXT("From %s -> %s "), *WanderTargetLocation.LaneHandle.ToString(), *WanderTargetLocation.NextLaneHandle.ToString());
 	
 	
-	return Status;
+
+
+	return EStateTreeRunStatus::Succeeded;
 }

@@ -3,10 +3,15 @@
 
 #include "ZoneGraphExample/Processors/MSPathFindingProcessor.h"
 
+#include "GraphAStar.h"
 #include "MassCommonFragments.h"
+
 #include "ZoneGraphSubsystem.h"
 
 #include "ZoneGraphExample/Fragments/MSZoneGraphExampleFragments.h"
+
+
+#include "ZoneGraphAStar.h"
 
 //FZoneGraphPathTestFromFragment
 
@@ -64,22 +69,7 @@ void UMSPathFindingProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMa
 
 			if (FromFragmentList[EntityIndex].CurrentlyCachedMovement == true)
 			{
-				// Show path
-				for (TPair<int, FZoneGraphLinkedLane> LanePair : FromFragmentList[EntityIndex].OutPathLinkedLanes)
-				{
-					FZoneGraphLinkedLane& LinkedLane = LanePair.Value;
-					const FZoneGraphStorage* GraphStorage = ZoneGraphSubsystem->GetZoneGraphStorage(LinkedLane.DestLane.DataHandle);
-				
-					FZoneData DestLaneZoneData = GraphStorage->GetZoneDataFromLaneIndex(LinkedLane.DestLane.Index);
-				
-					FZoneLaneData DestZoneLaneData = GraphStorage->Lanes[LinkedLane.DestLane.Index];
-					for (int32 i = DestZoneLaneData.PointsBegin; i < DestZoneLaneData.PointsEnd - 1; i++)
-					{
-						const FVector& SegStart = GraphStorage->LanePoints[i];
-						const FVector& SegEnd = GraphStorage->LanePoints[i + 1];
-						DrawLineBetweenTwoPoints(SegStart, SegEnd, FColor::Cyan);
-					}
-				}
+				// TODO: Make a debug thing here that doesn't just spam
 				continue;
 			}
 
@@ -94,11 +84,11 @@ void UMSPathFindingProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMa
 			// Get ZoneGraph lanes
 			// Find the closest ZoneGraph lane to FromTransform
 			FZoneGraphLaneLocation FromLane;
-			bool bFromLaneSuccess = GetLaneClosestToTransform(FromTransform, FromLane);
+			bool bFromLaneSuccess = GetLaneClosestToTransform(FromTransform, FromLane, 250);
 
 			// Find the closest ZoneGraph lane to ToTransform
 			FZoneGraphLaneLocation ToLane;
-			bool bToLaneSuccess = GetLaneClosestToTransform(ToTransform, ToLane);
+			bool bToLaneSuccess = GetLaneClosestToTransform(ToTransform, ToLane, 250);
 
 			// Draw lines from points to lanes
 			if (bFromLaneSuccess)
@@ -112,94 +102,142 @@ void UMSPathFindingProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMa
 
 			// PathFinding
 
-			//TArray<FZoneGraphLinkedLane> OutPathLinkedLanes;
-			TMap<int, FZoneGraphLinkedLane> OutPathLinkedLanes;
+			TMap<int, int> OutPathLinkedLanes;
 
-			bool bFoundPath = DFTFindPath(FromLane.LaneHandle, ToLane.LaneHandle,OutPathLinkedLanes);
+
+			bool bFoundPath = false;
+			
+
+			UE_LOG( LogTemp, Warning, TEXT("CurrentlyCachedMovement != true"));
+
+			UE_LOG( LogTemp, Warning, TEXT("-- A*Star Path --"));
+
+			bFoundPath = FindAStarPath(FromLane, ToLane, OutPathLinkedLanes);
 
 			
 			// Debug Draw Path
 			if (bFoundPath)
 			{
-				for (TPair<int, FZoneGraphLinkedLane> LanePair : OutPathLinkedLanes)
-				{
-					FZoneGraphLinkedLane& LinkedLane = LanePair.Value;
-					const FZoneGraphStorage* GraphStorage = ZoneGraphSubsystem->GetZoneGraphStorage(LinkedLane.DestLane.DataHandle);
+				UE_LOG( LogTemp, Warning, TEXT("bFoundPath"));
+
 				
-					FZoneData DestLaneZoneData = GraphStorage->GetZoneDataFromLaneIndex(LinkedLane.DestLane.Index);
-				
-					FZoneLaneData DestZoneLaneData = GraphStorage->Lanes[LinkedLane.DestLane.Index];
-					for (int32 i = DestZoneLaneData.PointsBegin; i < DestZoneLaneData.PointsEnd - 1; i++)
-					{
-						const FVector& SegStart = GraphStorage->LanePoints[i];
-						const FVector& SegEnd = GraphStorage->LanePoints[i + 1];
-						DrawLineBetweenTwoPoints(SegStart, SegEnd, FColor::Cyan);
-					}
-				}
+
+				// Setting cached means that a new path will only be created once navigation has ended
+				FromFragmentList[EntityIndex].CurrentlyCachedMovement = true;
+
+				FromFragmentList[EntityIndex].TargetLocation.Reset();
+				FromFragmentList[EntityIndex].TargetLocation = ToLane;
+
+				FromFragmentList[EntityIndex].OutPathLinkedLanes = OutPathLinkedLanes;
+
+				FromFragmentList[EntityIndex].CurrentPathIndex = FromLane.LaneHandle.Index;
+
+				DebugShowLane(FromLane.LaneHandle.DataHandle, OutPathLinkedLanes);
 			}
 			else
 			{
 				UE_LOG( LogTemp, Warning, TEXT("No path could be found"));
 			}
-
 			
-
+			// NOTE: Here is cringe DFTFindPath
+			//TMap<int, int> OutPathLinkedLanes2;
+			//bool bFoundPath2 = DFTFindPath(FromLane.LaneHandle, ToLane.LaneHandle, OutPathLinkedLanes2);
 			
-
-			if (bFoundPath)
-			{
-				FromFragmentList[EntityIndex].OutPathLinkedLanes = OutPathLinkedLanes;
-
-				// Setting cached means that a new path will only be created once navigation has ended
-				FromFragmentList[EntityIndex].CurrentlyCachedMovement = true;
-			}
-
-
-			// TODO: Try Implementing the A*Star algo from testing actor
-			
-			// Simple pathfind to to the linked AZoneGraphTestingActor for testing purposes
-			// UZoneGraphTestingComponent* OtherTestingComp = OtherActor ? Cast<UZoneGraphTestingComponent>(OtherActor->GetComponentByClass(UZoneGraphTestingComponent::StaticClass())) : nullptr;
-			// if (NearestLaneLocation.IsValid() &&
-			// 	OtherTestingComp && OtherTestingComp->NearestLaneLocation.IsValid() &&
-			// 	NearestLaneLocation.LaneHandle.DataHandle == OtherTestingComp->NearestLaneLocation.LaneHandle.DataHandle)
-			// {
-			// 	const AZoneGraphData* Data = ZoneGraph->GetZoneGraphData(NearestLaneLocation.LaneHandle.DataHandle);
-			// 	if (Data)
-			// 	{
-			// 		const FZoneGraphStorage& ZoneGraphStorage = Data->GetStorage();
-			// 		FZoneGraphAStarWrapper Graph(ZoneGraphStorage);
-			// 		FZoneGraphAStar Pathfinder(Graph);
-			// 		// @todo: pass FZoneGraphLaneLocation directly to the constructor
-			// 		FZoneGraphAStarNode StartNode(NearestLaneLocation.LaneHandle.Index, NearestLaneLocation.Position);
-			// 		FZoneGraphAStarNode EndNode(OtherTestingComp->NearestLaneLocation.LaneHandle.Index, OtherTestingComp->NearestLaneLocation.Position);
-			// 		FZoneGraphPathFilter PathFilter(ZoneGraphStorage, NearestLaneLocation, OtherTestingComp->NearestLaneLocation);
-			//
-			// 		// @todo: see if we can return directly a path of lane handles
-			// 		TArray<FZoneGraphAStarWrapper::FNodeRef> ResultPath;
-			// 		EGraphAStarResult Result = Pathfinder.FindPath(StartNode, EndNode, PathFilter, ResultPath);
-			// 		if (Result == SearchSuccess)
-			// 		{
-			// 			//Store the resulting lanes
-			// 			LanePath.Reset(ResultPath.Num());
-			//
-			// 			LanePath.StartLaneLocation = NearestLaneLocation;
-			// 			LanePath.EndLaneLocation = OtherTestingComp->NearestLaneLocation;
-			// 			for (FZoneGraphAStarWrapper::FNodeRef Node : ResultPath)
-			// 			{
-			// 				LanePath.Add(FZoneGraphLaneHandle(Node, NearestLaneLocation.LaneHandle.DataHandle));
-			// 			}
-			// 		}
-			// 	}
-			// }
 			
 		}
 	});
 	
 }
 
-bool UMSPathFindingProcessor::DFTFindPath(FZoneGraphLaneHandle& StartLaneLocationHandle, FZoneGraphLaneHandle& EndLaneLocationHandle, TMap<int, FZoneGraphLinkedLane>& OutPathLinkedLanes)
+void UMSPathFindingProcessor::DebugShowLane(FZoneGraphDataHandle& DataHandle ,TMap<int, int> OutPathLinkedLanes)
+{
+	const UWorld* World = GetWorld();
+	UZoneGraphSubsystem* ZoneGraphSubsystem = World->GetSubsystem<UZoneGraphSubsystem>();
+	
+	for (TPair<int, int> LanePair : OutPathLinkedLanes)
+	{
+		const FZoneGraphStorage* GraphStorage = ZoneGraphSubsystem->GetZoneGraphStorage(DataHandle);
+
+		FZoneLaneLinkData LinkedLane = GraphStorage->LaneLinks[LanePair.Value];
+
+		FZoneData DestLaneZoneData = GraphStorage->GetZoneDataFromLaneIndex(LinkedLane.DestLaneIndex);
+
+		FColor DebugPathColor = FColor::MakeRandomColor();
+
+		FZoneLaneData DestZoneLaneData = GraphStorage->Lanes[LinkedLane.DestLaneIndex];
+		// Draw lane line along points
+		for (int32 i = DestZoneLaneData.PointsBegin; i < DestZoneLaneData.PointsEnd - 1; i++)
+		{
+			const FVector& SegStart = GraphStorage->LanePoints[i];
+			const FVector& SegEnd = GraphStorage->LanePoints[i + 1];
+			DrawLineBetweenTwoPoints(SegStart, SegEnd, DebugPathColor, 5.f, 300.f);
+		}
+
+		// Draw text in middle of lane
+		int MidPoint = DestZoneLaneData.PointsBegin + (DestZoneLaneData.GetNumPoints() / 2);
+
+		FString LaneDebugString = "Path idx:" + FString::FromInt(LinkedLane.DestLaneIndex);
+
+		int TextStartPoint = FMath::Min(DestZoneLaneData.PointsBegin + 2, DestZoneLaneData.PointsEnd);
+		const FVector& TextPosStart = GraphStorage->LanePoints[TextStartPoint];
+		DrawDebugString(World, TextPosStart, LaneDebugString, nullptr, DebugPathColor, 300.f, true, 1.5f);
+
+		int TextEndPoint = FMath::Max(DestZoneLaneData.PointsEnd - 2, DestZoneLaneData.PointsBegin);
+		const FVector& TextPosEnd = GraphStorage->LanePoints[TextEndPoint];
+		DrawDebugString(World, TextPosEnd, LaneDebugString, nullptr, DebugPathColor, 300.f, true, 1.5f);
+	}
+}
+
+
+bool UMSPathFindingProcessor::FindAStarPath(FZoneGraphLaneLocation& StartLaneLocationHandle, FZoneGraphLaneLocation& EndLaneLocationHandle, TMap<int, int>& OutPathLinkedLanes)
+{
+	const UWorld* World = GetWorld();
+	UZoneGraphSubsystem* ZoneGraphSubsystem = World->GetSubsystem<UZoneGraphSubsystem>();
+	const AZoneGraphData* Data = ZoneGraphSubsystem->GetZoneGraphData(StartLaneLocationHandle.LaneHandle.DataHandle);
+	bool bFoundPath = false;
+	if (Data)
+	{
+		const FZoneGraphStorage& ZoneGraphStorage = Data->GetStorage();
+		FZoneGraphAStarWrapper Graph(ZoneGraphStorage);
+		FZoneGraphAStar Pathfinder(Graph);
+		
+		FZoneGraphAStarNode StartNode(StartLaneLocationHandle.LaneHandle.Index, StartLaneLocationHandle.Position);
+		FZoneGraphAStarNode EndNode(EndLaneLocationHandle.LaneHandle.Index, EndLaneLocationHandle.Position);
+		FZoneGraphPathFilter PathFilter(ZoneGraphStorage, StartLaneLocationHandle, EndLaneLocationHandle);
+
+		TArray<FZoneGraphAStarWrapper::FNodeRef> ResultPath;
+		EGraphAStarResult Result = Pathfinder.FindPath(StartNode, EndNode, PathFilter, ResultPath);
+		if (Result == SearchSuccess)
+		{
+			bFoundPath = true;
+			
+			for (int32 i = 0; i < ResultPath.Num() - 1; ++i)
+			{
+				//UE_LOG(LogTemp, Warning, TEXT("i: %d"), i);
+				FZoneGraphAStarWrapper::FNodeRef Node = ResultPath[i];
+				const FZoneLaneData& Lane = ZoneGraphStorage.Lanes[Node];
+				for (int32 j = Lane.LinksBegin; j < Lane.LinksEnd; j++)
+				{
+					if (ZoneGraphStorage.LaneLinks[j].DestLaneIndex == ResultPath[i+1] && ZoneGraphStorage.LaneLinks[j].Type != EZoneLaneLinkType::Incoming)// && ZoneGraphStorage.LaneLinks[j].HasFlags()
+					{
+						OutPathLinkedLanes.Add(Node, j);
+						break;
+					}
+				}
+
+				UE_LOG(LogTemp, Warning, TEXT("Idx: %d, LaneID: %d"), i, Node);
+			}
+			//UE_LOG(LogTemp, Warning, TEXT("LaneLink: %d"), EndNode.NodeRef);
+		}
+	}
+	return bFoundPath;
+}
+
+bool UMSPathFindingProcessor::DFTFindPath(FZoneGraphLaneHandle& StartLaneLocationHandle, FZoneGraphLaneHandle& EndLaneLocationHandle, TMap<int, int>& OutPathLinkedLanes)
 {
 	TSet<int> InProgressLaneIndices;
+
+	UE_LOG( LogTemp, Warning, TEXT("-- DFT Path --"));
 	
 	const bool bSuccess = DFT_ZoneGraph_Origin(StartLaneLocationHandle, EndLaneLocationHandle, OutPathLinkedLanes, InProgressLaneIndices);
 	
@@ -211,7 +249,7 @@ bool UMSPathFindingProcessor::DFTFindPath(FZoneGraphLaneHandle& StartLaneLocatio
 // TODO: Add bfs algo
 // TODO: Add A*star algo
 
-bool UMSPathFindingProcessor::DFT_ZoneGraph_Origin(FZoneGraphLaneHandle& StartLaneLocationHandle, FZoneGraphLaneHandle& EndLaneLocationHandle, TMap<int, FZoneGraphLinkedLane>& OutPathLinkedLanes, TSet<int>& InProgressLaneIndices)
+bool UMSPathFindingProcessor::DFT_ZoneGraph_Origin(FZoneGraphLaneHandle& StartLaneLocationHandle, FZoneGraphLaneHandle& EndLaneLocationHandle, TMap<int, int>& OutPathLinkedLanes, TSet<int>& InProgressLaneIndices)
 {
 	const UWorld* World = GetWorld();
 	UZoneGraphSubsystem* ZoneGraphSubsystem = World->GetSubsystem<UZoneGraphSubsystem>();
@@ -222,35 +260,38 @@ bool UMSPathFindingProcessor::DFT_ZoneGraph_Origin(FZoneGraphLaneHandle& StartLa
 	InProgressLaneIndices.Emplace(LaneIndex);
 	
 	// NOTE: By using "EZoneLaneLinkType::Outgoing" this ensures respect for lane direction
-	// TODO: Add adjacent lane handling
-
-	//TArray<FZoneGraphLinkedLane> OutLinkedLanes;
-	//TMap<int, FZoneGraphLinkedLane> OutLinkedLanes;
-	TArray<FZoneGraphLinkedLane> OutLinkedLanes;
-	bool bLinkedSuccess = ZoneGraphSubsystem->GetLinkedLanes(StartLaneLocationHandle, EZoneLaneLinkType::Outgoing, EZoneLaneLinkFlags::All, EZoneLaneLinkFlags::None, OutLinkedLanes);
+	// TODO: Add adjacent lane handling (Nah)
 	
-	if (bLinkedSuccess)
-	{
-		for (FZoneGraphLinkedLane& LinkedLane : OutLinkedLanes)
-		{
-			//UE_LOG( LogTemp, Warning, TEXT("-"));
-			FZoneGraphLaneHandle DestLaneHandle = LinkedLane.DestLane;
+	const FZoneGraphStorage* Storage = ZoneGraphSubsystem->GetZoneGraphStorage(StartLaneLocationHandle.DataHandle);
 
-			if (!InProgressLaneIndices.Contains(DestLaneHandle.Index))
+	FZoneLaneData LaneData = Storage->Lanes[StartLaneLocationHandle.Index];
+	if (LaneData.GetLinkCount() > 0)
+	{
+		//for (FZoneGraphLinkedLane& LinkedLane : OutLinkedLanes)
+		for (int i = LaneData.LinksBegin; i < LaneData.LinksEnd - 1; i++)
+		{
+			FZoneLaneLinkData LinkData = Storage->LaneLinks[i];
+			//UE_LOG( LogTemp, Warning, TEXT("-"));
+			FZoneGraphLaneHandle DestLaneHandle = FZoneGraphLaneHandle(LinkData.DestLaneIndex, StartLaneLocationHandle.DataHandle);
+
+			if (!InProgressLaneIndices.Contains(LinkData.DestLaneIndex))
 			{
-				if (EndLaneLocationHandle.Index == DestLaneHandle.Index)//DestLaneHandle.Index
+				if (EndLaneLocationHandle.Index == LinkData.DestLaneIndex)//DestLaneHandle.Index
 				{
 					//UE_LOG( LogTemp, Warning, TEXT("--"));
 					bFound = true;
-					OutPathLinkedLanes.Add(LaneIndex, LinkedLane);
-					OutPathLinkedLanes.Add(EndLaneLocationHandle.Index, LinkedLane);//FZoneGraphLinkedLane()
+					OutPathLinkedLanes.Add(LaneIndex, i);
+					//UE_LOG(LogTemp, Warning, TEXT("LaneLink: %d"), LaneIndex);
+					
+					//OutPathLinkedLanes.Add(EndLaneLocationHandle.Index, LinkedLane);//FZoneGraphLinkedLane()
 					break;
 				}
 				if (DFT_ZoneGraph_Origin(DestLaneHandle, EndLaneLocationHandle, OutPathLinkedLanes, InProgressLaneIndices) == true)
 				{
 					//UE_LOG( LogTemp, Warning, TEXT("---"));
 					bFound = true;
-					OutPathLinkedLanes.Add(LaneIndex, LinkedLane);
+					OutPathLinkedLanes.Add(LaneIndex, i);
+					//UE_LOG(LogTemp, Warning, TEXT("LaneLink: %d"), LaneIndex);
 					break;
 				}
 			}
@@ -293,16 +334,16 @@ bool UMSPathFindingProcessor::GetLaneClosestToTransform(FTransform InTransform, 
 
 
 
-void UMSPathFindingProcessor::DrawLineBetweenTwoPoints(FTransform FromTransform, FTransform ToTransform, FColor PathColor, float LineThickness)
+void UMSPathFindingProcessor::DrawLineBetweenTwoPoints(FTransform FromTransform, FTransform ToTransform, FColor PathColor, float LineThickness, float LifeTime)
 {
 	const UWorld* World = GetWorld();
 	
-	DrawDebugLine(World, FromTransform.GetLocation(), ToTransform.GetLocation(), PathColor, false, 1.f, 2, /*screenspace*/LineThickness);
+	DrawDebugLine(World, FromTransform.GetLocation(), ToTransform.GetLocation(), PathColor, false, LifeTime, 2, /*screenspace*/LineThickness);
 }
 
-void UMSPathFindingProcessor::DrawLineBetweenTwoPoints(FVector FromLocation, FVector ToLocation, FColor PathColor, float LineThickness)
+void UMSPathFindingProcessor::DrawLineBetweenTwoPoints(FVector FromLocation, FVector ToLocation, FColor PathColor, float LineThickness, float LifeTime)
 {
 	const UWorld* World = GetWorld();
 	
-	DrawDebugLine(World, FromLocation, ToLocation, PathColor, false, 1.f, 2, /*screenspace*/LineThickness);
+	DrawDebugLine(World, FromLocation, ToLocation, PathColor, false, LifeTime, 2, /*screenspace*/LineThickness);
 }
