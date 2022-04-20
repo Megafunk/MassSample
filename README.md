@@ -608,16 +608,9 @@ As noted above, it is possible to reuse the same `EMassObservedOperation` operat
 
 Out of the box Mass can spread out work to threads in two different ways:
 <!--FIXMEFUNK - we really need to figure out which ini this goes in...-->
-Per-Processor threading based on the processor dependency graph by setting the console variable `mass.FullyParallel 1`
+- Per-Processor threading based on the processor dependency graph by setting the console variable `mass.FullyParallel 1`
 
-Per-query parrallel for calls that spread the job of one query over multiple threads by using the command argument `ParallelMassQueries=1` for the given Unreal process. This is currently used nowhere in the Mass modules or sample and currently it seems to break when deferring commands from it multiple times a frame.
-
-
-
-
-
-
-
+- Per-query parrallel for calls that spread the job of one query over multiple threads by using the command argument `ParallelMassQueries=1` for the given Unreal process. This is currently used nowhere in the Mass modules or sample and currently it seems to break when deferring commands from it multiple times a frame.
 
 
 

@@ -23,6 +23,7 @@ class MASSSAMPLE_API UMSProjectileSimProcessors : public UMassProcessor
 	virtual void Initialize(UObject& Owner) override;
 	
 	FMassEntityQuery LineTraceFromPreviousPosition;
+	FMassEntityQuery MyQuery;
 };
 
 

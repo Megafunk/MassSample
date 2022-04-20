@@ -24,70 +24,69 @@ void UMSNiagaraRepresentationProcessors::ConfigureQueries()
 
 void UMSNiagaraRepresentationProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
-		//Let's prepare the shared fragments to accept new data!
-		EntitySubsystem.ForEachSharedFragment<FSharedNiagaraSystemFragment>([&,this](FSharedNiagaraSystemFragment& SharedNiagaraFragment)
-		{
-			SharedNiagaraFragment.IteratorOffset = 0;
-		});
+
 	
 		//query mass for transform data
 		PositionToNiagaraFragmentQuery.ForEachEntityChunk(EntitySubsystem,Context,
 			[&,this](FMassExecutionContext& Context)
-		{
-			QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_PositionToNiagara);
-			const int32 QueryLength = Context.GetNumEntities();
-				
-			const auto& Transforms = Context.GetFragmentView<FTransformFragment>().GetData();
-			auto& SharedNiagaraFragment = Context.GetMutableSharedFragment<FSharedNiagaraSystemFragment>();
-				
-			AMSNiagaraActor* NiagaraActor =  SharedNiagaraFragment.NiagaraManagerActor.Get();
-				
-			if(!NiagaraActor) return;
-				
-			//todo-performance: shrink this with GC timing?
-			bool bAllowShrinking = false;
-
-			//todo-performance this should also probably not even happen if the total array num isn't going to change 
-			int32 ArrayResizeAmount = SharedNiagaraFragment.IteratorOffset + QueryLength;
-				
-			//todo-performance if we want multithreading does this need to happen on another foreach?
-			//I did have this parrallelfor'd before but 
-			SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticlePositions.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
-			SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticleDirectionVectors.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
-				
-			SharedNiagaraFragment.IteratorOffset += QueryLength;
-				
-			for (int32 i = 0; i < QueryLength; ++i)
 			{
-				 //this is needed because there are multiple chunks for each shared niagara system 
-				 const int32 ArrayPosition = i + SharedNiagaraFragment.IteratorOffset - QueryLength;
-				 NiagaraActor->ParticlePositions[ArrayPosition] = Transforms[i].GetTransform().GetTranslation();
-				 NiagaraActor->ParticleDirectionVectors[ArrayPosition] = Transforms[i].GetTransform().GetRotation().GetForwardVector();
-				//temp log to double check iteration order etc
-				//UE_LOG( LogTemp, Error, TEXT("projectile manager niagara system %s iterated on! with chunk length %i "),*NiagaraActor->GetName(),QueryLength);
-			}
-		});
+				QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_PositionToNiagara);
+				const int32 QueryLength = Context.GetNumEntities();
+				
+				const auto& Transforms = Context.GetFragmentView<FTransformFragment>().GetData();
+				auto& SharedNiagaraFragment = Context.GetMutableSharedFragment<FSharedNiagaraSystemFragment>();
+				
+				// AMSNiagaraActor* NiagaraActor =  SharedNiagaraFragment.NiagaraManagerActor.Get();
+				// if(!NiagaraActor) return;
+				// SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticlePositions.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
+				// SharedNiagaraFragment.NiagaraManagerActor.Get()->ParticleDirectionVectors.SetNumUninitialized(ArrayResizeAmount,bAllowShrinking);
+				Context.DoesArchetypeHaveTag<>()
+				//todo-performance: shrink this with GC timing?
+				bool bAllowShrinking = false;
+
+				//todo-performance this should also probably not even happen if the total array num isn't going to change 
+				int32 ArrayResizeAmount = SharedNiagaraFragment.IteratorOffset + QueryLength;
+				
+				//todo-performance if we want multithreading does this need to happen on another foreach?
+				//I did have this parrallelfor'd before but 
+				
+				SharedNiagaraFragment.IteratorOffset += QueryLength;
+				SharedNiagaraFragment.ParticlePositions.SetNumUninitialized(ArrayResizeAmount);
+				SharedNiagaraFragment.ParticleDirectionVectors.SetNumUninitialized(ArrayResizeAmount);
+				
+				
+				for (int32 i = 0; i < QueryLength; ++i)
+				{
+					 //this is needed because there are multiple chunks for each shared niagara system 
+					 const int32 ArrayPosition = i + SharedNiagaraFragment.IteratorOffset - QueryLength;
+					 SharedNiagaraFragment.ParticlePositions[ArrayPosition] = (Transforms[i].GetTransform().GetTranslation());
+					 SharedNiagaraFragment.ParticleDirectionVectors[ArrayPosition] = (Transforms[i].GetTransform().GetRotation().GetForwardVector());
+					 //temp log to double check iteration order etc
+					 //UE_LOG( LogTemp, Error, TEXT("projectile manager niagara system %s iterated on! with chunk length %i "),*NiagaraActor->GetName(),QueryLength);
+				}
+			});
 
 	//with our nice new data, we push to the actual niagara components in the world!
 	EntitySubsystem.ForEachSharedFragment<FSharedNiagaraSystemFragment>([](FSharedNiagaraSystemFragment& SharedNiagaraFragment)
 	{
-		
-		AMSNiagaraActor* NiagaraActor =  SharedNiagaraFragment.NiagaraManagerActor.Get();
-		
+		const AMSNiagaraActor* NiagaraActor =  SharedNiagaraFragment.NiagaraManagerActor.Get();
+
 		//UE_LOG( LogTemp, Error, TEXT("Niagara array length for %s is %i"),*NiagaraActor->GetName(),SharedNiagaraFragment.NiagaraManagerActor->ParticlePositions.Num());
 		
 		if(UNiagaraComponent* NiagaraComponent = NiagaraActor->GetNiagaraComponent())
 		{
 			
 			//congratulations to me (karl) for making SetNiagaraArrayVector public in an engine PR (he's so cool) (wow)
-			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent,"MassParticlePositions",NiagaraActor->ParticlePositions);
-			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent,"MassParticleDirectionVectors",NiagaraActor->ParticleDirectionVectors);
+			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent,"MassParticlePositions",SharedNiagaraFragment.ParticlePositions);
+			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent,"MassParticleDirectionVectors",SharedNiagaraFragment.ParticleDirectionVectors);
 		}
 		else
 		{
 			UE_LOG( LogTemp, Error, TEXT("projectile manager %s was invalid during array push!"),*NiagaraActor->GetName());
 		}
-		
+
+		//Let's prepare the shared fragments to accept new data next frame!
+		SharedNiagaraFragment.IteratorOffset = 0;
 	});
 	
 }
