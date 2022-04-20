@@ -31,6 +31,7 @@ This documentation will be updated often!
 > 4.8 [Shared Fragments](#mass-sf)  
 > 4.9 [Observers](#mass-o)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observing multiple Fragment/Tags](#mass-o-mft)
+> 4.10 [Mulitthreading](#mass-mt)  
 > 5. [Mass Plugins and Modules](#mass-pm)  
 > 5.1 [MassEntity](#mass-pm-me)  
 > 5.2 [MassGameplay](#mass-pm-gp)  
@@ -599,6 +600,26 @@ void UMyMassObserverProcessor::Register()
 }
 ```
 As noted above, it is possible to reuse the same `EMassObservedOperation` operation for multiple observed types, and vice-versa.
+
+
+<!--FIXMEFUNK - Very WIP. I will share some images of Insights in here soon...-->
+<a name="mass-mt"></a>
+### 4.10 Multithreading
+
+Out of the box Mass can spread out work to threads in two different ways:
+<!--FIXMEFUNK - we really need to figure out which ini this goes in...-->
+Per-Processor threading based on the processor dependency graph by setting the console variable `mass.FullyParallel 1`
+
+Per-query parrallel for calls that spread the job of one query over multiple threads by using the command argument `ParallelMassQueries=1` for the given Unreal process. This is currently used nowhere in the Mass modules or sample and currently it seems to break when deferring commands from it multiple times a frame.
+
+
+
+
+
+
+
+
+
 
 <a name="mass-pm"></a>
 ## 5. Mass Plugins and Modules
