@@ -282,7 +282,7 @@ MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& C
 			OptionalFragmentList[i].DoOptionalStuff();
 		}		
 	}
-}
+});
 ```
 <a name="mass-queries-iq"></a>
 #### 4.6.3 Iterating Queries
