@@ -26,7 +26,7 @@ This documentation will be updated often!
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.1 [Access requirements](#mass-queries-ar)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.2 [Presence requirements](#mass-queries-pr)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.3 [Iterating Queries](#mass-queries-iq)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.4 [Mutating entities with Defer()](#mass-queries-mq)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.3 [Mutating entities with Defer()](#mass-queries-mq)  
 > 4.7 [Traits](#mass-traits)  
 > 4.8 [Shared Fragments](#mass-sf)  
 > 4.9 [Observers](#mass-o)  
@@ -197,12 +197,26 @@ Queries (`FMassEntityQuery`) filter and iterate entities given a series of rules
 Processors can define multiple `FMassEntityQuery`s and should override the `ConfigureQueries` function in order to add rules to the different queries defined in the processor's header:
 
 ```c++
-void UMSMovementProcessor::ConfigureQueries()
+void UMyProcessor::ConfigureQueries()
 {
-	MovementEntityQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
-	MovementEntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
-	MovementEntityQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
-	MovementEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
+	MyQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
+	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
+}
+```
+Queries are executed by calling `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. The following example code lies inside the `Execute` function of a processor:
+
+```c++
+void UMyProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+{
+	//Note that this is a lambda! If you want extra data you may need to pass it in the [] operator
+	MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+	{
+		//Loop over every entity in the current chunk and do stuff!
+		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		{
+			// ...
+		}
+	});
 }
 ```
 
@@ -215,21 +229,51 @@ Queries can define read/write access requirements for Fragments:
 
 | `EMassFragmentAccess` | Description |
 | ----------- | ----------- |
-| None | No binding required. |
-| ReadOnly | We want to read the data for the fragment. | 
-| ReadWrite | We want to read and write the data for the fragment. | 
+| `None` | No binding required. |
+| `ReadOnly` | We want to read the data for the fragment. | 
+| `ReadWrite` | We want to read and write the data for the fragment. | 
 
-Here are some basic examples in which we add access rules in two Fragments from a `FMassEntityQuery MoveEntitiesQuery`:
+Here are some basic examples in which we add access rules in two Fragments from a `FMassEntityQuery MyQuery`:
 
 ```c++	
-//Entities must have an FTransformFragment and we are reading and changing it (EMassFragmentAccess::ReadWrite)
-MoveEntitiesQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
-	
-//Entities must have an FMassForceFragment and we are only reading it (EMassFragmentAccess::ReadOnly)
-MoveEntitiesQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
+void UMyProcessor::ConfigureQueries()
+{
+	// Entities must have an FTransformFragment and we are reading and writing it (EMassFragmentAccess::ReadWrite)
+	MyQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
+		
+	// Entities must have an FMassForceFragment and we are only reading it (EMassFragmentAccess::ReadOnly)
+	MyQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
+}
 ```
 
-Note that Tags **do not have** access requirements, since they don't contain data.
+`ForEachEntityChunk`s can use the following two functions to access `ReadOnly` or `ReadWrite` fragment data according to the access requirement:
+
+| `EMassFragmentAccess` | Function |Description |
+| ----------- | ----------- | ----------- |
+| `ReadOnly` | `GetFragmentView` | Returns a read only `TConstArrayView` containing the data of our `ReadOnly` fragment. |
+| `ReadWrite` | `GetMutableFragmentView` | Returns a writable `TArrayView` containing de data of our `ReadWrite` fragment. | 
+
+Find below the following two functions employed in context:
+
+```c++
+void UMyProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+{
+	MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+	{
+		const auto TransformList = Context.GetMutableFragmentView<FTransformFragment>();
+		const auto ForceList = Context.GetMutableFragmentView<FMassForceFragment>();
+
+		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		{
+			FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
+			const FVector DeltaForce = Context.GetDeltaTimeSeconds() * ForceList[EntityIndex].Value;
+			TransformToChange.AddToTranslation(DeltaForce);
+		}
+	});
+}
+```
+
+**Note:** Tags do not have access requirements since they don't contain data.
 
 <a name="mass-queries-pr"></a>
 #### 4.6.2 Presence requirements
@@ -237,43 +281,54 @@ Queries can define presence requirements for Fragments and Tags:
 
 | `EMassFragmentPresence` | Description |
 | ----------- | ----------- |
-| All | All of the required fragments must be present. Default presence requirement. |
-| Any | At least one of the fragments marked any must be present. | 
-| None | None of the required fragments can be present. | 
-| Optional | If fragment is present we'll use it, but it does not need to be present. | 
+| All | All of the required fragments/tags must be present. Default presence requirement. |
+| Any | At least one of the fragments/tags marked any must be present. | 
+| None | None of the required fragments/tags can be present. | 
+| Optional | If fragment/tag is present we'll use it, but it does not need to be present. | 
 
-Here are some basic examples in which we add presence rules in two Tags from a `FMassEntityQuery MoveEntitiesQuery`:
+##### 4.6.2.1 Presence requirements in Tags
+To add presence rules to Tags, use `AddTagRequirement`.   
 ```c++
-// All entities must have a FMoverTag
-MoveEntitiesQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
-// None of the Entities may have a FStopTag
-MoveEntitiesQuery.AddTagRequirement<FStopTag>(EMassFragmentPresence::None);
-```
-Fragments can be filtered by presence with an additional `EMassFragmentPresence` parameter.
-```c++	
-// Don't include entities with a HitLocation fragment
-MoveEntitiesQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::None);
+void UMyProcessor::ConfigureQueries()
+{
+	// All entities must have a FMoverTag
+	MyQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
+	// Entities can have a FOptionalTag
+	MyQuery.AddTagRequirement<FOptionalTag>(EMassFragmentPresence::Optional);
+}
 ```
 
-`EMassFragmentPresence::Any` filters entities that must at least have one of the fragments marked with `Any`. Here is a contrived example:
-```c++
-FarmAnimalsQuery.AddTagRequirement<FHorseTag>(EMassFragmentPresence::Any);
-FarmAnimalsQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
-FarmAnimalsQuery.AddTagRequirement<FGoatTag>(EMassFragmentPresence::Any);
-```
-
-`EMassFragmentPresence::Optional` can be used to get an Entity to be considered for iteration without the need of actually containing the specified Tag or Fragment.
-```c++	
-MyQuery.AddRequirement<FMyOptionalFragment>(EMassFragmentAccess::ReadWrite,EMassFragmentPresence::Optional);
-```
-
-`ForEachChunk`s can use the length of the optional fragment's `TArrayView` to determine if the current chunk contains the optional Fragment/Tag before accessing it:
+`ForEachChunk`s can use `DoesArchetypeHaveTag` to determine if the current processed archetype contains the the Tag:
 
 ```c++
 MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
 {
-	const TArrayView<FMyOptionalFragment> OptionalFragmentList = Context.GetMutableFragmentView<FMyOptionalFragment>();
+	if(Context.DoesArchetypeHaveTag<FMoverTag>())
+	{
+		// I do have the FOptionalTag tag!!
+	}
+});
+```
 
+##### 4.6.2.2 Presence requirements in Fragments
+Fragments can define presence rules in an additional `EMassFragmentPresence` parameter through `AddRequirement`.
+
+```c++
+void UMyProcessor::ConfigureQueries()
+{
+	// Don't include entities with a HitLocation fragment
+	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::None);
+}
+```
+
+`ForEachChunk`s can use the length of the `Optional`/`Any` fragment's `TArrayView` to determine if the current chunk contains the Fragment before accessing it:
+
+```c++
+MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+{
+	const auto OptionalFragmentList = Context.GetMutableFragmentView<FMyOptionalFragment>();
+	const auto HorseFragmentList = Context.GetMutableFragmentView<FHorseTag>();	
+	const auto SheepFragmentList = Context.GetMutableFragmentView<FSheepTag>();
 	for (int32 i = 0; i < Context.GetNumEntities(); ++i)
 	{
 		// An optional fragment array is present in our current chunk if the OptionalFragmentList isn't empty
@@ -281,44 +336,23 @@ MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& C
 		{
 			// Now that we know it is safe to do so, we can compute
 			OptionalFragmentList[i].DoOptionalStuff();
+		}
+
+		// Same with fragments marked with Any
+		if(HorseFragmentList.Num() > 0)
+		{
+			HorseFragmentList[i].DoHorseStuff();
+		}
+		if(SheepFragmentList.Num() > 0)
+		{
+			SheepFragmentList[i].DoSheepStuff();
 		}		
 	}
 });
 ```
-<a name="mass-queries-iq"></a>
-#### 4.6.3 Iterating Queries
-Queries are executed by calling `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. The following example code lies inside the `Execute` function of a processor:
 
-```c++
-//Note that this is a lambda! If you want extra data you may need to pass something into the []
-MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
-{
-	//Get the length of the entities in our current ExecutionContext
-	const int32 NumEntities = Context.GetNumEntities();
-
-	//These are what let us read and change entity data from the query in the ForEach
-	const TArrayView<FTransformFragment> TransformList = Context.GetMutableFragmentView<FTransformFragment>();
-
-	//This one is readonly, so we don't need Mutable
-	const TConstArrayView<FMassForceFragment> ForceList = Context.GetFragmentView<FMassForceFragment>();
-
-	//Loop over every entity in the current chunk and do stuff!
-	for (int32 EntityIndex = 0; EntityIndex < NumEntities; ++EntityIndex)
-	{
-		FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
-
-		FVector DeltaForce = ForceList[EntityIndex].Value;
-
-		//Multiply the amount to move by delta time from the context.
-		DeltaForce = Context.GetDeltaTimeSeconds() * DeltaForce;\
-
-		TransformToChange.AddToTranslation(DeltaForce);
-	}
-});
-```
-s                                                        
 <a name="mass-queries-mq"></a>
-#### 4.6.4 Mutating entities with Defer()
+#### 4.6.3 Mutating entities with Defer()
                                                         
 Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FIsRedTag` to any entity that has a color fragment with its `Color` property set to `Red`:
 
@@ -342,7 +376,7 @@ EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecution
 });
 ```
 
-##### 4.6.4.1 Basic mutation operations
+##### 4.6.3.1 Basic mutation operations
 The following Listings define the native mutations that you can defer:
 
 Fragments:
@@ -363,10 +397,10 @@ Context.Defer().DestroyEntity(MyEntity);
 Context.Defer().BatchDestroyEntities(MyEntitiesArray);
 ```
 
-##### 4.6.4.2 Advanced mutation operations
+##### 4.6.3.2 Advanced mutation operations
 There is a built in set of `FCommandBufferEntryBase` derived commands that you can use to defer some more useful entity mutations. Here is a list with some short examples using different styles. 
 
-###### 4.6.4.2.1 FMassCommandAddFragmentInstanceList
+###### 4.6.3.2.1 FMassCommandAddFragmentInstanceList
 Adds a list of instanced struct fragments with data you can make in `FConstStructView`s or `FStructView`s. Here's an example with a new `FHitResultFragment` with HitResult data and an `FSampleColorFragment` fragment with a new color. 
 ```c++
 FConstStructView HitResulStruct = FConstStructView::Make(FHitResultFragment(HitResult));
@@ -378,12 +412,12 @@ Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(Entity,
 	));
 ```
 
-##### 4.6.4.2.2 FMassCommandAddFragmentInstance (singular)
-Identical to FMassCommandAddFragmentInstanceList besides only taking a single fragment as input instead of a list.
+##### 4.6.3.2.2 FMassCommandAddFragmentInstance (singular)
+Identical to `FMassCommandAddFragmentInstanceList` besides only taking a single fragment as input instead of a list.
 <!--(check) FIXMEFUNK when does FStructView being const matter? Should this use a different code style or not?-->
 
-##### 4.6.4.2.3 FBuildEntityFromFragmentInstances 
-Similar to AddFragmentInstances, this uses a list of `FConstStructView`s to create a whole new entity. 
+##### 4.6.3.2.3 FBuildEntityFromFragmentInstances 
+Similar to `AddFragmentInstances`, this uses a list of `FConstStructView`s to create a whole new entity. 
 Here we make the `FStructView`s inline.
 ```c++
 FSampleColorFragment ColorFragment;
@@ -396,10 +430,10 @@ Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(Entity,
 	{FStructView::Make(ColorFragment),FStructView::Make(ThingyFragment)}
 	));
 ```
-##### 4.6.4.2.4 FBuildEntityFromFragmentInstance (singular)
+##### 4.6.3.2.4 FBuildEntityFromFragmentInstance (singular)
 Identical to FBuildEntityFromFragmentInstances besides only taking a single fragment as input instead of a list.
 
-##### 4.6.4.2.5 FCommandSwapTags 
+##### 4.6.3.2.5 FCommandSwapTags 
 Removes the first tag (`FOffTag` in this example) and adds the second to the entity. (`FOnTag`)
 
 ```c++
@@ -409,7 +443,7 @@ Context.Defer().PushCommand(FCommandSwapTags(Entity,
 	));
 ```
 
-##### 4.6.4.2.6 FCommandRemoveComposition
+##### 4.6.3.2.6 FCommandRemoveComposition
 <!--(check) FIXMEFUNK wait... we should mention this in the archetype section!! -->
 <!--(check) FIXMEFUNK also, this example is a little contrived? -->
 <!-- FIXMEVORI: Requires offline discussion -->
@@ -425,17 +459,19 @@ const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetComp
 Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
 ```
 
-<!-- FIXME: Add the lambda one in here!!!! -->
+<!-- FIXMEFUNK: Add the lambda one in here!!!! -->
 
 
 Note that the commands that mutate entities change the value of ECommandBufferOperationType in their decleration in order to pass their changes to relevant observers when commands are flushed. They also manually add their changes to the observed changes list by implementing `AppendAffectedEntitiesPerType`. 
 
-##### 4.6.4.2.7 Custom mutation operations
+##### 4.6.3.2.7 Custom mutation operations
 It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
+
 ```c++
 Context.Defer().EmplaceCommand<FMyCustomComand>(...)
 ```
 
+<!-- FIXMEVORI: Provide example of custom commands and when they would be useful -->
 
 <a name="mass-traits"></a>
 ### 4.7 Traits
