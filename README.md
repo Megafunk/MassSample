@@ -1,32 +1,3 @@
-
-# Wacky AI
-
-This is an example and reference map showing some basic AI behaviour within the ZoneGraph-ECS-AI in the UE5 mass modules. Most of the basic stuff here is setup
-in a similar way to how the basic AI in the mass demo is. Various additions like the A*Star pathing are similar to the pathfinding that is used in the `ZoneGraphTestingActor`.
-
-More specifically this example has usage of the following:
-- Mordatly complex usage of the zone graph system data system to run pathfinding (AStar, DFS)
-- Basic usage of the AI StateTree system C++`behaviour`/`States`->Use in StateTree`Asset` (Setting up StateTrees for normal usage seems fairly simple).
-- Use of ECS systems in modules (`ECS MassAI`, `ECS ZoneGraph`)
-- Use of (non-optimized) `ECS` processes to calculate, cache and store AI and Pathfinding data.
-
-![AIThumbnail](Images/aithumbnail.jpg)
-
-### Things in AI Gym
-
-+ Press `E` to create a temporary danger around the player that the characters will avoid.
-+ The pathing is not heavily optimized, but it uses caching and the StateTree nodes to show how ECS is used within and intergrated with ZoneGraph and MassAI.
-
-### Notes
-+ Will prob add some notes and proper docs or something, particularly for some of the highlevel ECS<->MassAI/ZoneGraph and StateTree stuff.
-+ Other than that gonna leave this to sima for a bit might expand a bit more later if/when I feel the need to look into other stuff (paralledlization, optimization, proper ECS caching, more complex state tree stuff).
-+ Make an issue if you want something or something.
-
-
-
------
-
-
 # Community Mass Sample
 Our very WIP understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are not affiliated with Epic Games and this system is actively being changed often so this information might not be accurate.
 If something is wrong feel free to PR!
