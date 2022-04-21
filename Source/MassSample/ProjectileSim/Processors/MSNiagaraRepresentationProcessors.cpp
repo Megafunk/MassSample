@@ -4,7 +4,7 @@
 #include "MSNiagaraRepresentationProcessors.h"
 
 #include "NiagaraComponent.h"
-#include "MSNiagaraActor.h"
+#include "ProjectileSim/MSNiagaraActor.h"
 
 UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
 {

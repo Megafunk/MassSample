@@ -5,8 +5,8 @@
 
 #include "MassCommonFragments.h"
 #include "MassMovementFragments.h"
-#include "MassProjectileHitInterface.h"
-#include "MSProjectileFragments.h"
+#include "ProjectileSim/MassProjectileHitInterface.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
 UMSProjectileHitObserver::UMSProjectileHitObserver()
 {

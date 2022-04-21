@@ -1,7 +1,7 @@
 ﻿#include "MSProjectileSubsystem.h"
 
 #include "MSNiagaraActor.h"
-#include "MSProjectileFragments.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "NiagaraComponent.h"
 
 

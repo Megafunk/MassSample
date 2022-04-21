@@ -5,7 +5,7 @@
 
 #include "MassCommonFragments.h"
 #include "MassObserverRegistry.h"
-#include "MSProjectileFragments.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "MassRepresentationTypes.h"
 #include "Fragments/MSFragments.h"
 #include "HAL/ThreadManager.h"

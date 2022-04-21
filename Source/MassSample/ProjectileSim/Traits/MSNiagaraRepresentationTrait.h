@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
-#include "MSProjectileFragments.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "NiagaraSystem.h"
 #include "MSNiagaraRepresentationTrait.generated.h"
 

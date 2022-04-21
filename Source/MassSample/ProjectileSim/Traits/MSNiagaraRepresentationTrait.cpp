@@ -5,8 +5,8 @@
 
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
-#include "MSProjectileFragments.h"
-#include "MSProjectileSubsystem.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
+#include "ProjectileSim/MSProjectileSubsystem.h"
 #include "NiagaraSystem.h"
 #include "Fragments/MSFragments.h"
 

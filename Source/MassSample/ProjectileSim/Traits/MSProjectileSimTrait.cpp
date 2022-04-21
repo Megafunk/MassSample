@@ -6,7 +6,7 @@
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
 #include "MassMovementFragments.h"
-#include "MSProjectileFragments.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "NiagaraSystem.h"
 
 void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const

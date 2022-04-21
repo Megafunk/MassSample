@@ -10,7 +10,7 @@
 #include "MassMovementFragments.h"
 #include "MSSubsystem.h"
 #include "AI/NavigationSystemBase.h"
-#include "ProjectileSim/MSProjectileFragments.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
 FEntityHandleWrapper UMSBPFunctionLibarary::SpawnEntityFromEntityConfig(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
                                                                         const UObject* WorldContextObject)

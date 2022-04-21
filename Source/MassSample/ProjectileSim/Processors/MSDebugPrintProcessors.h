@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MSProjectileSubsystem.h"
+#include "ProjectileSim/MSProjectileSubsystem.h"
 
 #include "MassCommonFragments.h"
 #include "MassProcessor.h"
