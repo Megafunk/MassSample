@@ -1,12 +1,14 @@
 # Community Mass Sample
-Our very WIP understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are not affiliated with Epic Games and this system is actively being changed often so this information might not be accurate.
-If something is wrong feel free to PR!
+Our **very WIP** understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are **not** affiliated with Epic Games and this system is actively being changed often so this information might not be totally accurate.
 
-Currently built for the Unreal Engine 5.0 binary from the Epic Games launcher. 
+We are totally open to contributions, If something is wrong or you think it could be improved, feel free to [open an issue](https://github.com/Megafunk/MassSample/issues) or submit a [pull request](https://github.com/Megafunk/MassSample/pulls).
 
-Requires git LFS to be installed to clone.
-
+Currently built for the Unreal Engine 5 latest version binary from the Epic Games launcher. 
 This documentation will be updated often!
+
+#### **Requirements:**
+- Unreal Engine 5 latest version from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- [Git Large File Storage](https://git-lfs.github.com/)
 
 <!--- Introduce here table of contents -->
 <a name="tocs"></a>
@@ -168,7 +170,7 @@ The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on 
 ### 4.5 Processors
 Processors combine multiple user-defined [queries](#mass-queries) with functions that compute entities.
 
-Processors are automatically registered with Mass and added to the `PrePhsysics` processing phase by default.
+Processors are automatically registered with Mass and added to the `EMassProcessingPhase::PrePhsysics` processing phase by default. The `MassProcessingPhaseManager` owns separate `FMassProcessingPhase` instances for every `ETickingGroup`, mapped to `EMassProcessingPhase`. Users can configure to which `FMassProcessingPhase` their processor belongs by modifying the `ProcessingPhase` variable included in `UMassProcessor`.
 
 In their constructor they can define rules for their execution order and which type of game clients they execute on:
 ```c++
@@ -185,9 +187,9 @@ UMyProcessor::UMyProcessor()
 }
 ```
 
-On initialization, Mass creates a graph of processors using their execution rules so they execute in order. For example, we make sure to move entities before we render them.
+On initialization, Mass creates a graph of processors using their execution rules so they execute in order (ie: In the example above we make sure to move our entities before we call Execute in `UMyProcessor`).
 
-<!-- FIXMEVORI: You meant "The visualization and LOD modules processors..." right?  -->
+<!-- FIXMEVORI: You meant "The visualization and LOD processors..." right?  -->
 **Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD modules are both designed to be used this way. 
 
 <a name="mass-queries"></a>
