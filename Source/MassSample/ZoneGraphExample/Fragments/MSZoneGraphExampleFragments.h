@@ -14,6 +14,10 @@
 
 // Test AI Stuff
 
+/*
+ * These traits are used to define and store values for the from and to targets for the pathfinding system.
+ */
+
 
 USTRUCT()
 struct MASSSAMPLE_API FZoneGraphPathTestFromFragment : public FMassFragment

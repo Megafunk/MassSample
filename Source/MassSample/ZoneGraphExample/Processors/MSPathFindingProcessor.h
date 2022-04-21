@@ -17,7 +17,8 @@ struct FZoneGraphLaneHandle;
 
 
 /**
- * 
+ * This Processor constantly runs. For all "FZoneGraphPathTestFromFragment"/"UMSZoneGraphPathTestFromTrait" it will calculate and cache a path to the one "FZoneGraphPathTestToFragment"/"UMSZoneGraphPathTestToTrait".
+ * The processor also runs debugging and will not find paths if the cached value in "FZoneGraphPathTestFromFragment" is set to true.
  */
 UCLASS()
 class MASSSAMPLE_API UMSPathFindingProcessor : public UMassProcessor

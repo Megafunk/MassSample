@@ -7,14 +7,6 @@
 #include "UObject/NoExportTypes.h"
 #include "MSEntityActorExampleEvaluator.generated.h"
 
-/**
- * 
- */
-// UCLASS()
-// class MASSSAMPLE_API UMSEntityActorExampleEvaluator : public UObject
-// {
-// 	GENERATED_BODY()
-// };
 
 class UMassAgentSubsystem;
 class UMassEntitySubsystem;

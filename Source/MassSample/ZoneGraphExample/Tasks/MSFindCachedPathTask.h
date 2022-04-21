@@ -15,16 +15,7 @@
 
 
 
-//
-// /**
-//  * 
-//  */
-// UCLASS()
-// class MASSSAMPLE_API UMSFindCachedPathTask : public UObject
-// {
-// 	GENERATED_BODY()
-// 	
-// };
+
 
 
 class UZoneGraphAnnotationSubsystem;
@@ -32,11 +23,17 @@ class UMassCrowdSubsystem;
 class UZoneGraphSubsystem;
 
 
+/*
+ * This is a MassAI Behaviour struct, properties here catagory will be exposed to the StateTree editor.
+ * These properties can be used for output or input.
+ * You can bind input properties to the outputs provided by other nodes in the tree (often other tasks and evaluaters)
+ */
 USTRUCT()
 struct MASSSAMPLE_API FFindCachedPathTaskData
 {
 	GENERATED_BODY()
 
+	/** This is the output FMassZoneGraphTargetLocation, it is similar to a normal ZoneGraphLaneLocation struct, however it used by the "Follow path" StateTree task to move*/
 	UPROPERTY(VisibleAnywhere, Category = Output)
 	FMassZoneGraphTargetLocation FollowPathTargetLocation;
 	
@@ -45,7 +42,9 @@ struct MASSSAMPLE_API FFindCachedPathTaskData
 
 
 /**
- * 
+ * This is task node will use the "PathFromFragmentHandle" to get the values that define the path to target (paths and values are calculated in "UMSPathFindingProcessor")
+ * It will then use the values in the TMap<int(LaneIndex), int(LaneLinkIndex)> to find the next ZoneGraph LaneLink to move towards.
+ * The output is a "FMassZoneGraphTargetLocation" that can be used in the ZoneGraph FollowPath node to follow path.
  */
 USTRUCT(meta = (DisplayName = "MS Find Cached Path"))
 struct MASSSAMPLE_API FFindCachedPathTask : public FMassStateTreeTaskBase

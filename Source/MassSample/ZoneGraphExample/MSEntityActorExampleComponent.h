@@ -7,6 +7,10 @@
 #include "MSEntityActorExampleComponent.generated.h"
 
 
+
+/*
+ * This is a test component to show Mass<->Agent actor component setups, refer to "UMSEntityActorExampleSubsystem" for details
+ */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MASSSAMPLE_API UMSEntityActorExampleComponent : public UActorComponent
 {
