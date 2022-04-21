@@ -19,6 +19,7 @@ This documentation will be updated often!
 > 4. [Mass Concepts](#massconcepts)  
 > 4.1 [Entities](#mass-entities)   
 > 4.2 [Fragments](#mass-fragments)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.2.1 [Shared Fragments](#mass-fragments-sf)  
 > 4.3 [Tags](#mass-tags)  
 > 4.4 [The archetype model](#mass-arch-mod)   
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.4.1 [Tags in the archetype model](#mass-arch-mod-tags)  
@@ -30,8 +31,7 @@ This documentation will be updated often!
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.3 [Iterating Queries](#mass-queries-iq)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.3 [Mutating entities with Defer()](#mass-queries-mq)  
 > 4.7 [Traits](#mass-traits)  
-> 4.8 [Shared Fragments](#mass-sf)  
-> 4.9 [Observers](#mass-o)  
+> 4.8 [Observers](#mass-o)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observing multiple Fragment/Tags](#mass-o-mft)
 > 4.10 [Mulitthreading](#mass-mt)  
 > 5. [Mass Plugins and Modules](#mass-pm)  
@@ -88,8 +88,7 @@ Currently, the sample features the following:
 > 4.5 [Processors](#mass-processors)  
 > 4.6 [Queries](#mass-queries)  
 > 4.7 [Traits](#mass-traits)  
-> 4.8 [Shared Fragments](#mass-sf)  
-> 4.9 [Observers](#mass-o)
+> 4.8 [Observers](#mass-o)
 
 <a name="mass-entities"></a>
 ### 4.1 Entities
@@ -107,6 +106,29 @@ struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
 	float Time;
 };
 ```
+
+With `FMassFragment`s each entity gets its own fragment data, however if we wish to share data across all our entities, we have to use a [shared fragment](#mass-fragments-sf). 
+
+<a name="mass-fragments-sf"></a>
+#### 4.2.1 Shared Fragments
+A Shared Fragment is a type of Fragment that multiple entities can point to. This is often used for configuration common to a group of entities, like LOD or replication settings. To create a shared fragment, inherit from [`FMassSharedFragment`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassSharedFragment/).
+
+```c++
+USTRUCT()
+struct MASSSAMPLE_API FClockSharedFragment : public FMassSharedFragment
+{
+	GENERATED_BODY()
+	float Clock;
+};
+```
+
+In the example above, all the entities containing the `FClockSharedFragment` will see the same `Clock` value. If an entity modifies the `Clock` value, the rest of the entities with this fragment will see the change, as this fragment is shared accross them.
+
+Thanks to this sharing data requirement, the Mass Entity subsystem only needs to store one Shared Fragment for the entities that use it.
+
+<!-- FIXMEVORI: (About the commented phrase below) Probably a bit too technical? Not a performance requirement, we should simply expose API usage. -->
+<!-- Hashes of the `FMassSharedFragment`'s values are used to find existing shared fragments and to create new ones. -->
+
 
 <a name="mass-tags"></a>
 ### 4.3 Tags
@@ -235,6 +257,8 @@ Queries can define read/write access requirements for Fragments:
 | `ReadOnly` | We want to read the data for the fragment. | 
 | `ReadWrite` | We want to read and write the data for the fragment. | 
 
+`FMassFragment`s use `AddRequirement` to add access and presence requirement to our fragments. While `FMassSharedFragment`s employ `AddSharedRequirement`. 
+
 Here are some basic examples in which we add access rules in two Fragments from a `FMassEntityQuery MyQuery`:
 
 ```c++	
@@ -245,6 +269,9 @@ void UMyProcessor::ConfigureQueries()
 		
 	// Entities must have an FMassForceFragment and we are only reading it (EMassFragmentAccess::ReadOnly)
 	MyQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
+
+	// Entities must have a common FClockSharedFragment that can be read and written
+	MyQuery.AddSharedRequirement<FClockSharedFragment>(EMassFragmentAccess::ReadWrite);
 }
 ```
 
@@ -321,7 +348,7 @@ MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& C
 ```
 
 ##### 4.6.2.2 Presence requirements in Fragments
-Fragments can define presence rules in an additional `EMassFragmentPresence` parameter through `AddRequirement`.
+Fragments and shared fragments can define presence rules in an additional `EMassFragmentPresence` parameter through `AddRequirement` and `AddSharedRequirement`, respectively.
 
 ```c++
 void UMyProcessor::ConfigureQueries()
@@ -552,7 +579,7 @@ There is also a `ValidateTemplate` overridable function which appears to just le
  <!--FIXMEFUNK This ordering is so weird, oh well....-->
 
  Here is a partial `BuildTemplate` example for a shared struct, which requires some extra work on your part to see if a shared fragment identical to the new one already exists:
-```cpp
+```c++
 
 	//Create the actual fragment struct and set up the data for it however you like 
 	FMySharedSettings MyFragment;
@@ -570,25 +597,8 @@ There is also a `ValidateTemplate` overridable function which appears to just le
 ```
 
 
-<a name="mass-sf"></a>
-### 4.8 Shared Fragments
-Shared Fragments (`FMassSharedFragment`) are fragments that multiple entities can point to. This is often used for configuration that won't change for a group of entities at runtime, like LOD settings and the like.
-
-<!-- FIXME: Which archetype? Which hashes? This is a bit confusing! -->
-<!-- REVIEWMEFUNK: Fixed!!! -->
-
-The Mass Entity subsystem only needs to store one Shared Fragment for the entities that use it. Hashes of the `FMassSharedFragment`'s values are used to find existing shared fragments and to create new ones. 
-
-<!-- FIXME: Quack? x'D. Please rephrase, can't understand this -->
-<!-- REVIEWMEFUNK: I just want to make it really obvious a different function is used here -->
-Adding one to a query can be done with `AddSharedRequirement`:
-
-```c++
-PositionToNiagaraFragmentQuery.AddSharedRequirement<FSharedNiagaraSystemFragment>(EMassFragmentAccess::ReadWrite);
-```
-
 <a name="mass-o"></a>
-### 4.9 Observers
+### 4.8 Observers
 The `UMassObserverProcessor` is a type of processor that operates on entities that have just performed a `EMassObservedOperation` over the Fragment/Tag type observed:
 
 | `EMassObservedOperation` | Description |
@@ -632,7 +642,7 @@ It is also possible to create [queries](#mass-queries) to use during the executi
 **Note:** _Currently_ observers are only called during batched entity actions. This covers processors and spawners but not single entity changes from C++. 
 
 <a name="mass-o-mft"></a>
-#### 4.9.1 Observing multiple Fragment/Tags
+#### 4.8.1 Observing multiple Fragment/Tags
 Observers can also be used to observe multiple operations and/or types. For that, override the `Register` function in `UMassObserverProcessor`: 
 
 ```c++
