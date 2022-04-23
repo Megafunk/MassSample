@@ -11,9 +11,10 @@ We are totally open to contributions, If something is wrong or you think it coul
 Currently built for the Unreal Engine 5 latest version binary from the Epic Games launcher. 
 This documentation will be updated often!
 
-#### **Requirements:**
-- Unreal Engine 5 latest version from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+#### **Download instructions:**
+- Unreal Engine 5.0.1 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - [Git Large File Storage](https://git-lfs.github.com/)
+- You might need to actually clone instead of just downloading the .zip due to the LFS requirement.
 
 <!--- Introduce here table of contents -->
 <a name="tocs"></a>
