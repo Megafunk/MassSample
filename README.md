@@ -610,7 +610,7 @@ void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildCon
 	//If our shared niagara system is null, show an error!
 	if (!SharedNiagaraSystem)
 	{
-		UE_VLOG(&World, LogMass, Error, TEXT("Failed to get SharedNiagaraSystem."));
+		UE_VLOG(&World, LogMass, Error, TEXT("SharedNiagaraSystem is null!"));
 		return;
 	}
 }
