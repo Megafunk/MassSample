@@ -133,6 +133,7 @@ In the example above, all the entities containing the `FClockSharedFragment` wil
 Thanks to this sharing data requirement, the Mass Entity subsystem only needs to store one Shared Fragment for the entities that use it.
 
 <!-- FIXMEVORI: (About the commented phrase below) Probably a bit too technical? Not a performance requirement, we should simply expose API usage. -->
+<!-- REVIEWMEFUNK: Shared fragments seem design around the hashing workflow. It seems pretty important to mention. I will check to make sure that is true... -->
 <!-- Hashes of the `FMassSharedFragment`'s values are used to find existing shared fragments and to create new ones. -->
 
 
@@ -217,8 +218,7 @@ UMyProcessor::UMyProcessor()
 
 On initialization, Mass creates a graph of processors using their execution rules so they execute in order (ie: In the example above we make sure to move our entities before we call Execute in `UMyProcessor`).
 
-<!-- FIXMEVORI: You meant "The visualization and LOD processors..." right?  -->
-**Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD modules are both designed to be used this way. 
+**Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD processors are both designed to be used this way. 
 
 <a name="mass-queries"></a>
 ### 4.6 Queries
@@ -331,6 +331,7 @@ void UMyProcessor::ConfigureQueries()
 }
 ```
 <!-- FIXMEVORI: This passes in the context, does it work in a per chunk granularity??? -->
+ <!--REVIEWMEFUNK Yes, it is per chunk"-->
 `ForEachChunk`s can use `DoesArchetypeHaveTag` to determine if the current archetype contains the the Tag:
 
 ```c++
@@ -570,21 +571,15 @@ public:
 };
 ```
 <!-- FIXMEVORI: What do you mean by bookkeeping? Maybe clarify? -->
-**Note:** We recommend looking at the many existing traits in this sample and the mass modules for a better overview. For the most part, they are fairly simple UObjects that occasionally call subsystems for bookkeeping. 
+ <!--REVIEWMEFUNK Now "fairly simple UObjects that occasionally have extra code to make sure the fragments are all valid and set correctly. "-->
 
-#### 4.7.2 Validating traits
-<!-- FIXMEVORI: Clarify and provide example. I'll rewrite it once all the info is in place :) -->
-There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that just raises errors.
+**Note:** We recommend looking at the many existing traits in this sample and the mass modules for a better overview. For the most part, they are fairly simple UObjects that occasionally have extra code to make sure the fragments are all valid and set correctly. 
 
-```c++
-[TODO]
-```
 
-<!-- FIXMEVORI: Is this supposed to be part of the traits section? If so please clarify! Better title? -->
-###### Shared Fragments
- <!--FIXMEFUNK This ordering is so weird, oh well....-->
+ <!--REVIEWMEFUNK moved it up to this section "-->
+##### Shared Fragments
 
- Here is a partial `BuildTemplate` example for a shared struct, which requires some extra work on your part to see if a shared fragment identical to the new one already exists:
+ Here is a partial `BuildTemplate` example for adding a shared struct, which can do some extra work to see if a shared fragment identical to the new one already exists:
 ```c++
 
 	//Create the actual fragment struct and set up the data for it however you like 
@@ -601,6 +596,16 @@ There is also a `ValidateTemplate` overridable function which appears to just le
 	//Finally, add the shared fragment to the BuildContext!
 	BuildContext.AddSharedFragment(MySharedFragment);
 ```
+
+
+#### 4.7.2 Validating traits
+<!-- FIXMEVORI: Clarify and provide example. I'll rewrite it once all the info is in place :) -->
+There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that just raises errors.
+
+```c++
+[TODO]
+```
+
 
 
 <a name="mass-o"></a>
@@ -707,7 +712,6 @@ The `MassGameplay` plugin compiles a number of useful Fragments and Processors t
 > 5.2.9 [`MassSmartObjects`](#mass-pm-gp-mso)  
 
 <!-- FIXME: Since there are some modules more interesting than others we will format them in a subsection manner, so we can extend the interesting one easier. -->
-<!-- (Check)FIXMEFUNK: Vori, review this text. (unless you already did) -->
 <a name="mass-pm-gp-mc"></a>
 #### 5.2.1 `MassCommon`
 Basic fragments like `FTransformFragment`.
