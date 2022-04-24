@@ -600,7 +600,7 @@ public:
 
 #### 4.7.2 Validating traits
 <!-- FIXMEVORI: Clarify and provide example. I'll rewrite it once all the info is in place :) -->
-There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that can raise errors or even change the buildcontext if need be.
+There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that can raise errors or even change the buildcontext if need be. This is called after `BuildTemplate` is called for all of the traits of the current template.
 
 
 In this snippet, we check if a field of the trait is null and print an error:
