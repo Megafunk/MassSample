@@ -23,3 +23,13 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 	
 	BuildContext.AddSharedFragment(SharedFragment);
 }
+
+void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+{
+	if (!SharedNiagaraSystem)
+	{
+		UE_VLOG(&World, LogMass, Error, TEXT("Failed to get SharedNiagaraSystem."));
+		return;
+	}
+	
+}

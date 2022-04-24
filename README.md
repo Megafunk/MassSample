@@ -331,7 +331,7 @@ void UMyProcessor::ConfigureQueries()
 }
 ```
 <!-- FIXMEVORI: This passes in the context, does it work in a per chunk granularity??? -->
- <!--REVIEWMEFUNK Yes, it is per chunk"-->
+ <!--REVIEWMEFUNK Yes, it is per chunk because each chunk is only one archetype"-->
 `ForEachChunk`s can use `DoesArchetypeHaveTag` to determine if the current archetype contains the the Tag:
 
 ```c++
@@ -600,10 +600,20 @@ public:
 
 #### 4.7.2 Validating traits
 <!-- FIXMEVORI: Clarify and provide example. I'll rewrite it once all the info is in place :) -->
-There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that just raises errors.
+There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that can raise errors or even change the buildcontext if need be.
 
+
+In this snippet, we check if a field of the trait is null and print an error:
 ```c++
-[TODO]
+void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+{
+	//If our shared niagara system is null, show an error!
+	if (!SharedNiagaraSystem)
+	{
+		UE_VLOG(&World, LogMass, Error, TEXT("Failed to get SharedNiagaraSystem."));
+		return;
+	}
+}
 ```
 
 

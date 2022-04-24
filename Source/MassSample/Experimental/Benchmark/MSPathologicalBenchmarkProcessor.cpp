@@ -3,7 +3,7 @@
 
 #include "MSPathologicalBenchmarkProcessor.h"
 
-
+//make this true to try the benchmark!
 constexpr bool benchmark = false;
 
 UMSPathologicalBenchmarkProcessor::UMSPathologicalBenchmarkProcessor()

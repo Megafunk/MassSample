@@ -18,6 +18,7 @@ class MASSSAMPLE_API UMSNiagaraRepresentationTrait : public UMassEntityTraitBase
 	GENERATED_BODY()
 public:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
+	virtual void ValidateTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = "Config")
 	UNiagaraSystem* SharedNiagaraSystem;
