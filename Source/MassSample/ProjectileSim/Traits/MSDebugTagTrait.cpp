@@ -4,7 +4,7 @@
 #include "MSDebugTagTrait.h"
 
 #include "MassEntityTemplateRegistry.h"
-#include "Fragments/MSFragments.h"
+#include "Common/Fragments/MSFragments.h"
 
 void UMSDebugTagTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {

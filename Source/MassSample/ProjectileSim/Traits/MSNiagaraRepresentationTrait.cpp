@@ -8,7 +8,7 @@
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "ProjectileSim/MSProjectileSubsystem.h"
 #include "NiagaraSystem.h"
-#include "Fragments/MSFragments.h"
+#include "Common/Fragments/MSFragments.h"
 
 void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {

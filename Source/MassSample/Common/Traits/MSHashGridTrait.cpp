@@ -4,7 +4,7 @@
 #include "MSHashGridTrait.h"
 
 #include "MassEntityTemplateRegistry.h"
-#include "Fragments/MSHashGridFragments.h"
+#include "Common/Fragments/MSHashGridFragments.h"
 
 void UMSHashGridTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {

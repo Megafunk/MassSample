@@ -4,7 +4,7 @@
 #include "MSMovementProcessor.h"
 #include "MassCommon/Public/MassCommonFragments.h"
 #include "MassMovement/Public/MassMovementFragments.h"
-#include "Fragments/MSFragments.h"
+#include "Common/Fragments/MSFragments.h"
 
 UMSMovementProcessor::UMSMovementProcessor()
 {

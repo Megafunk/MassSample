@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntitySubsystem.h"
-#include "Fragments/MSHashGridFragments.h"
+#include "Common/Fragments/MSHashGridFragments.h"
 #include "MSSubsystem.generated.h"
 
 /**

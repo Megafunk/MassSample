@@ -6,7 +6,7 @@
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
 #include "MassMovementFragments.h"
-#include "Fragments/MSFragments.h"
+#include "Common/Fragments/MSFragments.h"
 
 void UMSMoverMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {

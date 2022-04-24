@@ -6,7 +6,6 @@
 #include "MassObserverProcessor.h"
 #include "MassProcessor.h"
 #include "MSSubsystem.h"
-#include "Fragments/MSHashGridFragments.h"
 #include "MSHashGridProcessor.generated.h"
 
 

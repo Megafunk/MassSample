@@ -4,8 +4,7 @@
 
 #include "MassCommonFragments.h"
 #include "MassCommonTypes.h"
-#include "MassLODFragments.h"
-#include "Fragments/MSHashGridFragments.h"
+#include "Common/Fragments/MSHashGridFragments.h"
 
 
 UMSHashGridProcessor::UMSHashGridProcessor()
