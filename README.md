@@ -59,12 +59,17 @@ After installing the requirements from above, follow these steps:
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.3 [Mutating entities with Defer()](#mass-queries-mq)  
 > 4.7 [Traits](#mass-traits)  
 > 4.8 [Observers](#mass-o)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observing multiple Fragment/Tags](#mass-o-mft)
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observing multiple Fragment/Tags](#mass-o-mft)       
 > 4.10 [Mulitthreading](#mass-mt)  
-> 5. [Mass Plugins and Modules](#mass-pm)  
-> 5.1 [MassEntity](#mass-pm-me)  
-> 5.2 [MassGameplay](#mass-pm-gp)  
-> 5.3 [MassAI](#mass-pm-ai)  
+> 5. Mass common operations    <!-- Proposal -->                  
+> 5.1 Spawning an entity                
+> 5.2 Destroying an entity
+> 6. [Mass Plugins and Modules](#mass-pm)  
+> 6.1 [MassEntity](#mass-pm-me)  
+> 6.2 [MassGameplay](#mass-pm-gp)  
+> 6.3 [MassAI](#mass-pm-ai)  
+
+
 
 <a name="mass"></a>
 ## 1. Mass
@@ -154,7 +159,8 @@ In the example above, all the entities containing the `FClockSharedFragment` wil
 Thanks to this sharing data requirement, the Mass Entity subsystem only needs to store one Shared Fragment for the entities that use it.
 
 <!-- FIXMEVORI: (About the commented phrase below) Probably a bit too technical? Not a performance requirement, we should simply expose API usage. -->
-<!-- REVIEWMEFUNK: Shared fragments seem design around the hashing workflow. It seems pretty important to mention. I will check to make sure that is true... -->
+<!-- REVIEWMEFUNK: Shared fragments seem designed around the hashing workflow. It seems pretty important to mention. I will check to make sure that is true... -->
+<!-- FIXMEVORI: Mhm, I get it, however this just seems implementation details that the user won't have to handle, as its part of the framework. Will this affect performance or code design? not very likely... -->
 <!-- Hashes of the `FMassSharedFragment`'s values are used to find existing shared fragments and to create new ones. -->
 
 
@@ -184,8 +190,7 @@ The `FMassArchetypeData` struct represents an archetype in Mass internally.
 #### 4.4.1 Tags in the archetype model
 Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<FMassTag>`) that constains the tag presence information, whereas each bit in the bitset represents whether a tag exists in the archetype or not.
 
-<!-- FIXMEFUNK: "What happens if we have like 100 different tags? Is there a limit?" -->
-<!-- (check) FIXMEVORI: "Good point! Will add it to the list to things to reasearch!" -->
+<!-- FIXMEVORI: "Is there a maximum amount of tags limit?" -->
 ![MassArchetypeTags](Images/arche-tags.png)
 
 Following the previous example, *Archetype 0* and *Archetype 2* contain the tags: *TagA*, *TagC* and *TagD*; while *Archetype 1* contains *TagC* and *TagD*. Which makes the combination of *Fragment A* and *Fragment B* to be split in two different archetypes.
@@ -237,15 +242,15 @@ UMyProcessor::UMyProcessor()
 }
 ```
 
-On initialization, Mass creates a graph of processors using their execution rules so they execute in order (ie: In the example above we make sure to move our entities before we call Execute in `UMyProcessor`).
+On initialization, Mass creates a dependency graph of processors using their execution rules so they execute in order (ie: In the example above we make sure to move our entities before we call `Execute` in `UMyProcessor`).
 
-**Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD processors are both designed to be used this way. 
+**Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD processors. 
 
 <a name="mass-queries"></a>
 ### 4.6 Queries
-Queries (`FMassEntityQuery`) filter and iterate entities given a series of rules based on fragment and tag presence.
+Queries (`FMassEntityQuery`) filter and iterate entities given a series of rules based on Fragment and Tag presence.
 
-Processors can define multiple `FMassEntityQuery`s and should override the `ConfigureQueries` function in order to add rules to the different queries defined in the processor's header:
+Processors can define multiple `FMassEntityQuery`s and should override the `ConfigureQueries` to add rules to the different queries defined in the processor's header:
 
 ```c++
 void UMyProcessor::ConfigureQueries()
@@ -254,7 +259,7 @@ void UMyProcessor::ConfigureQueries()
 	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
 }
 ```
-Queries are executed by calling `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. The following example code lies inside the `Execute` function of a processor:
+Queries are executed by calling the `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. Processors execute queries within their `Execute` function:
 
 ```c++
 void UMyProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
@@ -351,8 +356,7 @@ void UMyProcessor::ConfigureQueries()
 	MyQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
 }
 ```
-<!-- FIXMEVORI: This passes in the context, does it work in a per chunk granularity??? -->
- <!--REVIEWMEFUNK Yes, it is per chunk because each chunk is only one archetype"-->
+
 `ForEachChunk`s can use `DoesArchetypeHaveTag` to determine if the current archetype contains the the Tag:
 
 ```c++
@@ -418,13 +422,13 @@ MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& C
 	}
 });
 ```
-
+<!-- REVIEWMEVORI: Maybe move to mass common operations!! Spawning/Destroying subsections, although I think that wouldn't hurt having this here, and then referencing it back in the common mass operation section -->
 <a name="mass-queries-mq"></a>
 #### 4.6.3 Mutating entities with Defer()
                                                         
 Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FIsRedTag` to any entity that has a color fragment with its `Color` property set to `Red`:
 
-<!-- REV: Isn't this executed constantly? Wouldn't be adding the tag all the time? Can't we do this just once? -->
+<!-- FIXMEVORI: Do you think this example is appropriate? Or can we find a better one? -->
 
 ```c++
 EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
@@ -436,7 +440,7 @@ EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecution
 
 		if(ColorList[EntityIndex].Color == FColor::Red)
 		{
-			//Using the context, defer adding a tag to this entity after done processing!                                                             
+			// Adding a tag to this entity after processing                                     
 			Context.Defer().AddTag<FIsRedTag>(Context.GetEntity(EntityIndex));
 		}
 	}
@@ -466,27 +470,38 @@ Context.Defer().BatchDestroyEntities(MyEntitiesArray);
 ```
 
 ##### 4.6.3.2 Advanced mutation operations
-There is a built in set of `FCommandBufferEntryBase` derived commands that you can use to defer some more useful entity mutations. Here is a list with some short examples using different styles. 
+There is a set of `FCommandBufferEntryBase` commands that can be used to defer some more useful entity mutations. The following subsections provide an overview. 
 
-###### 4.6.3.2.1 FMassCommandAddFragmentInstanceList
-Adds a list of instanced struct fragments with data you can make in `FConstStructView`s or `FStructView`s. Here's an example with a new `FHitResultFragment` with HitResult data and an `FSampleColorFragment` fragment with a new color. 
+###### 4.6.3.2.1 `FMassCommandAddFragmentInstanceList`
+Defers a list of Fragment mutations over an entity using `FStructView`s and/or `FConstStructView`s.
+
+In the example below we mutate the `FHitResultFragment` with HitResult data, and a `FSampleColorFragment` fragment with a new color.
+
 ```c++
 FConstStructView HitResulStruct = FConstStructView::Make(FHitResultFragment(HitResult));
-
 FStructView ColorStruct = FStructView::Make(FSampleColorFragment(Color));
 
 Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(Entity, 
-	{HitResulStruct,ColorStruct}
-	));
+	{HitResulStruct, ColorStruct}
+));
 ```
 
-##### 4.6.3.2.2 FMassCommandAddFragmentInstance (singular)
-Identical to `FMassCommandAddFragmentInstanceList` besides only taking a single fragment as input instead of a list.
-<!--(check) FIXMEFUNK when does FStructView being const matter? Should this use a different code style or not?-->
+<!-- FIXMEVORI: Careful! This command might change its name in the future as its currently out of convention (FMass...)-->
+##### 4.6.3.2.2 `FCommandAddFragmentInstance` (Singular)
+Identical to `FMassCommandAddFragmentInstanceList` but it takes a single Fragment as input instead of a list.
+```c++
+FConstStructView HitResulStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 
-##### 4.6.3.2.3 FBuildEntityFromFragmentInstances 
-Similar to `AddFragmentInstances`, this uses a list of `FConstStructView`s to create a whole new entity. 
-Here we make the `FStructView`s inline.
+Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResulStruct));
+```
+
+<!--(check) FIXMEFUNK when does FStructView being const matter? Should this use a different code style or not?-->
+<!-- FIXMEVORI: Simple, FStructView can be mutated once created, and FConstStructView can't. (Just checked, hehe)-->
+
+##### 4.6.3.2.3 `FBuildEntityFromFragmentInstances`
+Creates an entity given a list of initialized Fragments using `FStructView`s and/or `FConstStructView`s.
+
+In the example below, we inline the `FStructView`s:
 ```c++
 FSampleColorFragment ColorFragment;
 ColorFragment.Color = FColor::Green;
@@ -496,12 +511,17 @@ TransformFragment.SetTransform(SpawnTransform);
 
 Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(Entity,
 	{FStructView::Make(ColorFragment),FStructView::Make(ThingyFragment)}
-	));
+));
 ```
-##### 4.6.3.2.4 FBuildEntityFromFragmentInstance (singular)
-Identical to FBuildEntityFromFragmentInstances besides only taking a single fragment as input instead of a list.
+##### 4.6.3.2.4 `FBuildEntityFromFragmentInstance` (singular)
+Identical to `FBuildEntityFromFragmentInstances` but it takes a single Fragment as input instead of a list.
+```c++
+FConstStructView ColorStruct = FConstStructView::Make(FSampleColorFragment(HitResult));
 
-##### 4.6.3.2.5 FCommandSwapTags 
+Context.Defer().PushCommand(FBuildEntityFromFragmentInstance(Entity, ColorStruct));
+```
+
+##### 4.6.3.2.5 `FCommandSwapTags`
 Removes the first tag (`FOffTag` in this example) and adds the second to the entity. (`FOnTag`)
 
 ```c++
@@ -511,10 +531,11 @@ Context.Defer().PushCommand(FCommandSwapTags(Entity,
 	));
 ```
 
-##### 4.6.3.2.6 FCommandRemoveComposition
+##### 4.6.3.2.6 `FCommandRemoveComposition`
 <!--(check) FIXMEFUNK wait... we should mention this in the archetype section!! -->
 <!--(check) FIXMEFUNK also, this example is a little contrived? -->
 <!-- FIXMEVORI: Requires offline discussion -->
+<!-- FIXMEVORI: I'm reviewing from this to down later. -->
 
 The `FMassArchetypeCompositionDescriptor` is a struct that defines a set of fragments and tags that make up an archetype. For example, we can get one from a given archetype handle or template. In this example we get one from a `UMassEntityConfigAsset` pointer.
 
