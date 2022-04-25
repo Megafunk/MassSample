@@ -11,10 +11,31 @@ We are totally open to contributions, If something is wrong or you think it coul
 Currently built for the Unreal Engine 5 latest version binary from the Epic Games launcher. 
 This documentation will be updated often!
 
-#### **Download instructions:**
+#### **Requirements:**
 - Unreal Engine 5.0.1 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- `Git` version control:
+  - [Windows](https://gitforwindows.org/)
+  - [Linux/Unix & macOS](https://git-scm.com/downloads)
 - [Git Large File Storage](https://git-lfs.github.com/)
-- You might need to actually clone instead of just downloading the .zip due to the LFS requirement.
+
+#### **Download instructions (Windows):**
+After installing the requirements from above, follow these steps:
+
+1. Right-Click where you wish to hold your project, then press `Git Bash Here`.
+
+2. Within the terminal, clone the project:
+	```bash
+	git clone https://github.com/Megafunk/MassSample.git
+	```
+
+3. Pull LFS:
+	```bash
+	git lfs pull
+	```
+4. Once LFS finishes, close the terminal.
+
+
+**Note:** This project requires `Git LFS` for it to work properly, `zip` downloads **won't work**. 
 
 <!--- Introduce here table of contents -->
 <a name="tocs"></a>
