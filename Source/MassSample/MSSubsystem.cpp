@@ -24,6 +24,8 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		FTransformFragment::StaticStruct(),
 		FMassVelocityFragment::StaticStruct()
 	});
+
+	Context =  EntitySystem->CreateExecutionContext(0);
 	
 	
 }

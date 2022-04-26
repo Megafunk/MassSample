@@ -22,6 +22,8 @@ public:
 	FMassArchetypeHandle MoverArchetype;
 
 	FMSHashGrid3D HashGrid = FMSHashGrid3D(100.0f,FMassEntityHandle());
+	
+	FMassExecutionContext Context;
 
 	UFUNCTION(BlueprintCallable)
 	int32 SpawnEntity();
