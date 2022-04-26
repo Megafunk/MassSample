@@ -259,7 +259,9 @@ void UMyProcessor::ConfigureQueries()
 	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
 }
 ```
-Queries are executed by calling the `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. Processors execute queries within their `Execute` function:
+Queries are executed by calling the `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. 
+
+Processors execute queries within their `Execute` function:
 
 ```c++
 void UMyProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
@@ -275,6 +277,7 @@ void UMyProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecution
 	});
 }
 ```
+Be aware that the index we employ to iterate entities, in this case `EntityIndex`, doesn't identify uniquely your entities along time, since chunks' disposition may change and an entity that has an index this frame, may be in a different chunk with a different index in the next frame.
 
 **Note:** Queries can also be created and iterated outside processors.
 
