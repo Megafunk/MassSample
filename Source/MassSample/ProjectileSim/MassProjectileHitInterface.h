@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Common/Misc/MSBPFunctionLibarary.h"
+#include "Common/Misc/MSBPFunctionLibrary.h"
 #include "UObject/Interface.h"
 #include "MassProjectileHitInterface.generated.h"
 

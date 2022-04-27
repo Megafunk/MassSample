@@ -1,18 +1,19 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MSBPFunctionLibarary.h"
+#include "MSBPFunctionLibrary.h"
 
 #include "MassCommonFragments.h"
 #include "MassEntityConfigAsset.h"
 #include "MassEntityTemplateRegistry.h"
 #include "MassExecutor.h"
 #include "MassMovementFragments.h"
+#include "MassProcessingPhase.h"
 #include "MSSubsystem.h"
 #include "AI/NavigationSystemBase.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
-FEntityHandleWrapper UMSBPFunctionLibarary::SpawnEntityFromEntityConfig(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
+FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
                                                                         const UObject* WorldContextObject)
 {
 
@@ -39,7 +40,7 @@ FEntityHandleWrapper UMSBPFunctionLibarary::SpawnEntityFromEntityConfig(AActor* 
 	return FEntityHandleWrapper();
 }
 
-void UMSBPFunctionLibarary::SetEntityTransform(const FEntityHandleWrapper EntityHandle,const FTransform Transform,const UObject* WorldContextObject)
+void UMSBPFunctionLibrary::SetEntityTransform(const FEntityHandleWrapper EntityHandle,const FTransform Transform,const UObject* WorldContextObject)
 {
 	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	
@@ -53,7 +54,7 @@ void UMSBPFunctionLibarary::SetEntityTransform(const FEntityHandleWrapper Entity
 	
 }
 
-void UMSBPFunctionLibarary::SetEntityCollisionQueryIgnoredActors(const FEntityHandleWrapper EntityHandle,const TArray<AActor*> IgnoredActors,const UObject* WorldContextObject)
+void UMSBPFunctionLibrary::SetEntityCollisionQueryIgnoredActors(const FEntityHandleWrapper EntityHandle,const TArray<AActor*> IgnoredActors,const UObject* WorldContextObject)
 {
 	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	
@@ -66,11 +67,13 @@ void UMSBPFunctionLibarary::SetEntityCollisionQueryIgnoredActors(const FEntityHa
 	}
 	
 }
-FTransform UMSBPFunctionLibarary::GetEntityTransform(const FEntityHandleWrapper EntityHandle,const UObject* WorldContextObject)
+FTransform UMSBPFunctionLibrary::GetEntityTransform(const FEntityHandleWrapper EntityHandle,const UObject* WorldContextObject)
 {
 	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	
 	check(EntitySubSystem)
+
+	if(!EntitySubSystem->IsEntityValid(EntityHandle.Entity)) return FTransform::Identity;
 	
 	if(const auto TransformFragmentPtr =  EntitySubSystem->GetFragmentDataPtr<FTransformFragment>(EntityHandle.Entity))
 	{
@@ -81,7 +84,7 @@ FTransform UMSBPFunctionLibarary::GetEntityTransform(const FEntityHandleWrapper 
 	
 }
 
-void UMSBPFunctionLibarary::SetEntityForce(const FEntityHandleWrapper EntityHandle,const FVector Force,const UObject* WorldContextObject)
+void UMSBPFunctionLibrary::SetEntityForce(const FEntityHandleWrapper EntityHandle,const FVector Force,const UObject* WorldContextObject)
 {
 	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	
@@ -96,7 +99,7 @@ void UMSBPFunctionLibarary::SetEntityForce(const FEntityHandleWrapper EntityHand
 
 
 
-void UMSBPFunctionLibarary::FindHashGridEntitiesInSphere(const FVector Location, double Radius, TArray<FEntityHandleWrapper>& Entities ,const UObject* WorldContextObject)
+void UMSBPFunctionLibrary::FindHashGridEntitiesInSphere(const FVector Location,const double Radius, TArray<FEntityHandleWrapper>& Entities ,const UObject* WorldContextObject)
 {
 
 	QUICK_SCOPE_CYCLE_COUNTER(FindHashGridEntitiesInSphere);
@@ -123,13 +126,61 @@ void UMSBPFunctionLibarary::FindHashGridEntitiesInSphere(const FVector Location,
 	}
 }
 
-void UMSBPFunctionLibarary::AddFragmentToEntity(FFragmentWrapper Fragment, FEntityHandleWrapper Entity,
+void UMSBPFunctionLibrary::FindClosestHashGridEntityInSphere(const FVector Location,const double Radius, FEntityHandleWrapper& Entity ,const UObject* WorldContextObject,TEnumAsByte<EReturnSuccess>& ReturnBranch)
+{
+
+	QUICK_SCOPE_CYCLE_COUNTER(FindCloestHashGridEntityInSphere);
+
+	if(auto MassSampleSystem = WorldContextObject->GetWorld()->GetSubsystem<UMSSubsystem>())
+	{
+		auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+
+		const auto FoundEntityHashMember = MassSampleSystem->HashGrid.FindNearestInRadius(Location, Radius,
+			//todo-performance it feels bad to get random entities to query... 
+			[&,Location](const FMassEntityHandle Entity)
+			{
+				const FVector EntityLocation = EntitySystem->GetFragmentDataPtr<FTransformFragment>(Entity)->
+				                                             GetTransform().GetLocation();
+				return UE::Geometry::DistanceSquared(Location, EntityLocation);
+			});
+
+		if(FoundEntityHashMember.Key.IsValid())
+		{
+			Entity.Entity = FoundEntityHashMember.Key;
+			ReturnBranch = EReturnSuccess::Success;
+		}
+		else
+		{
+			ReturnBranch = EReturnSuccess::Failure;
+		}
+	}
+}
+
+void UMSBPFunctionLibrary::AddFragmentToEntity(FFragmentWrapper Fragment, FEntityHandleWrapper Entity,
 	const UObject* WorldContextObject)
 {
 
 	auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	EntitySystem->AddFragmentToEntity(Entity.Entity, Fragment.Fragment.GetScriptStruct());
 
+}
+
+FString UMSBPFunctionLibrary::GetEntityDebugString(FEntityHandleWrapper Entity, const UObject* WorldContextObject)
+{
+	auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	check(EntitySystem)
+
+	if (!Entity.Entity.IsValid())
+		return FString();
+
+
+	FStringOutputDevice OutPut;
+	OutPut.SetAutoEmitLineTerminator(true);
+	EntitySystem->DebugPrintEntity(Entity.Entity,OutPut);
+
+
+	return FString{OutPut};
+	
 }
 
 

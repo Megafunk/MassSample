@@ -11,7 +11,6 @@
 //todo: less weird place to stuff this? some types thing? oh well...
 typedef UE::Geometry::TPointHashGrid3<FMassEntityHandle,Chaos::FReal> FMSHashGrid3D;
 
-
 //This entity's startomg location on our 2D hashgrid this frame
 USTRUCT()
 struct MASSSAMPLE_API FMSGridCellStartingLocationFragment : public FMassFragment

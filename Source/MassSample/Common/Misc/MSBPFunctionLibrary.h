@@ -7,7 +7,8 @@
 
 #include "MassEntityTypes.h"
 
-#include "MSBPFunctionLibarary.generated.h"
+#include "MSBPFunctionLibrary.generated.h"
+
 
 
 USTRUCT(BlueprintType)
@@ -15,8 +16,9 @@ struct FEntityHandleWrapper
 {
 	GENERATED_BODY()
 	FMassEntityHandle Entity;
-	
+
 };
+
 
 
 USTRUCT(BlueprintType)
@@ -29,8 +31,15 @@ struct FFragmentWrapper
 
 };
 
+UENUM(BlueprintType)
+enum EReturnSuccess
+{
+	Success,
+	Failure
+};
+
 UCLASS()
-class MASSSAMPLE_API UMSBPFunctionLibarary : public UBlueprintFunctionLibrary
+class MASSSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -53,13 +62,18 @@ class MASSSAMPLE_API UMSBPFunctionLibarary : public UBlueprintFunctionLibrary
 
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void FindHashGridEntitiesInSphere(const FVector Location, double Radius, TArray<FEntityHandleWrapper>& Entities ,const UObject* WorldContextObject);
+	static void FindHashGridEntitiesInSphere(const FVector Location,const double Radius, TArray<FEntityHandleWrapper>& Entities ,const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
+	static void FindClosestHashGridEntityInSphere(const FVector Location,const double Radius, FEntityHandleWrapper& Entity, const UObject* WorldContextObject,TEnumAsByte<EReturnSuccess>& ReturnBranch);
 
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static void AddFragmentToEntity(FFragmentWrapper Fragment , FEntityHandleWrapper Entity ,const UObject* WorldContextObject);
 
 
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
+	static FString GetEntityDebugString(FEntityHandleWrapper Entity, const UObject* WorldContextObject);
 
 
 
