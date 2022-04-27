@@ -224,7 +224,7 @@ The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on 
 <a name="mass-processors"></a>
 ### 4.5 Processors
 Processors combine multiple user-defined [queries](#mass-queries) with functions that compute entities.
-<!-- FIXMEFUNK: Please simplify! Too many concepts and new types at once! -->
+
 Processors are automatically registered with Mass and added to the `EMassProcessingPhase::PrePhsysics` processing phase by default. Each `EMassProcessingPhase` relates to an `ETickingGroup`, meaning that, by default, processors tick every frame in their given processing phase.
 
 Users can configure to which processing phase their processor belongs by modifying the `ProcessingPhase` variable included in `UMassProcessor`: 
@@ -586,16 +586,14 @@ Traits are C++ defined objects that declare a set of Fragments, Tags and data fo
 To start using traits, create a `DataAsset` that inherits from 
 `MassEntityConfigAsset` and add new traits to it. Each trait can be expanded to set properties if it has any. 
 
+In addition, it is possible to inherit Fragments from another `MassEntityConfigAsset` by setting it in the `Parent` field.
+
 ![MassEntityConfigAsset](Images/massentityconfigasset.jpg)
 
-Between the many built-in traits offered by Mass, we can find the `Assorted Fragments` trait, which holds an array of `FInstancedStruct` that enables adding fragments to this trait from the editor without the need of creating a new C++ Trait. 
+Between the many built-in traits offered by Mass, we can find the `Assorted Fragments` trait, which holds an array of `FInstancedStruct` that enables adding Fragments to this trait from the editor without the need of creating a new C++ Trait. 
 
 ![AssortedFragments](Images/assortedfragments.jpg)
 
-<!-- FIXME: This is how ue works, I think it's not necessary -->
-<!-- REVIEWMEFUNK: We talk about composition over inheritance earlier so I think it's worth pointing out "inheritance" is still technically possible in Mass at least at a prefab level. Also, I think the child config's traits can override values set by the parent if they are the same? I need to test that out. -->
-
-You can also define a parent MassEntityConfigAsset to inherit the fragments from another `DataAsset`.
 
 <!-- FIXME: Please elaborate -->
 <!-- REVIEWMEFUNK kind of hard to talk about it too much here with the other section existing -->
