@@ -224,7 +224,7 @@ The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on 
 <a name="mass-processors"></a>
 ### 4.5 Processors
 Processors combine multiple user-defined [queries](#mass-queries) with functions that compute entities.
-
+<!-- FIXMEFUNK: Please simplify! Too many concepts and new types at once! -->
 Processors are automatically registered with Mass and added to the `EMassProcessingPhase::PrePhsysics` processing phase by default. The `MassProcessingPhaseManager` owns separate `FMassProcessingPhase` instances for every `ETickingGroup`, mapped to `EMassProcessingPhase`. Users can configure to which `FMassProcessingPhase` their processor belongs by modifying the `ProcessingPhase` variable included in `UMassProcessor`. By default they tick every frame in their given ticking group.
 
 In their constructor they can define rules for their execution order and which type of game clients they execute on:
