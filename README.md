@@ -225,19 +225,33 @@ The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on 
 ### 4.5 Processors
 Processors combine multiple user-defined [queries](#mass-queries) with functions that compute entities.
 <!-- FIXMEFUNK: Please simplify! Too many concepts and new types at once! -->
-Processors are automatically registered with Mass and added to the `EMassProcessingPhase::PrePhsysics` processing phase by default. The `MassProcessingPhaseManager` owns separate `FMassProcessingPhase` instances for every `ETickingGroup`, mapped to `EMassProcessingPhase`. Users can configure to which `FMassProcessingPhase` their processor belongs by modifying the `ProcessingPhase` variable included in `UMassProcessor`. By default they tick every frame in their given ticking group.
+Processors are automatically registered with Mass and added to the `EMassProcessingPhase::PrePhsysics` processing phase by default. Each `EMassProcessingPhase` relates to an `ETickingGroup`, meaning that, by default, processors tick every frame in their given processing phase.
 
-In their constructor they can define rules for their execution order and which type of game clients they execute on:
+Users can configure to which processing phase their processor belongs by modifying the `ProcessingPhase` variable included in `UMassProcessor`: 
+
+| `EMassProcessingPhase` | Related `ETickingGroup` | Description |
+| ----------- | ----------- | ----------- |
+| `PrePhysics` | `TG_PrePhysics` | Executes before physics simulation starts. |
+| `StartPhysics` | `TG_StartPhysics` | Special tick group that starts physics simulation. | 
+| `DuringPhysics` | `TG_DuringPhysics` | Executes in parallel with the physics simulation work. | 
+| `EndPhysics` | `TG_EndPhysics` |Special tick group that ends physics simulation. | 
+| `PostPhysics` | `TG_PostPhysics` |Executes after rigid body and cloth simulation. | 
+| `FrameEnd` | `TG_LastDemotable` | Catchall for anything demoted to the end. | 
+
+
+In their constructor, processors can define rules for their execution order, the processing phase and which type of game clients they execute on:
 ```c++
 UMyProcessor::UMyProcessor()
 {
-	//This processor is registered with mass by just existing! This is the default behaviour of all processors.
+	// This processor is registered with mass by just existing! This is the default behaviour of all processors.
 	bAutoRegisterWithProcessingPhases = true;
-	//Using the built-in movement processor group
+	// Setting the processing phase explicitly
+	ProcessingPhase = EMassProcessingPhase::PrePhysics;
+	// Using the built-in movement processor group
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
-	//You can also define other processors that require to run before or after this one
+	// You can also define other processors that require to run before or after this one
 	ExecutionOrder.ExecuteAfter.Add(TEXT("MSMovementProcessor"));
-	//This executes only on Clients and Standalone
+	// This executes only on Clients and Standalone
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
 }
 ```
