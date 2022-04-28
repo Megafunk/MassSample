@@ -847,26 +847,24 @@ A new lightweight AI statemachine that can work in conjunction with Mass Crowds.
 <a name="mass-or"></a>
 ## 7. Other Resources
 
-### 7.1 Unreal specific
+### 7.1 Mass
+This section compiles very useful Mass resources to complement this documentation.
 
+#### **Epic Games Official resources:**
+  - [[Documentation] MassEntity](https://docs.unrealengine.com/5.0/en-US/overview-of-mass-entity-in-unreal-engine/): Overview of Unreal Engine's MassEntity system.
+  - [[Documentation] Mass Avoidance](https://docs.unrealengine.com/5.0/en-US/mass-avoidance-in-unreal-engine/): Mass Avoidance is a force-based avoidance system integrated with MassEntity.
+  - [[Documentation] Smart Objects](https://docs.unrealengine.com/5.0/en-US/smart-objects-in-unreal-engine/): Smart Objects represent a set of activities in the level that can be used through a reservation system.
+  - [[Documentation] StateTree](https://docs.unrealengine.com/5.0/en-US/overview-of-state-tree-in-unreal-engine/): Overview of the Mass AI StateTree system.
+  - [[Video] State of Unreal : Large Numbers of Entities with Mass](https://youtu.be/f9q8A-9DvPo): Mario Palermo (Global Unreal Engine 5 Lead Evangelist) showcases Mass in detail in a 30-minute video.
 
-#### Official
-##### Documentation
-  - [MassEntity](https://docs.unrealengine.com/5.0/en-US/overview-of-mass-entity-in-unreal-engine/)
-  - [Mass Avoidance](https://docs.unrealengine.com/5.0/en-US/mass-avoidance-in-unreal-engine/)
-  - [Smart Objects](https://docs.unrealengine.com/5.0/en-US/smart-objects-in-unreal-engine/)
-  - [StateTree](https://docs.unrealengine.com/5.0/en-US/overview-of-state-tree-in-unreal-engine//)
-##### Videos
-  - [State of Unreal : Large Numbers of Entities with Mass](https://youtu.be/f9q8A-9DvPo)
-
-<!--Huge credit to this blog for teaching me how to use spawners!-->
-#### quabqi's Mass blogs
-  - [ECS of UE5: MASS framework (1)](https://zhuanlan.zhihu.com/p/441773595)
-  - [ECS of UE5: MASS framework (2)](https://zhuanlan.zhihu.com/p/446937133)
-  - [ECS of UE5: MASS framework (3)](https://zhuanlan.zhihu.com/p/477803528)
-  - [MassAI crowd drawing of UE5 CitySample](https://zhuanlan.zhihu.com/p/496165391)
+<!-- Huge credit to this blog for teaching us how to use spawners! -->
+#### **[@quabqi](https://www.zhihu.com/people/quabqi)'s blog posts (Chinese):**
+  - [ECS of UE5: MASS framework (1)](https://zhuanlan.zhihu.com/p/441773595): Mass memory hierarchy, entity and archetype introduction.
+  - [ECS of UE5: MASS framework (2)](https://zhuanlan.zhihu.com/p/446937133): Mass basic execution.
+  - [ECS of UE5: MASS framework (3)](https://zhuanlan.zhihu.com/p/477803528): A deep dive in `MassGameplay`.
+  - [MassAI crowd drawing of UE5 CitySample](https://zhuanlan.zhihu.com/p/496165391): How are the pedestrians of the UE5 CitySample handled?
  
-### 7.2 Entity componenent systems
+### 7.2 General Entity Component Systems (ECS)
 
-  - [Sander's Entity Component System FAQ](https://github.com/SanderMertens/ecs-faq)
+  - [Sander's Entity Component System FAQ](https://github.com/SanderMertens/ecs-faq): This FAQ is for anyone interested in ECS & modern, high performance game development.
 
