@@ -866,7 +866,7 @@ A new lightweight AI statemachine that can work in conjunction with Mass Crowds.
   - [ECS of UE5: MASS framework (3)](https://zhuanlan.zhihu.com/p/477803528)
   - [MassAI crowd drawing of UE5 CitySample](https://zhuanlan.zhihu.com/p/496165391)
  
-### 7.2 Entity xomponenent systems
+### 7.2 Entity componenent systems
 
   - [Sander's Entity Component System FAQ](https://github.com/SanderMertens/ecs-faq)
 
