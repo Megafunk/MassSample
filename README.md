@@ -471,8 +471,8 @@ The following Listings define the native mutations that you can defer:
 
 Fragments:
 ```c++
-Context.Defer().AddFragment<FMyTag>(Entity);
-Context.Defer().RemoveFragment<FMyTag>(Entity);
+Context.Defer().AddFragment<FMyFragment>(Entity);
+Context.Defer().RemoveFragment<FMyFragment>(Entity);
 ```
 
 Tags:
@@ -496,11 +496,11 @@ Defers a list of Fragment mutations over an entity using `FStructView`s and/or `
 In the example below we mutate the `FHitResultFragment` with HitResult data, and a `FSampleColorFragment` fragment with a new color.
 
 ```c++
-FConstStructView HitResulStruct = FConstStructView::Make(FHitResultFragment(HitResult));
+FConstStructView HitResultStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 FStructView ColorStruct = FStructView::Make(FSampleColorFragment(Color));
 
 Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(Entity, 
-	{HitResulStruct, ColorStruct}
+	{HitResultStruct, ColorStruct}
 ));
 ```
 
@@ -508,9 +508,9 @@ Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(Entity,
 ##### 4.6.3.2.2 `FCommandAddFragmentInstance` (Singular)
 Identical to `FMassCommandAddFragmentInstanceList` but it takes a single Fragment as input instead of a list.
 ```c++
-FConstStructView HitResulStruct = FConstStructView::Make(FHitResultFragment(HitResult));
+FConstStructView HitResultStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 
-Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResulStruct));
+Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResultStruct));
 ```
 
 <!--(check) FIXMEFUNK when does FStructView being const matter? Should this use a different code style or not?-->
@@ -569,7 +569,7 @@ Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
 <!-- FIXMEFUNK: Add the lambda one in here!!!! -->
 
 
-Note that the commands that mutate entities change the value of ECommandBufferOperationType in their decleration in order to pass their changes to relevant observers when commands are flushed. They also manually add their changes to the observed changes list by implementing `AppendAffectedEntitiesPerType`. 
+Note that the commands that mutate entities change the value of `ECommandBufferOperationType` in their declaration in order to pass their changes to relevant observers when commands are flushed. They also manually add their changes to the observed changes list by implementing `AppendAffectedEntitiesPerType`. 
 
 ##### 4.6.3.2.7 Custom mutation operations
 It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
@@ -825,7 +825,7 @@ Lets entities "claim" SmartObjects to interact with them.
 > 6.3.2 [`StateTree`](#mass-pm-ai-st)  
 > 6.3.3 ...
 
-This Section, as the rest of the document is still work in progress.
+This section, like the rest of the document, is still work in progress.
 
 <!-- FIXME: Ideally, this section should be like the previous one. -->
 <!-- FIXME: To what extent do we want to cover the AI side of mass. -->
