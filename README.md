@@ -69,8 +69,10 @@ After installing the requirements from above, follow these steps:
 > 6.2 [MassGameplay](#mass-pm-gp)  
 > 6.3 [MassAI](#mass-pm-ai)  
 > 7. [Other Resources](#mass-or)  
-
-
+<!--ProposalFUNK: How about a "FAQ" of sorts for debugging etc? like: -->
+<!--Why isn't anything being used in my query?-->
+<!--When should I use Mass?-->
+<!--General debug UI info etc-->
 
 <a name="mass"></a>
 ## 1. Mass
@@ -442,7 +444,7 @@ MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& C
 ```
 <!-- REVIEWMEVORI: Maybe move to mass common operations!! Spawning/Destroying subsections, although I think that wouldn't hurt having this here, and then referencing it back in the common mass operation section -->
 <a name="mass-queries-mq"></a>
-#### 4.6.3 Mutating entities with Defer()
+#### 4.6.3 Mutating entities with `Defer()`
                                                         
 Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FIsRedTag` to any entity that has a color fragment with its `Color` property set to `Red`:
 
@@ -512,14 +514,14 @@ FConstStructView HitResultStruct = FConstStructView::Make(FHitResultFragment(Hit
 
 Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResultStruct));
 ```
-
-<!--(check) FIXMEFUNK when does FStructView being const matter? Should this use a different code style or not?-->
-<!-- FIXMEVORI: Simple, FStructView can be mutated once created, and FConstStructView can't. (Just checked, hehe)-->
-
+<!-- FIXMEFUNK: I trample all over your weak naming conventions! muahhahhahaa... -->
+<a name="mass-queries-FBuildEntityFromFragmentInstances"></a>
 ##### 4.6.3.2.3 `FBuildEntityFromFragmentInstances`
 Creates an entity given a list of initialized Fragments using `FStructView`s and/or `FConstStructView`s.
 
 In the example below, we inline the `FStructView`s:
+
+**Note:** Can also take an optional `FMassArchetypeSharedFragmentValues` struct as the third function argument.
 ```c++
 FSampleColorFragment ColorFragment;
 ColorFragment.Color = FColor::Green;
@@ -527,14 +529,27 @@ ColorFragment.Color = FColor::Green;
 FTransformFragment TransformFragment;
 TransformFragment.SetTransform(SpawnTransform);
 
+//Reserve our future entity's ID!
+const FMassEntityHandle Entity = EntitySubsystem->ReserveEntity();
+
 Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(Entity,
 	{FStructView::Make(ColorFragment),FStructView::Make(ThingyFragment)}
+
+	//you can add a final FMassArchetypeSharedFragmentValues if you like!
 ));
 ```
+
+<!-- TODO/FIXMEFUNK: test out FMassArchetypeSharedFragmentValues and document it!!! This isn't really feedback as much as a todo...-->
+
+
 ##### 4.6.3.2.4 `FBuildEntityFromFragmentInstance` (singular)
-Identical to `FBuildEntityFromFragmentInstances` but it takes a single Fragment as input instead of a list.
+Identical to `FBuildEntityFromFragmentInstances` but it takes a single Fragment as input instead of a list. 
+It can take an optional `FMassArchetypeSharedFragmentValues` struct as the third function argument as well.
 ```c++
 FConstStructView ColorStruct = FConstStructView::Make(FSampleColorFragment(HitResult));
+
+//Reserve our future entity's ID!
+const FMassEntityHandle Entity = EntitySubsystem->ReserveEntity();
 
 Context.Defer().PushCommand(FBuildEntityFromFragmentInstance(Entity, ColorStruct));
 ```
@@ -566,12 +581,36 @@ const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetComp
 Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
 ```
 
-<!-- FIXMEFUNK: Add the lambda one in here!!!! -->
 
+
+
+
+<!-- FIXMEFUNK: Add the lambda example in here!!!! I need a better example....-->
+
+##### 4.6.3.2.7 `FDeferredCommand` Lambda
+The `FDeferredCommand` is works similarly to the other commands and takes a lambda. This way, you can defer your own arbitrary code to happen when the command buffer is flushed! Much easier than a whole new custom command.
+
+This is a smart way to handle changing stuff on actors, as that usually needs to happen on the main thread.
+
+**Note:** The `TFunction` lambda does have a UMassEntitySubsystem& as a function parameter you should include in every lambda using this command.
+
+**Note:** Since it defines `ECommandBufferOperationType::None` this deferred action does not add any entity changes to trigger observers on its own!
+
+```c++
+	//don't forget the UMassEntitySubsystem&! It can just be (UMassEntitySubsystem&) if it's unneeded.
+	Context.Defer().EmplaceCommand<FDeferredCommand>([MyAwesomePointer](const UMassEntitySubsystem& System)
+	{
+		//Just a weird example. This is a good way to
+			auto World = System.GetWorld();
+			MyAwesomePointer->DoStuffWithWorld(World);
+	});
+
+
+```
 
 Note that the commands that mutate entities change the value of `ECommandBufferOperationType` in their declaration in order to pass their changes to relevant observers when commands are flushed. They also manually add their changes to the observed changes list by implementing `AppendAffectedEntitiesPerType`. 
 
-##### 4.6.3.2.7 Custom mutation operations
+##### 4.6.3.2.8 Custom mutation operations
 It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
 
 ```c++
@@ -718,7 +757,19 @@ void UMSObserverOnAdd::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecu
 
 It is also possible to create [queries](#mass-queries) to use during the execution process regardless the observed Fragment/Tag.
 
-**Note:** _Currently_ observers are only called during batched entity actions. This covers processors and spawners but not single entity changes from C++. 
+**Note:** _Currently_ observers are only triggered explicitely during specific entity actions. This covers processors and spawners but not single entity changes from C++.
+<a name="mass-o-n"></a>
+Here is a complete list (so far):
+
+- Entity changes in the subsystem
+  - `UMassEntitySubsystem::BatchCreateEntities`
+  - `UMassEntitySubsystem::BatchDestroyEntityChunks`
+  - `UMassEntitySubsystem::AddCompositionToEntity_GetDelta`
+  - `UMassEntitySubsystem::RemoveCompositionFromEntity`
+- Flushing the command buffer with deferred entity changes (`FMassCommandBuffer::Flush`) 
+  - Any `FCommandBufferEntryBase` derived command that mutates entities.
+    They are set up by defining the enum `ECommandBufferOperationType::Add` or `ECommandBufferOperationType::Remove` along with manually adding the changed entities to the list of changes stored in the query by overriding `AppendAffectedEntitiesPerType`. 
+
 
 <a name="mass-o-mft"></a>
 #### 4.8.1 Observing multiple Fragment/Tags
@@ -751,6 +802,48 @@ Out of the box Mass can spread out work to threads in two different ways:
 - Per-query parrallel for calls that spread the job of one query over multiple threads by using the command argument `ParallelMassQueries=1` for the given Unreal process. This is currently used nowhere in the Mass modules or sample and currently it seems to break when deferring commands from it multiple times a frame.
 
 
+<a name="mass-cm"></a>
+## 5. Mass common operations
+This section is designed to serve as a quick reference for how to perform some common operations. As usual, we are open to ideas on how to organize this stuff!!
+
+As a rule of thumb, most entity mutations (adding/removing components, spawning or removing entities) are generally done by deferring them from inside of processors. You can create your own `FMassExecutionContext` whenever you need one as well! We have one on the `UMSSubsystem` as an example.
+
+<!--FIXMEFUNK: a custom FMassExecutionContext in the subsystem seems like the easiest way to handle this. Need to show how to use it correctly soon. -->
+
+<!--FIXMEFUNK: When does changing values require deferrment if ever? need more concurrency info for that-->
+
+<a name="mass-cm-sae"></a>
+## 5.1 Spawning a new entity
+
+Spawning an entity only requires asking the Mass Entity Subsystem for a new entity, but we rarely just want an entity with nothing on it! Here are some common ways to create new entiites with data.
+
+#### Entity with Fragment data
+<!--FIXMEFUNK: Aaaagh!! -->
+
+[Check out this example with `FBuildEntityFromFragmentInstances` from the commands section:](#mass-queries-FBuildEntityFromFragmentInstances)
+
+We currently recommend not calling `UMassEntitySubsystem::BuildEntity` directly unless you are sure don't need observers to trigger for the entity. The shared fragments go in there as well as the third function argument!
+
+#### Entity with Fragment data *and* tags
+
+Currently, my best guess is to use `FBuildEntityFromFragmentInstances` and then defer however many `Context.Defer().AddTag<FTagType>(EntityReservedEarlier);` you need.
+
+<!--REVIEWMEFUNK: Added stuff in observers-->
+#### A note on observers
+
+It is very important to remember that Observers are only triggered explicitely in certain functions out of the box. [Check out the list here.](#mass-o-n) 
+
+
+<!-- <a name="mass-cm-dae"></a>
+## 5.2 Destroying an entity
+
+Destroying an entity is rather straightfoward -->
+
+<!-- #### Deferred -->
+
+<!-- #### Direct Call -->
+
+
 
 <a name="mass-pm"></a>
 ## 6. Mass Plugins and Modules
@@ -761,7 +854,7 @@ This Section overviews the three main Mass plugins and their different modules:
 > 6.3 [`MassAI`](#mass-pm-ai)  
 
 <a name="mass-pm-me"></a>
-### 6.1 `MassEntity`
+### 6.1 [`MassEntity`](https://docs.unrealengine.com/5.0/en-US/overview-of-mass-entity-in-unreal-engine/)
 `MassEntity` is the main plugin that manages everything regarding Entity creation and storage.
 
 
@@ -794,15 +887,15 @@ Processors and fragments for rendering entities in the world. They generally use
 
 <a name="mass-pm-gp-ms"></a>
 #### 6.2.4 `MassSpawner`
-A highly configurable actor type that can spawn specific entities where you want. 
+A highly configurable actor type that can spawn specific entities where you want. There are two ways of choosing locations built in, one that uses an Environmental Query System asset and one that uses a ZoneGraph tag-based query. This appears to be intended for things that spawn all at once initially like NPCs,trees etc, rather than dynamicly spawned things like projectiles, for example.
 
 <a name="mass-pm-gp-ma"></a>
 #### 6.2.5 `MassActors`
-A bridge between the general UE5 actor framework and Mass. A type of fragment that turns entities into "Agents" that can exchange data in either direction (or both).
+A bridge between the general UE5 actor framework and Mass. A type of fragment that turns entities into "Agents" that can exchange data in either direction (or both ways).
 
 <a name="mass-pm-gp-ml"></a>
 #### 6.2.6 `MassLOD`
-LOD Processors that can manage different kinds of levels of detail, from rendering to ticking at different rates based on fragment settings.
+LOD Processors that can manage different kinds of levels of detail, from rendering to ticking at different rates based on fragment settings. They are used in visualization and replication currently as well.
 
 <a name="mass-pm-gp-mre"></a>
 #### 6.2.7 `MassReplication`
@@ -813,7 +906,7 @@ Replication support for Mass! Other modules override `UMassReplicatorBase` to re
 A system that lets entities send named signals to each other.
 
 <a name="mass-pm-gp-mso"></a>
-#### 6.2.9 `MassSmartObjects`
+#### 6.2.9 [`MassSmartObjects`](https://docs.unrealengine.com/5.0/en-US/smart-objects-in-unreal-engine/)
 Lets entities "claim" SmartObjects to interact with them.
 
 <!-- This section explicitly for AI specific modules-->
@@ -837,7 +930,7 @@ This section, like the rest of the document, is still work in progress.
 In-level splines and shapes that use config defined lanes to direct zonegraph pathing things around! Think sidewalks, roads etc.
 
 <a name="mass-pm-ai-st"></a>
-#### 6.3.2 `StateTree`
+#### 6.3.2 [`StateTree`](https://docs.unrealengine.com/5.0/en-US/overview-of-state-tree-in-unreal-engine/)
 <!-- FIXME: Add screenshots and examples. -->
 A new lightweight AI statemachine that can work in conjunction with Mass Crowds. One of them is used to give movement targets to the cones in the parade in the sample.
 
@@ -849,7 +942,6 @@ A new lightweight AI statemachine that can work in conjunction with Mass Crowds.
 
 ### 7.1 Mass
 This section compiles very useful Mass resources to complement this documentation.
-
 #### **Epic Games Official resources:**
   - [[Documentation] MassEntity](https://docs.unrealengine.com/5.0/en-US/overview-of-mass-entity-in-unreal-engine/): Overview of Unreal Engine's MassEntity system.
   - [[Documentation] Mass Avoidance](https://docs.unrealengine.com/5.0/en-US/mass-avoidance-in-unreal-engine/): Mass Avoidance is a force-based avoidance system integrated with MassEntity.
