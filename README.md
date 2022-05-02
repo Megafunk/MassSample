@@ -995,4 +995,7 @@ This section compiles very useful Mass resources to complement this documentatio
 
   - [Sander's Entity Component System FAQ](https://github.com/SanderMertens/ecs-faq): This FAQ is for anyone interested in ECS & modern, high performance game development.
   - [Data-Oriented Design by Richard Fabian](https://www.dataorienteddesign.com/dodbook/): A book detailing a style/paradigm of programming called "Data-Oriented Design". Entity Component System libraries like Mass make data oriented design easy!
+  - [Evolve Your Hierarchy by Mick West](https://cowboyprogramming.com/2007/01/05/evolve-your-heirachy/): An article demonstrating how to use composition over inheritance to represent game entities.
+
+
 
