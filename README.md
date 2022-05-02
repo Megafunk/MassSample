@@ -994,4 +994,5 @@ This section compiles very useful Mass resources to complement this documentatio
 ### 7.2 General Entity Component Systems (ECS)
 
   - [Sander's Entity Component System FAQ](https://github.com/SanderMertens/ecs-faq): This FAQ is for anyone interested in ECS & modern, high performance game development.
+  - [Data-Oriented Design by Richard Fabian](https://www.dataorienteddesign.com/dodbook/): A book detailing a style/paradigm of programming called "Data-Oriented Design". Entity Component System libraries like Mass make data oriented design easy!
 
