@@ -243,7 +243,7 @@ void UMSBPFunctionLibrary::AddFragmentToEntity(FStructViewBPWrapper Fragment, FE
 {
 
 	auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-	EntitySystem->AddFragmentToEntity(Entity.Entity, Fragment.Fragment.GetScriptStruct());
+	EntitySystem->AddFragmentToEntity(Entity.Entity, Fragment.Struct.GetScriptStruct());
 
 }
 
