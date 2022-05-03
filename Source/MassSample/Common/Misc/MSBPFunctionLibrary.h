@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityConfigAsset.h"
+#include "StructView.h"
 
 #include "MassEntityTypes.h"
 
@@ -22,15 +23,25 @@ struct FEntityHandleWrapper
 
 
 USTRUCT(BlueprintType)
-struct FFragmentWrapper
+struct FFragmentBPWrapper
 {
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, meta = (BaseStruct = "MassFragment", ExcludeBaseStruct))
-	FInstancedStruct Fragment;
+	FInstancedStruct Struct;
 
 };
 
+USTRUCT(BlueprintType)
+struct FStructViewBPWrapper
+{
+	GENERATED_BODY()
+
+
+	//not a ustruct, as luck would have it...
+	FStructView Struct;
+
+};
 UENUM(BlueprintType)
 enum EReturnSuccess
 {
@@ -45,6 +56,12 @@ class MASSSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static FEntityHandleWrapper SpawnEntityFromEntityConfig(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig, const UObject* WorldContextObject);
+
+
+	//todo: broken and hardcoded for testing, Don't use this yet!
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
+	static FEntityHandleWrapper SpawnEntityFromEntityConfigDeferredTest(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
+	                                                         const UObject* WorldContextObject);
 
 	//todo: Lazy fragment-specific versions until we can think of something nicer
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
@@ -69,7 +86,7 @@ class MASSSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void AddFragmentToEntity(FFragmentWrapper Fragment , FEntityHandleWrapper Entity ,const UObject* WorldContextObject);
+	static void AddFragmentToEntity(FStructViewBPWrapper Fragment , FEntityHandleWrapper Entity ,const UObject* WorldContextObject);
 
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))

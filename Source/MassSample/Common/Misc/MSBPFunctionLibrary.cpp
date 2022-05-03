@@ -5,10 +5,11 @@
 
 #include "MassCommonFragments.h"
 #include "MassEntityConfigAsset.h"
-#include "MassEntityTemplateRegistry.h"
 #include "MassExecutor.h"
+#include "MassGameplayDebugTypes.h"
 #include "MassMovementFragments.h"
 #include "MassProcessingPhase.h"
+#include "MSDeferredCommands.h"
 #include "MSSubsystem.h"
 #include "AI/NavigationSystemBase.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
@@ -32,6 +33,8 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(AActor* O
 		EntitySubSystem->BatchCreateEntities(EntityTemplate->GetArchetype(), 1, SpawnedEntities);
 
 		const TConstArrayView<FInstancedStruct> FragmentInstances = EntityTemplate->GetInitialFragmentValues();
+
+		
 		EntitySubSystem->SetEntityFragmentsValues(SpawnedEntities[0], FragmentInstances);
 		
 		return  FEntityHandleWrapper{SpawnedEntities[0]};
@@ -40,16 +43,94 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(AActor* O
 	return FEntityHandleWrapper();
 }
 
+
+
+
+FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredTest(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
+																		const UObject* WorldContextObject)
+{
+
+
+//	FMassExecutionContext ExecutionContext(WorldContextObject->GetWorld()->DeltaTimeSeconds);
+	FMassExecutionContext ExecutionContext(0);
+
+	ExecutionContext.SetDeferredCommandBuffer(MakeShareable(new FMassCommandBuffer()));
+
+
+	
+
+
+	
+	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
+	
+	if(const FMassEntityTemplate* EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
+		*Owner, *MassEntityConfig))
+	{
+		auto EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+		auto MassSampleSubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMSSubsystem>();
+
+;
+
+		const FMassEntityHandle ReservedEntity = EntitySubSystem->ReserveEntity();
+
+
+		
+
+
+		//todo: this is very slow! I am just doing this to be able to stuff configs in here for now
+		TArray<const UScriptStruct*> FragmentTypesList;
+		EntityTemplate->GetCompositionDescriptor().Fragments.ExportTypes(FragmentTypesList);
+		TArray<const UScriptStruct*> TagsTypeList;
+
+		EntityTemplate->GetCompositionDescriptor().Tags.ExportTypes(TagsTypeList);
+
+		TArray<FInstancedStruct> InstanceStructs = TArray<FInstancedStruct>(FragmentTypesList);
+
+		TConstArrayView<FInstancedStruct> InitialFragmentInstances = EntityTemplate->GetInitialFragmentValues();
+
+		// InstanceStructs need to have the InitialFragmentInstances data-filled instanced structs, all of which already exist inside of InstanceStructs
+
+		for (auto InitialFragmentInstance : InitialFragmentInstances)
+		{
+			int32 index = InstanceStructs.IndexOfByPredicate([&](const FInstancedStruct InstancedStructValue)
+				{
+					return InstancedStructValue.GetScriptStruct() == InitialFragmentInstance.GetScriptStruct();
+				});
+			if(index != INDEX_NONE)
+				InstanceStructs[index] = InitialFragmentInstance;
+		}
+		
+		ExecutionContext.Defer().PushCommand(
+			FBuildEntityFromFragmentInstancesAndTags(ReservedEntity,
+				InstanceStructs,
+				TagsTypeList,
+				EntityTemplate->GetSharedFragmentValues()));
+		
+
+		ExecutionContext.FlushDeferred(*EntitySubSystem);
+		//EntitySubSystem->FlushCommands(MakeShareable(new FMassCommandBuffer()));
+		return  FEntityHandleWrapper{ReservedEntity};
+	}
+	
+	return FEntityHandleWrapper();
+}
+
+
 void UMSBPFunctionLibrary::SetEntityTransform(const FEntityHandleWrapper EntityHandle,const FTransform Transform,const UObject* WorldContextObject)
 {
 	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	
 	check(EntitySubSystem)
+	check(EntitySubSystem->IsEntityBuilt(EntityHandle.Entity))
 
 	
-	if(const auto TransformFragmentPtr =  EntitySubSystem->GetFragmentDataPtr<FTransformFragment>(EntityHandle.Entity))
+	if(!EntitySubSystem->GetArchetypeComposition(EntitySubSystem->GetArchetypeForEntity(EntityHandle.Entity)).Fragments.Contains(*FTransformFragment::StaticStruct()))
+		return;
+
+	if(const auto TransformFragment = EntitySubSystem->GetFragmentDataPtr<FTransformFragment>(
+		EntityHandle.Entity))
 	{
-		TransformFragmentPtr->SetTransform(Transform);
+		TransformFragment->SetTransform(Transform);
 	}
 	
 }
@@ -89,7 +170,8 @@ void UMSBPFunctionLibrary::SetEntityForce(const FEntityHandleWrapper EntityHandl
 	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	
 	check(EntitySubSystem)
-
+	if(!EntitySubSystem->GetArchetypeComposition(EntitySubSystem->GetArchetypeForEntity(EntityHandle.Entity)).Fragments.Contains(*FMassForceFragment::StaticStruct()))
+		return;
 	if(const auto MassForceFragmentPtr =  EntitySubSystem->GetFragmentDataPtr<FMassForceFragment>(EntityHandle.Entity))
 	{
 		MassForceFragmentPtr->Value = Force;
@@ -156,7 +238,7 @@ void UMSBPFunctionLibrary::FindClosestHashGridEntityInSphere(const FVector Locat
 	}
 }
 
-void UMSBPFunctionLibrary::AddFragmentToEntity(FFragmentWrapper Fragment, FEntityHandleWrapper Entity,
+void UMSBPFunctionLibrary::AddFragmentToEntity(FStructViewBPWrapper Fragment, FEntityHandleWrapper Entity,
 	const UObject* WorldContextObject)
 {
 

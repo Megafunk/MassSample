@@ -40,6 +40,7 @@ public class MassSample : ModuleRules
 				"MassSignals",
 				"MassCrowd",
 				"MassActors",
+				"MassSpawner",
 				"MassRepresentation",
 				"MassReplication",
 				"MassNavigation",

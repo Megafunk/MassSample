@@ -25,7 +25,7 @@ struct MASSSAMPLE_API FSampleColorFragment : public FMassFragment
  */
 //*** TAGS ***//
 USTRUCT()
-struct MASSSAMPLE_API FMoverTag : public FMassTag
+struct MASSSAMPLE_API FsampleMoverTag : public FMassTag
 {
 	GENERATED_BODY()
 };

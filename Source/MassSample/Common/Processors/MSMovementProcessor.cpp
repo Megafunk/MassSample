@@ -18,11 +18,11 @@ UMSMovementProcessor::UMSMovementProcessor()
 }
 
 void UMSMovementProcessor::ConfigureQueries()
-{
+ {
 	//Only include entities that meet the following rules:
 
 	//ALL must have an FMoverTag
-	MovementEntityQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
+	MovementEntityQuery.AddTagRequirement<FsampleMoverTag>(EMassFragmentPresence::All);
 
 	//must have an FTransformFragment and we are reading and changing it
 	MovementEntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
