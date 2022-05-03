@@ -16,17 +16,18 @@ UCLASS()
 class MASSSAMPLE_API UMSMovementProcessor : public UMassProcessor
 {
 	GENERATED_BODY()
+
 public:
+
 	UMSMovementProcessor();
 
 protected:
+
+	//Note that we declare this ourselves! You can have many queries if need be.
+	FMassEntityQuery MovementEntityQuery;
+
 	virtual void ConfigureQueries() override;
 	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
 
-	
-	//Note that we declare this ourselves! You can have many queries if need be.
-	FMassEntityQuery MovementEntityQuery;
-	
-	
 };
 

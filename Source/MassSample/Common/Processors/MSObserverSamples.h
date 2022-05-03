@@ -14,14 +14,16 @@ UCLASS()
 class MASSSAMPLE_API UMSObserverOnAdd : public UMassObserverProcessor
 {
 	GENERATED_BODY()
+
 public:
+
 	UMSObserverOnAdd();
 	
 protected:
 	
+	FMassEntityQuery EntityQuery;
+
 	virtual void ConfigureQueries() override;
-	
 	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
 
-	FMassEntityQuery EntityQuery;
 };

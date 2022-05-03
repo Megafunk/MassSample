@@ -4,13 +4,9 @@
 #include "GameplayEffect.h"
 #include  "MSProjectileFragments.generated.h"
  
-
-/*
- *   Fragments	
- */
-
-
-
+/**
+* Fragments	
+**/
 USTRUCT()
 struct MASSSAMPLE_API FDamageFragment : public FMassFragment
 {
@@ -18,7 +14,7 @@ struct MASSSAMPLE_API FDamageFragment : public FMassFragment
 	float Damage;
 };
 
-//todo-performance investigate making part of this shared? it's going to be very common besides the ignored actors etc?
+// FIXME: Performance investigate making part of this shared? it's going to be very common besides the ignored actors etc?
 USTRUCT(BlueprintType)
 struct MASSSAMPLE_API FLineTraceFragment : public FMassFragment
 {
@@ -27,6 +23,7 @@ struct MASSSAMPLE_API FLineTraceFragment : public FMassFragment
 
 	
 };
+
 USTRUCT()
 struct MASSSAMPLE_API FHitResultFragment : public FMassFragment
 {
@@ -41,7 +38,8 @@ struct MASSSAMPLE_API FHitResultFragment : public FMassFragment
 	FHitResult HitResult;
 
 };
-//TODO: move this elsewhere? It's not entirely projectile specific
+
+// TODO: Move this elsewhere? It's not entirely projectile specific
 USTRUCT()
 struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
 {
@@ -49,11 +47,10 @@ struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
 	float Time;
 };
 
-
-/*		Please keep in mind that we key FSharedNiagaraSystemFragment off of the pointer
- *		to the niagara system select in the trait.
- *		Don't use the regular struct CRC32 hash like you would for other shared fragments.
-*/
+/**	Please keep in mind that we key FSharedNiagaraSystemFragment off of the pointer
+*	to the niagara system select in the trait.
+*	Don't use the regular struct CRC32 hash like you would for other shared fragments.
+**/
 USTRUCT()
 struct MASSSAMPLE_API FSharedNiagaraSystemFragment : public FMassSharedFragment
 {
@@ -67,16 +64,15 @@ struct MASSSAMPLE_API FSharedNiagaraSystemFragment : public FMassSharedFragment
 
 	UPROPERTY()
 	TArray<FVector> ParticlePositions;
+
 	UPROPERTY()
 	TArray<FVector> ParticleDirectionVectors;
 
 };
 
-
-
-/*
- *   Tags	
- */
+/**
+* Tags	
+**/
 USTRUCT()
 struct MASSSAMPLE_API FStopMovementTag : public FMassTag
 {
@@ -88,9 +84,6 @@ struct MASSSAMPLE_API FProjectileTag : public FMassTag
 {
 	GENERATED_BODY()
 };
-
-
-
 
 USTRUCT()
 struct MASSSAMPLE_API FFireHitEventTag : public FMassTag

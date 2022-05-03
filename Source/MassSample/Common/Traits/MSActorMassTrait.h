@@ -17,8 +17,8 @@ class MASSSAMPLE_API UMSActorMassTrait : public UMassEntityTraitBase
 	GENERATED_BODY()
 
 protected:
+
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
-	
-	
+
 };
 

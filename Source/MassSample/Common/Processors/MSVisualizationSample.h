@@ -15,7 +15,10 @@ UCLASS()
 class MASSSAMPLE_API UMSSampleVisualizationProcessor : public UMassVisualizationProcessor
 {
 	GENERATED_BODY()
+
 public:
+
 	UMSSampleVisualizationProcessor();
+
 };
 

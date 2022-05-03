@@ -94,22 +94,27 @@ UCLASS()
 class MASSSAMPLE_API UMSPathologicalBenchmarkProcessor : public UMassProcessor
 {
 	GENERATED_BODY()
+
 public:
+
 	UMSPathologicalBenchmarkProcessor();
-	void CombinationsRecursive(UMassEntitySubsystem* EntitySubsystem, int32 length, int32 offset);
-	virtual void Initialize(UObject& Owner) override;
-	//static void Combinations(TArray<UScriptStruct*> array, TArray<UScriptStruct*> result,int32 length );
+
 protected:
-	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
 
 	TArray<UScriptStruct*> Combination;
 	TArray<UScriptStruct*> Provinces;
-
 	int NumCombinations;
-
 	FMassEntityQuery PathologicQuery3;
 	FMassEntityQuery PathologicQuery9;
-
 	TArray<FMassArchetypeHandle> Archetypes;
+
+public:
+
+	void CombinationsRecursive(UMassEntitySubsystem* EntitySubsystem, int32 length, int32 offset);
+	virtual void Initialize(UObject& Owner) override;
+
+protected:
+
+	virtual void ConfigureQueries() override;
+	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
 };

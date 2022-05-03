@@ -8,10 +8,10 @@
 #include "Spatial/PointHashGrid3.h"
 #include "MSHashGridFragments.generated.h"
 
-//todo: less weird place to stuff this? some types thing? oh well...
+// FIXMEFUNK: Less weird place to stuff this? some types thing? oh well...
 typedef UE::Geometry::TPointHashGrid3<FMassEntityHandle,Chaos::FReal> FMSHashGrid3D;
 
-//This entity's startomg location on our 2D hashgrid this frame
+// This entity's start location on our 2D hashgrid this frame
 USTRUCT()
 struct MASSSAMPLE_API FMSGridCellStartingLocationFragment : public FMassFragment
 {
@@ -19,7 +19,9 @@ struct MASSSAMPLE_API FMSGridCellStartingLocationFragment : public FMassFragment
 	FVector Location;
 };
 
-
-//to indicate the entity is currently added to the hashgrid
+// To indicate the entity is in the hashgrid
 USTRUCT()
-struct MASSSAMPLE_API FMSInHashGridTag : public FMassTag{GENERATED_BODY()};
+struct MASSSAMPLE_API FMSInHashGridTag : public FMassTag
+{
+	GENERATED_BODY()
+};

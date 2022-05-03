@@ -23,12 +23,12 @@ struct MASSSAMPLE_API FSampleColorFragment : public FMassFragment
  * FMassTags are structs that exist only as tags on Mass entities. They cannot have data!
  * Mostly used for filtering. They can be queried for to only include certain entities etc.
  */
-//*** TAGS ***//
 USTRUCT()
-struct MASSSAMPLE_API FsampleMoverTag : public FMassTag
+struct MASSSAMPLE_API FSampleMoverTag : public FMassTag
 {
 	GENERATED_BODY()
 };
+
 USTRUCT()
 struct MASSSAMPLE_API FMassSampleDebuggableTag : public FMassTag
 {

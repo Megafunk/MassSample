@@ -41,10 +41,10 @@ int32 UMSSubsystem::SpawnEntity()
 	
 	//Afterwards you can add, remove or change fragments of the entity. Let's add a tag fragment!
 	EntitySystem->AddTagToEntity(NewEntity,
-		FsampleMoverTag::StaticStruct());
+		FSampleMoverTag::StaticStruct());
 	//Make sure you use AddTag for tags and AddFragment for fragments!
 	EntitySystem->AddFragmentToEntity(NewEntity,
-	FSampleColorFragment::StaticStruct());
+		FSampleColorFragment::StaticStruct());
 
 	
 	//How about changing data on a fragment?
