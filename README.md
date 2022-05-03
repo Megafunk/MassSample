@@ -469,33 +469,43 @@ EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecution
 
 		if(ColorList[EntityIndex].Color == FColor::Red)
 		{
-			// Adding a tag to this entity after processing                                     
-			Context.Defer().AddTag<FIsRedTag>(Context.GetEntity(EntityIndex));
+			// Adding a tag to this entity after processing           
+			FMassEntityHandle EntityHandle = Context.GetEntity(EntityIndex);
+			Context.Defer().AddTag<FIsRedTag>(EntityHandle);
 		}
 	}
 
 });
 ```
 
+In order to Defer Entity mutations we require to obtain the handle (`FMassEntityHandle`) of the Entities we wish to modify. `FMassExecutionContext` holds an array with all the Entity handles. We can access it through two different methods:
+
+| Plurality | Code |
+| ----------- | ----------- |
+| Singular | `FMassEntityHandle EntityHandle = Context.GetEntity(EntityIndex);` |
+| Plural | `auto EntityHandleArray = Context.GetEntities();` | 
+
+The following Subsections will employ the keywords `EntityHandle` and `EntityHandleArray` when handling singular or plural operations, respectively.
+
 ##### 4.6.3.1 Basic mutation operations
 The following Listings define the native mutations that you can defer:
 
 Fragments:
 ```c++
-Context.Defer().AddFragment<FMyFragment>(Entity);
-Context.Defer().RemoveFragment<FMyFragment>(Entity);
+Context.Defer().AddFragment<FMyFragment>(EntityHandle);
+Context.Defer().RemoveFragment<FMyFragment>(EntityHandle);
 ```
 
 Tags:
 ```c++
-Context.Defer().AddTag<FMyTag>(Entity);
-Context.Defer().RemoveTag<FMyTag>(Entity);
+Context.Defer().AddTag<FMyTag>(EntityHandle);
+Context.Defer().RemoveTag<FMyTag>(EntityHandle);
 ```
  
 Destroying entities:
 ```c++
-Context.Defer().DestroyEntity(MyEntity);
-Context.Defer().BatchDestroyEntities(MyEntitiesArray);
+Context.Defer().DestroyEntity(EntityHandle);
+Context.Defer().BatchDestroyEntities(EntityHandleArray);
 ```
 
 ##### 4.6.3.2 Advanced mutation operations
@@ -510,7 +520,7 @@ In the example below we mutate the `FHitResultFragment` with HitResult data, and
 FConstStructView HitResultStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 FStructView ColorStruct = FStructView::Make(FSampleColorFragment(Color));
 
-Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(Entity, 
+Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(EntityHandle, 
 	{HitResultStruct, ColorStruct}
 ));
 ```
@@ -521,12 +531,12 @@ Identical to `FMassCommandAddFragmentInstanceList` but it takes a single Fragmen
 ```c++
 FConstStructView HitResultStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 
-Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResultStruct));
+Context.Defer().PushCommand(FCommandAddFragmentInstance(EntityHandle, HitResultStruct));
 ```
 
 <a name="mass-queries-FBuildEntityFromFragmentInstances"></a>
 ##### 4.6.3.2.3 `FBuildEntityFromFragmentInstances`
-Creates an entity given a list of initialized Fragments using `FStructView`s and/or `FConstStructView`s.
+Creates an Entity given a list of initialized Fragments using `FStructView`s and/or `FConstStructView`s.
 
 In the example below, we inline the `FStructView`s:
 
@@ -539,11 +549,10 @@ FTransformFragment TransformFragment;
 TransformFragment.SetTransform(SpawnTransform);
 
 //Reserve our future entity's ID!
-const FMassEntityHandle Entity = EntitySubsystem->ReserveEntity();
+const FMassEntityHandle EntityHandle = EntitySubsystem->ReserveEntity();
 
-Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(Entity,
+Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(EntityHandle,
 	{FStructView::Make(ColorFragment),FStructView::Make(ThingyFragment)}
-
 	//you can add a final FMassArchetypeSharedFragmentValues if you like!
 ));
 ```
@@ -559,16 +568,16 @@ It can take an optional `FMassArchetypeSharedFragmentValues` struct as the third
 FConstStructView ColorStruct = FConstStructView::Make(FSampleColorFragment(HitResult));
 
 //Reserve our future entity's ID!
-const FMassEntityHandle Entity = EntitySubsystem->ReserveEntity();
+const FMassEntityHandle EntityHandle = EntitySubsystem->ReserveEntity();
 
-Context.Defer().PushCommand(FBuildEntityFromFragmentInstance(Entity, ColorStruct));
+Context.Defer().PushCommand(FBuildEntityFromFragmentInstance(EntityHandle, ColorStruct));
 ```
 
 ##### 4.6.3.2.5 `FCommandSwapTags`
 Removes the first tag (`FOffTag` in this example) and adds the second to the entity. (`FOnTag`)
 
 ```c++
-Context.Defer().PushCommand(FCommandSwapTags(Entity, 
+Context.Defer().PushCommand(FCommandSwapTags(EntityHandle, 
 	FOffTag::StaticStruct(), 
 	FOnTag::StaticStruct()
 	));
@@ -592,14 +601,14 @@ const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetComp
 
 The following code demonstrates how to get it from an archetype handle:
 ```c++
-FMassEntityHandle Entity = Context.GetEntity(EntityId);
-FMassArchetypeHandle Archetype = EntitySubsystem->GetArchetypeForEntity(Entity);
+FMassEntityHandle EntityHandle = Context.GetEntity(EntityId);
+FMassArchetypeHandle Archetype = EntitySubsystem->GetArchetypeForEntity(EntityHandle);
 const FMassArchetypeCompositionDescriptor& Composition = EntitySubsystem->GetArchetypeComposition(Archetype);
 ```
 Once `FMassArchetypeCompositionDescriptor` is obtained, we perform the command doing the following:
 
 ```c++
-Context.Defer().PushCommand(FCommandRemoveComposition(Entity, Composition));
+Context.Defer().PushCommand(FCommandRemoveComposition(EntityHandle, Composition));
 ```
 
 <!-- FIXMEVORI: This section will be re-reviewed once you make another pass -->
@@ -631,7 +640,6 @@ They also manually add their changes to the observed changes list by implementin
 **Note:** Since it defines `ECommandBufferOperationType::None` this deferred action does not add any entity changes to trigger observers on its own!
 
 
-
 ##### 4.6.3.2.8 Custom mutation operations
 It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
 
@@ -660,7 +668,6 @@ Between the many built-in traits offered by Mass, we can find the `Assorted Frag
 <!-- FIXME: Please elaborate -->
 <!-- REVIEWMEFUNK kind of hard to talk about it too much here with the other section existing -->
 Traits are often used to add Shared Fragments in the form of settings. For example, our visualization traits save memory by sharing which mesh they are displaying, parameters etc. Configs with the same settings will share the same Shared Fragment.
-
 
 
 #### 4.7.1 Creating a trait
@@ -700,7 +707,6 @@ public:
 
  Here is a partial `BuildTemplate` example for adding a shared struct, which can do some extra work to see if a shared fragment identical to the new one already exists:
 ```c++
-
 	//Create the actual fragment struct and set up the data for it however you like 
 	FMySharedSettings MyFragment;
 	MyFragment.MyValue = UserSetValue;
