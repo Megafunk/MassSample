@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTypes.h"
+#include "Evaluation/MovieScenePlayback.h"
 #include "MSFragments.generated.h"
 
 /**
@@ -18,6 +19,34 @@ struct MASSSAMPLE_API FSampleColorFragment : public FMassFragment
 	FColor Color = FColor::Red;
 };
 
+
+USTRUCT()
+struct MASSSAMPLE_API FInterpLocationFragment : public FMassFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	FVector TargetLocation;
+
+	UPROPERTY(EditAnywhere)
+	FVector StartingLocation;
+	
+	UPROPERTY(EditAnywhere)
+	float Duration = 1.0f;
+	
+	bool bForwardDirection = true;
+
+	float Time = 0.0f;
+};
+
+USTRUCT()
+struct MASSSAMPLE_API FOriginalTransformFragment : public FMassFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	FTransform Transform;
+};
 
 /**
  * FMassTags are structs that exist only as tags on Mass entities. They cannot have data!

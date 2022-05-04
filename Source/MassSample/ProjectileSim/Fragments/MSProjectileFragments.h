@@ -27,6 +27,7 @@ struct MASSSAMPLE_API FLineTraceFragment : public FMassFragment
 USTRUCT()
 struct MASSSAMPLE_API FHitResultFragment : public FMassFragment
 {
+	GENERATED_BODY()
 	FHitResultFragment() = default;
 
 	explicit FHitResultFragment(const FHitResult& HitResult)
@@ -34,7 +35,7 @@ struct MASSSAMPLE_API FHitResultFragment : public FMassFragment
 	{
 	}
 
-	GENERATED_BODY()
+
 	FHitResult HitResult;
 
 };
