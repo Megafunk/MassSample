@@ -12,32 +12,39 @@
 #include "MSDeferredCommands.h"
 #include "MSSubsystem.h"
 #include "AI/NavigationSystemBase.h"
+#include "Common/Fragments/MSFragments.h"
+#include "Experimental/MSEntityUtils.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
-FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
-                                                                        const UObject* WorldContextObject)
+FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig,
+                                                                        const UObject* WorldContextObject, const bool bDebug)
 {
 
-	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
+	if (!MassEntityConfig) return FEntityHandleWrapper();
+
 	
+	UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+
 	//todo: who should actually own an entity template? it's probably designed to have just one spawner own it?
-	if(const FMassEntityTemplate* EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
-		*Owner, *MassEntityConfig))
-	{
-		UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-
 	
-		TArray<FMassEntityHandle> SpawnedEntities;
+	if(FMSEntitySpawnTemplate MassEntitySpawnData = FMSEntitySpawnTemplate(MassEntityConfig,WorldContextObject->GetWorld()))
+	{
+		
+		if(bDebug)
+		{
+			MassEntitySpawnData.Template.GetMutableTags().Add<FMassSampleDebuggableTag>();
+		}
+		MassEntitySpawnData.Template.AddFragment_GetRef<FTransformFragment>().SetTransform(FTransform::Identity);
+		MassEntitySpawnData.Template.AddFragment_GetRef<FTransformFragment>().GetMutableTransform().SetTranslation(FMath::VRand());
 
-		//Using batch create to trigger observers 
-		EntitySubSystem->BatchCreateEntities(EntityTemplate->GetArchetype(), 1, SpawnedEntities);
-
-		const TConstArrayView<FInstancedStruct> FragmentInstances = EntityTemplate->GetInitialFragmentValues();
+		// Finalize by actually
+		// 1: creating/getting archetype
+		MassEntitySpawnData.FinalizeTemplateArchetype(EntitySubSystem);
+		// 2: spawning the entity
+		FMassEntityHandle SpawnedEntity = MassEntitySpawnData.SpawnEntity(EntitySubSystem);
 
 		
-		EntitySubSystem->SetEntityFragmentsValues(SpawnedEntities[0], FragmentInstances);
-		
-		return  FEntityHandleWrapper{SpawnedEntities[0]};
+		return  FEntityHandleWrapper{SpawnedEntity};
 	}
 	
 	return FEntityHandleWrapper();

@@ -55,7 +55,7 @@ class MASSSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FEntityHandleWrapper SpawnEntityFromEntityConfig(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig, const UObject* WorldContextObject);
+	static FEntityHandleWrapper SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig, const UObject* WorldContextObject, const bool bDebug = false);
 
 
 	//todo: broken and hardcoded for testing, Don't use this yet!
