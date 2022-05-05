@@ -18,7 +18,7 @@ UMSMovementProcessor::UMSMovementProcessor()
 }
 
 void UMSMovementProcessor::ConfigureQueries()
- {
+{
 	//Only include entities that meet the following rules:
 
 	//ALL must have an FMoverTag

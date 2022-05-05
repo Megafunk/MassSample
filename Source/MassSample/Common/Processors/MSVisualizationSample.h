@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "MassRepresentationProcessor.h"
+#include "MassVisualizationLODProcessor.h"
 
 #include "MSVisualizationSample.generated.h"
 
 
 /**
- * Example processor demonstrating how to use the representation module
+ * Example processors demonstrating how to use the representation module
  */
 UCLASS()
 class MASSSAMPLE_API UMSSampleVisualizationProcessor : public UMassVisualizationProcessor
@@ -18,7 +19,23 @@ class MASSSAMPLE_API UMSSampleVisualizationProcessor : public UMassVisualization
 
 public:
 
-	UMSSampleVisualizationProcessor();
+	UMSSampleVisualizationProcessor()
+	{
+		bAutoRegisterWithProcessingPhases = true;
+	};
 
 };
 
+UCLASS()
+class MASSSAMPLE_API UMSSampleVisualizationLODProcessor : public UMassVisualizationLODProcessor
+{
+	GENERATED_BODY()
+
+public:
+
+	UMSSampleVisualizationLODProcessor()
+	{
+		bAutoRegisterWithProcessingPhases = true;
+	};
+
+};

@@ -54,7 +54,10 @@ public class MassSample : ModuleRules
 				"Niagara",
 				"DeveloperSettings",
 				"GeometryCore",
-				
+				"MassAIBehavior",
+				"StateTreeModule",
+				"MassLOD",
+
 				//todo: maybe do thee editor only stuff on another module?
 				"UnrealEd"
 			}
