@@ -24,16 +24,8 @@ struct FMSEntitySpawnTemplate
 
 	FMSEntitySpawnTemplate(const UMassEntityConfigAsset* MassEntityConfig, const UWorld* World)
 	{
-		//todo: this is an evil way to get a random actor to pass in
-		AActor* ActorToGetWorld = nullptr;
-		for (TActorIterator<AActor> It(World,AActor::StaticClass()); It; ++It)
-		{
-			ActorToGetWorld = *It;
-		}
-
-		if(ActorToGetWorld)
-		Template = *MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*ActorToGetWorld, *MassEntityConfig);
-
+		AGameStateBase* GameState = World->GetGameState();
+		Template = *MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*GameState, *MassEntityConfig);
 	};
 
 	FMassArchetypeHandle FinalizeTemplateArchetype(UMassEntitySubsystem* EntitySubSystem)
