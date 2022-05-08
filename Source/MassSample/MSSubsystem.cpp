@@ -26,6 +26,10 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	});
 
 	Context =  EntitySystem->CreateExecutionContext(0);
+
+	NavSystem = Cast<UNavigationSystemV1>(GetWorld()->GetNavigationSystem());
+
+	
 	
 	
 }

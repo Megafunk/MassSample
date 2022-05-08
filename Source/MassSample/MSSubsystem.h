@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntitySubsystem.h"
+#include "NavigationSystem.h"
 #include "Common/Fragments/MSHashGridFragments.h"
 #include "MSSubsystem.generated.h"
 
@@ -24,6 +25,9 @@ public:
 	FMSHashGrid3D HashGrid = FMSHashGrid3D(100.0f,FMassEntityHandle());
 	
 	FMassExecutionContext Context;
+	
+	UPROPERTY()
+	UNavigationSystemV1* NavSystem;
 
 	UFUNCTION(BlueprintCallable)
 	int32 SpawnEntity();

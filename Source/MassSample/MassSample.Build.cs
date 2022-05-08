@@ -57,7 +57,7 @@ public class MassSample : ModuleRules
 				"MassAIBehavior",
 				"StateTreeModule",
 				"MassLOD",
-
+				"NavigationSystem",
 				//todo: maybe do thee editor only stuff on another module?
 				"UnrealEd"
 			}
