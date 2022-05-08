@@ -58,10 +58,15 @@ class MASSSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 	static FEntityHandleWrapper SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig, const UObject* WorldContextObject, const bool bDebug = false);
 
 
-	//todo: broken and hardcoded for testing, Don't use this yet!
+	// todo: broken and hardcoded for testing, Don't use this yet!
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FEntityHandleWrapper SpawnEntityFromEntityConfigDeferredTest(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
+	static FEntityHandleWrapper SpawnEntityFromEntityConfigDeferred(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
 	                                                         const UObject* WorldContextObject);
+	// todo: also broken and hardcoded for testing, Don't use this yet!
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
+	static FEntityHandleWrapper SpawnEntityFromEntityConfigDeferredBugRepro(AActor* Owner,
+	                                                                 UMassEntityConfigAsset* MassEntityConfig,
+	                                                                 const UObject* WorldContextObject);
 
 	//todo: Lazy fragment-specific versions until we can think of something nicer
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))

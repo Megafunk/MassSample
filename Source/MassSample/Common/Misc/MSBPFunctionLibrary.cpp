@@ -52,7 +52,7 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEnti
 }
 
 
-FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredTest(
+FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferred(
 	AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
 	const UObject* WorldContextObject)
 {
@@ -110,6 +110,64 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredTe
 
 	return FEntityHandleWrapper();
 }
+
+
+
+
+FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredBugRepro(
+	AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
+	const UObject* WorldContextObject)
+{
+	
+	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
+
+	if (const FMassEntityTemplate* EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
+		*Owner, *MassEntityConfig))
+	{
+		auto EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+
+		const FMassEntityHandle ReservedEntity = EntitySubSystem->ReserveEntity();
+
+
+		//todo: this is very slow! I am just doing this to be able to stuff configs in here for now
+		TArray<const UScriptStruct*> FragmentTypesList;
+		EntityTemplate->GetCompositionDescriptor().Fragments.ExportTypes(FragmentTypesList);
+		TArray<const UScriptStruct*> TagsTypeList;
+
+		EntityTemplate->GetCompositionDescriptor().Tags.ExportTypes(TagsTypeList);
+
+		TArray<FInstancedStruct> InstanceStructs = TArray<FInstancedStruct>(FragmentTypesList);
+
+		TConstArrayView<FInstancedStruct> InitialFragmentInstances = EntityTemplate->GetInitialFragmentValues();
+
+		// InstanceStructs need to have the InitialFragmentInstances data-filled instanced structs, all of which already exist inside of InstanceStructs
+
+		for (auto InitialFragmentInstance : InitialFragmentInstances)
+		{
+			int32 index = InstanceStructs.IndexOfByPredicate([&](const FInstancedStruct InstancedStructValue)
+			{
+				return InstancedStructValue.GetScriptStruct() == InitialFragmentInstance.GetScriptStruct();
+			});
+			if (index != INDEX_NONE)
+				InstanceStructs[index] = InitialFragmentInstance;
+		}
+		// TODO: deferred BuildEntity can't seem to figure out representation? is it an initializer issue? 
+		EntitySubSystem->Defer().PushCommand(
+			FBuildEntityFromFragmentInstancesAndTags(ReservedEntity,
+			                                         InstanceStructs,
+			                                         TagsTypeList,
+			                                         EntityTemplate->GetSharedFragmentValues()));
+		
+		EntitySubSystem->FlushCommands();
+		//EntitySubSystem->FlushCommands(MakeShareable(new FMassCommandBuffer()));
+		return FEntityHandleWrapper{ReservedEntity};
+	}
+
+	return FEntityHandleWrapper();
+}
+
+
+
 
 
 void UMSBPFunctionLibrary::SetEntityTransform(const FEntityHandleWrapper EntityHandle, const FTransform Transform,
