@@ -148,25 +148,8 @@ class MASSSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 		//check for null
 		if (Property)
 		{
-
-
 				UE_LOG(LogTemp, Warning, TEXT("%s"), *Property->Struct->GetClass()->GetName());
-
-				
-			
 		}
 
-
-
-
-
-
-
-
-
-
-			
-
-		
 	}
 };

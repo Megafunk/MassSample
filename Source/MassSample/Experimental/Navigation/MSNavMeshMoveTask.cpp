@@ -12,34 +12,15 @@ bool FMassNavMeshPathFollowTask::Link(FStateTreeLinker& Linker)
 	Linker.LinkExternalData(MoveTargetHandle);
 	Linker.LinkExternalData(AgentRadiusHandle);
 	Linker.LinkExternalData(MovementParamsHandle);
+	Linker.LinkExternalData(NavMeshAIFragmentHandle);
 	Linker.LinkExternalData(MSSubsystemHandle);
+
 	
 	Linker.LinkInstanceDataProperty(TargetLocationHandle, STATETREE_INSTANCEDATA_PROPERTY(FMassNavMeshPathFollowTaskInstanceData, TargetLocation));
 	Linker.LinkInstanceDataProperty(MovementStyleHandle, STATETREE_INSTANCEDATA_PROPERTY(FMassNavMeshPathFollowTaskInstanceData, MovementStyle));
 	Linker.LinkInstanceDataProperty(SpeedScaleHandle, STATETREE_INSTANCEDATA_PROPERTY(FMassNavMeshPathFollowTaskInstanceData, SpeedScale));
 	
 	return true;
-}
-
-
-EStateTreeRunStatus FMassNavMeshPathFollowTask::EnterState(FStateTreeExecutionContext& Context, const EStateTreeStateChangeType ChangeType, const FStateTreeTransitionResult& Transition) const
-{
-	// Do not reset of the state if current state is still active after transition, unless transitioned specifically to this state.
-	if (ChangeType == EStateTreeStateChangeType::Sustained && Transition.Current != Transition.Next)
-	{
-		return EStateTreeRunStatus::Running;
-	}
-	
-	FMassStateTreeExecutionContext& MassContext = static_cast<FMassStateTreeExecutionContext&>(Context);
-	
-
-	
-	// if (!RequestPath(MassContext, TargetLocation))
-	// {
-	// 	return EStateTreeRunStatus::Failed;
-	// }
-
-	return EStateTreeRunStatus::Running;
 }
 
 EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
@@ -51,6 +32,9 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 	FMassMoveTargetFragment& MoveTarget = Context.GetExternalData(MoveTargetHandle);
 	
 	const FMassMovementStyleRef MovementStyle = Context.GetInstanceData(MovementStyleHandle);
+
+	FNavMeshAIFragment& NavMeshAIFragment = Context.GetExternalData(NavMeshAIFragmentHandle);
+
 	const FMassMovementParameters& MovementParams = Context.GetExternalData(MovementParamsHandle);
 
 	const FVector AgentNavLocation = Context.GetExternalData(TransformHandle).GetTransform().GetLocation();
@@ -86,23 +70,36 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 			const float DesiredSpeed = FMath::Min(MovementParams.GenerateDesiredSpeed(MovementStyle, MassContext.GetEntity().Index) * SpeedScale, MovementParams.MaxSpeed);
 
 			const auto PathEndLocation = Result.Path.Get()->GetEndLocation();
+			const auto PathPoints = Result.Path.Get()->GetPathPoints();
+
 			
-			UE_VLOG_CIRCLE(&MSSubsystem, LogMassNavigation, Log, MoveTarget.Center, FVector::UpVector, AgentRadius.Radius, FColor::Green, TEXT_EMPTY);
+
 			MoveTarget.DesiredSpeed.Set(DesiredSpeed);
 			MoveTarget.DistanceToGoal = (PathEndLocation -  AgentNavLocation).Length();
-			MoveTarget.Center = Result.Path.Get()->GetEndLocation();
-			MoveTarget.CreateNewAction(EMassMovementAction::Move,*Context.GetWorld());
 			
-			//PFollowComp->RequestMove(FAIMoveRequest(GoalLocation), Result.Path);
+			MoveTarget.Center = Result.Path.Get()->GetEndLocation();
+			MoveTarget.Forward = (PathEndLocation -  AgentNavLocation).GetSafeNormal();
+			MoveTarget.CreateNewAction(EMassMovementAction::Move,*Context.GetWorld());
+
+			
+			NavMeshAIFragment.NextPathNodePos = PathPoints[1].Location;
+
+			// todo-navigation need a smarter way to check if we are done pathing?
+			if(MoveTarget.DistanceToGoal < AgentRadius.Radius)
+			{
+				return EStateTreeRunStatus::Succeeded;
+			}
+
+		#if WITH_EDITOR
+			Result.Path.Get()->DebugDraw(Query.NavData.Get(),FColor::MakeRandomColor(),Context.GetWorld()->GetCanvasForRenderingToTarget(),false,10.0f);
+		#endif
+			
 		}
-		// else if (PFollowComp->GetStatus() != EPathFollowingStatus::Idle)
-		// {
-		// 	//PFollowComp->RequestMoveWithImmediateFinish(EPathFollowingResult::Invalid);
-		// }
+		else
+		{
+			return EStateTreeRunStatus::Failed;
+
+		}
 	}
-
-	
-	//return ShortPath.IsDone() ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
-
 	return EStateTreeRunStatus::Running;
 }

@@ -8,6 +8,7 @@
 #include "MassStateTreeTypes.h"
 #include "MassMovementTypes.h"
 #include "MassNavigationFragments.h"
+#include "MSNavMeshFragments.h"
 #include "MSSubsystem.h"
 #include "NavigationSystem.h"
 #include "StateTreeExecutionContext.h"
@@ -38,14 +39,20 @@ struct MASSSAMPLE_API FMassNavMeshPathFollowTask : public FMassStateTreeTaskBase
 protected:
 	virtual bool Link(FStateTreeLinker& Linker) override;
 	virtual const UStruct* GetInstanceDataType() const override { return FMassNavMeshPathFollowTaskInstanceData::StaticStruct(); };
-	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const EStateTreeStateChangeType ChangeType, const FStateTreeTransitionResult& Transition) const override;
+	
+	//virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const EStateTreeStateChangeType ChangeType, const FStateTreeTransitionResult& Transition) const override;
+	
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 
 	TStateTreeExternalDataHandle<FTransformFragment> TransformHandle;
 	TStateTreeExternalDataHandle<FMassMoveTargetFragment> MoveTargetHandle;
 	TStateTreeExternalDataHandle<FAgentRadiusFragment> AgentRadiusHandle;
 	TStateTreeExternalDataHandle<FMassMovementParameters> MovementParamsHandle;
+	TStateTreeExternalDataHandle<FNavMeshAIFragment> NavMeshAIFragmentHandle;
+
 	TStateTreeExternalDataHandle<UMSSubsystem> MSSubsystemHandle;
+
+	
 
 	//todo: find some navigation struct for this
 	TStateTreeInstanceDataPropertyHandle<FVector> TargetLocationHandle;
@@ -64,8 +71,9 @@ struct MASSSAMPLE_API FMassFindNavMeshPathTargetInstanceData
 };
 
 
-USTRUCT(meta = (DisplayName = "NavMesh Find Target Tester Thingy"))
-struct MASSSAMPLE_API FMassFindNavMeshPathTarget : public FMassStateTreeTaskBase
+// Super quick task to get a random nav point for testing
+USTRUCT(meta = (DisplayName = "Find NavMesh Wander Target In Radius"))
+struct MASSSAMPLE_API FMassFindNavMeshPathWanderTargetInRadius : public FMassStateTreeTaskBase
 {
 	GENERATED_BODY()
 
@@ -79,16 +87,26 @@ protected:
 
 	};
 	virtual const UStruct* GetInstanceDataType() const override { return FMassFindNavMeshPathTargetInstanceData::StaticStruct(); };
+
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const EStateTreeStateChangeType ChangeType, const FStateTreeTransitionResult& Transition) const override
 	{
-		Context.GetInstanceData(TargetLocationHandle) = TargetLocation;
+
+		auto NavSystem = Cast<UNavigationSystemV1>(Context.GetWorld()->GetNavigationSystem());
+		FNavLocation NavLocation;
+
+		// todo-navigation pass in nav property stuff
+			NavSystem->GetRandomReachablePointInRadius(Origin,Radius,NavLocation);
+
+		Context.GetInstanceData(TargetLocationHandle) = NavLocation.Location;
 
 		return EStateTreeRunStatus::Running;
 	};
-	
+
+
+	UPROPERTY(EditAnywhere)
+	FVector Origin;
+	UPROPERTY(EditAnywhere)
+	float Radius;
 	TStateTreeInstanceDataPropertyHandle<FVector> TargetLocationHandle;
-	
-	UPROPERTY(EditAnywhere, Category = Parameter)
-	FVector TargetLocation;
 	
 };
