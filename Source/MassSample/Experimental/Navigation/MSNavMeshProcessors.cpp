@@ -5,6 +5,7 @@
 
 #include "MassCommonFragments.h"
 #include "MassCommonTypes.h"
+#include "MassEntityView.h"
 #include "MassMovementFragments.h"
 #include "MassNavigationFragments.h"
 #include "MassSignalSubsystem.h"
@@ -15,6 +16,7 @@ UMSNavMeshProcessors::UMSNavMeshProcessors()
 {
 	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
+
 }
 
 void UMSNavMeshProcessors::Initialize(UObject& Owner)
@@ -49,14 +51,12 @@ void UMSNavMeshProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, FMassE
 		
 		for (int32 i = 0; i < Context.GetNumEntities(); ++i)
 		{
-
+			
 			auto& NavMeshAIFragment = NavMeshAIFragmentList[i];
 			auto& ForceFragment = ForceList[i];
 			auto& MoveTargetFragment = MoveTargetList[i];
 			auto& VelocityFragment = VelocityList[i];
 
-FMassEntityView
-			Context.GetEntity(i)
 
 			const FTransform& AgentTransform = TransformList[i].GetTransform();
 

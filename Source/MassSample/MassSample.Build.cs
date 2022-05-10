@@ -59,7 +59,8 @@ public class MassSample : ModuleRules
 				"MassLOD",
 				"NavigationSystem",
 				//todo: maybe do thee editor only stuff on another module?
-				"UnrealEd"
+				"UnrealEd",
+				"EditorSubsystem"
 			}
 		);
 	}
