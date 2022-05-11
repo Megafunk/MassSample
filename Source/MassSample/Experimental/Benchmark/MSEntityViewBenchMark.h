@@ -23,6 +23,7 @@ struct FMassEntityWrapper
 	template<typename T>
 	FORCEINLINE bool HasTag() const
 	{
+		checkSlow(EntitySystem && Handle.IsValid());
 		return EntitySystem->GetArchetypeComposition(EntitySystem->GetArchetypeForEntity(Handle)).Tags.Contains<T>();
 	}
 	

@@ -6,21 +6,17 @@
 
 #include "MassEntityView.h"
 
-namespace FMSConsoleStuff
-{
-	bool bEnableUMSEntityViewBenchMark = false;
-
-	FAutoConsoleVariableRef CVars[] = {
-		{TEXT("ms.EntityViewBenchmark"), bEnableUMSEntityViewBenchMark, TEXT("Enables FEntityViewBenchmark for registration")},
-	};
-}
-
 
 
 UMSEntityViewBenchMark::UMSEntityViewBenchMark()
 {
+	int shouldregister = -1;
+	if(FParse::Value(FCommandLine::Get(), TEXT("ViewBenchmarkCount="), shouldregister))
+	{
+		bAutoRegisterWithProcessingPhases = static_cast<bool>(shouldregister);	
 
-	bAutoRegisterWithProcessingPhases = FMSConsoleStuff::bEnableUMSEntityViewBenchMark;	
+	};
+
 	
 }
 
@@ -31,7 +27,12 @@ void UMSEntityViewBenchMark::Initialize(UObject& Owner)
 
 	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 
-	for(int i = 0; i<10000; ++i)
+	int EntityCount = 5000;
+	FParse::Value(FCommandLine::Get(), TEXT("ViewBenchmarkCount="), EntityCount);
+
+
+	
+	for(int i = 0; i<EntityCount; ++i)
 	{
 		// Add either tag 1 or tag 2
 
@@ -131,8 +132,12 @@ void UMSEntityViewBenchMark::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 UMSEntityViewWrapperBenchMark::UMSEntityViewWrapperBenchMark()
 {
 
-	bAutoRegisterWithProcessingPhases = FMSConsoleStuff::bEnableUMSEntityViewBenchMark;	
-	
+	int shouldregister = -1;
+	if(FParse::Value(FCommandLine::Get(), TEXT("ViewBenchmarkCount="), shouldregister))
+	{
+		bAutoRegisterWithProcessingPhases = static_cast<bool>(shouldregister);	
+
+	};	
 }
 
 void UMSEntityViewWrapperBenchMark::ConfigureQueries()
