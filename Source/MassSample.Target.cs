@@ -10,5 +10,6 @@ public class MassSampleTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.AddRange(new string[] { "MassSample" });
+
 	}
 }

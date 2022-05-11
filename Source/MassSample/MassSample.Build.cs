@@ -59,9 +59,16 @@ public class MassSample : ModuleRules
 				"MassLOD",
 				"NavigationSystem",
 				//todo: maybe do thee editor only stuff on another module?
-				"UnrealEd",
-				"EditorSubsystem"
+				
 			}
 		);
+        
+        
+        
+        if (Target.bBuildEditor)
+        {
+	        PrivateDependencyModuleNames.Add("CodeView");
+	        PrivateDependencyModuleNames.Add("UnrealEd");
+        }
 	}
 }

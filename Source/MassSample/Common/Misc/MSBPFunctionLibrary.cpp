@@ -316,7 +316,11 @@ FString UMSBPFunctionLibrary::GetEntityDebugString(FEntityHandleWrapper Entity, 
 
 	FStringOutputDevice OutPut;
 	OutPut.SetAutoEmitLineTerminator(true);
+
+	#if WITH_EDITOR
 	EntitySystem->DebugPrintEntity(Entity.Entity, OutPut);
+	#endif
+	
 
 
 	return FString{OutPut};

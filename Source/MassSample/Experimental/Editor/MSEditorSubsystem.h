@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "MSEditorSubsystem.generated.h"
+//#include "MSEditorSubsystem.generated.h"
 
 /**
  * 
  */
-UCLASS()
-class MASSSAMPLE_API UMSEditorSubsystem : public UEditorSubsystem
-{
-	GENERATED_BODY()
-public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-};
+// UCLASS()
+// class MASSSAMPLE_API UMSEditorSubsystem : public UEditorSubsystem
+// {
+// 	GENERATED_BODY()
+// public:
+// 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+// };

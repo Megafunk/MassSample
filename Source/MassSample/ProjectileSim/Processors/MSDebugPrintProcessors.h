@@ -30,6 +30,8 @@ protected:
 	{
 		DebugPointDisplay.ForEachEntityChunk(EntitySubsystem, Context, [&, this](FMassExecutionContext& Context)
 		{
+
+#if WITH_EDITOR
 			const auto Transforms = Context.GetFragmentView<FTransformFragment>().GetData();
 			
 			auto Entity = Context.GetEntity(0);
@@ -42,8 +44,12 @@ protected:
 				//UE_VLOG_LOCATION(this, LogTemp, Verbose, Transforms[i].Transform.GetTranslation(), 10, FColor::MakeRandomColor(), TEXT("%s"), *description);
 				DrawDebugString(GetWorld(), Location, static_cast<FString>(Description), 0, FColor::White, 0, true);
 			}
+#endif
+
 		});
+
 	}
+	
 	
 	FMassEntityQuery DebugPointDisplay;
 

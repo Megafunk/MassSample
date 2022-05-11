@@ -11,6 +11,7 @@
 #include "MassSignalSubsystem.h"
 #include "MassStateTreeSubsystem.h"
 #include "MSNavMeshFragments.h"
+#include "Common/Fragments/MSFragments.h"
 
 UMSNavMeshProcessors::UMSNavMeshProcessors()
 {
@@ -57,6 +58,7 @@ void UMSNavMeshProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, FMassE
 			auto& MoveTargetFragment = MoveTargetList[i];
 			auto& VelocityFragment = VelocityList[i];
 
+			
 
 			const FTransform& AgentTransform = TransformList[i].GetTransform();
 

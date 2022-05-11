@@ -52,33 +52,9 @@ struct FMSEntitySpawnTemplate
 };
 
 
-
-
-// FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
-// 																		const UObject* WorldContextObject)
-// {
-//
-// 	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
-// 	
-// 	//todo: who should actually own an entity template? it's probably designed to have just one spawner own it?
-// 	if(const FMassEntityTemplate* EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
-// 		*Owner, *MassEntityConfig))
-// 	{
-// 		UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-//
-// 	
-// 		TArray<FMassEntityHandle> SpawnedEntities;
-// 		EntityTemplate->GetMutableTags().Add<FMassDebuggableTag>();
-// 		//Using batch create to trigger observers 
-// 		EntitySubSystem->BatchCreateEntities(EntityTemplate->GetArchetype(), 1, SpawnedEntities);
-//
-// 		const TConstArrayView<FInstancedStruct> FragmentInstances = EntityTemplate->GetInitialFragmentValues();
-//
-// 		
-// 		EntitySubSystem->SetEntityFragmentsValues(SpawnedEntities[0], FragmentInstances);
-// 		
-// 		return  FEntityHandleWrapper{SpawnedEntities[0]};
-// 	}
-// 	
-// 	return FEntityHandleWrapper();
-// }
+USTRUCT()
+struct FMSEntity
+{
+	GENERATED_BODY()
+	
+};
