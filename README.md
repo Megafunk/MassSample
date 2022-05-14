@@ -784,7 +784,7 @@ void UMSObserverOnAdd::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecu
 ```
 
 <a name="mass-o-n"></a>
-#### 4.8.1 Observers limitations
+#### 4.8.1 Observer limitations
 At the time of writing, Observers are only triggered explicitely during these specific Entity actions: 
 
 <!-- FIXMEVORI: Maybe this isn't the case because we are not following the recommended practices!! Should ensure not skipping the appropriate exec path-->
@@ -796,11 +796,8 @@ At the time of writing, Observers are only triggered explicitely during these sp
   - `UMassEntitySubsystem::BatchDestroyEntityChunks`: [TODO: Add definition]
   - `UMassEntitySubsystem::AddCompositionToEntity_GetDelta`: [TODO: Add definition]
   - `UMassEntitySubsystem::RemoveCompositionFromEntity`: [TODO: Add definition]
+- Any [deferred command](#mass-queries-mq) that adds or removes Fragments/Tags to an entity. 
 
- <!-- FIMXEVORI: AppendAffectedEntitiesPerType isn't overridable  -->
- <!-- FIXMEVORI: Probably we should add an example of flushing --> 
-- Flushing the command buffer with deferred Entity changes (`FMassCommandBuffer::Flush`). 
-<!--  - Any `FCommandBufferEntryBase` that mutates entities. They are set up by defining the enum `ECommandBufferOperationType` along with manually adding the changed entities to the list of changes stored in the query by overriding `AppendAffectedEntitiesPerType`. -->
 
 
 <!-- FIXMEVORI: I'll review this the next day -->
