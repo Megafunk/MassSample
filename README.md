@@ -62,9 +62,7 @@ After installing the requirements from above, follow these steps:
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observers limitations](#mass-o-n)                
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.2 [Observing multiple Fragment/Tags](#mass-o-mft)       
 > 4.10 [Mulitthreading](#mass-mt)  
-> 5. Mass common operations    <!-- Proposal -->                  
-> 5.1 Spawning an entity                
-> 5.2 Destroying an entity
+> 5. [Mass common operations](#mass-cm)   
 > 6. [Mass Plugins and Modules](#mass-pm)  
 > 6.1 [MassEntity](#mass-pm-me)  
 > 6.2 [MassGameplay](#mass-pm-gp)  
@@ -269,6 +267,8 @@ UMyProcessor::UMyProcessor()
 ```
 
 On initialization, Mass creates a dependency graph of processors using their execution rules so they execute in order (ie: In the example above we make sure to move our entities before we call `Execute` in `UMyProcessor`).
+
+The `ExecutionFlags` variable indicates whether this processor should be executed on StandAlone, Server or Client.
 
 **Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD processors. 
 
@@ -797,9 +797,10 @@ At the time of writing, Observers are only triggered explicitely during these sp
   - `UMassEntitySubsystem::AddCompositionToEntity_GetDelta`: [TODO: Add definition]
   - `UMassEntitySubsystem::RemoveCompositionFromEntity`: [TODO: Add definition]
 
- <!-- FIXMEVORI: I need to clarify the AppendAffectedEntitiesPerType to review this part. --> 
-- Flushing the command buffer with deferred Entity changes (`FMassCommandBuffer::Flush`) 
-  - Any `FCommandBufferEntryBase` that mutates entities. They are set up by defining the enum `ECommandBufferOperationType` along with manually adding the changed entities to the list of changes stored in the query by overriding `AppendAffectedEntitiesPerType`. 
+ <!-- FIMXEVORI: AppendAffectedEntitiesPerType isn't overridable  -->
+ <!-- FIXMEVORI: Probably we should add an example of flushing --> 
+- Flushing the command buffer with deferred Entity changes (`FMassCommandBuffer::Flush`). 
+<!--  - Any `FCommandBufferEntryBase` that mutates entities. They are set up by defining the enum `ECommandBufferOperationType` along with manually adding the changed entities to the list of changes stored in the query by overriding `AppendAffectedEntitiesPerType`. -->
 
 
 <!-- FIXMEVORI: I'll review this the next day -->
@@ -808,6 +809,23 @@ At the time of writing, Observers are only triggered explicitely during these sp
 Observers can also be used to observe multiple operations and/or types. For that, override the `Register` function in `UMassObserverProcessor`: 
 
 ```c++
+// header file
+UPROPERTY()
+UScriptStruct* MyObserverType = nullptr;
+
+EMassObservedOperation MyOperation = EMassObservedOperation::MAX;
+
+
+// cpp file 
+UMyMassObserverProcessor::UMyMassObserverProcessor()
+{
+	ObservedType = FSampleColorFragment::StaticStruct();
+	Operation = EMassObservedOperation::Add;
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
+	MyObserverType = FSampleMaterialFragment::StaticStruct();
+	MyOperation = EMassObservedOperation::Add;
+}
+
 void UMyMassObserverProcessor::Register()
 {
 	check(ObservedType);
@@ -836,7 +854,7 @@ Out of the box Mass can spread out work to threads in two different ways:
 
 <a name="mass-cm"></a>
 ## 5. Mass common operations
-This section is designed to serve as a quick reference for how to perform some common operations with Mass. As usual, we are open to ideas on how to organize this stuff!!
+This section is designed to serve as a quick reference for how to perform common operations with Mass. As usual, we are open to ideas on how to organize this stuff!!
 
 As a rule of thumb, most entity mutations (adding/removing components, spawning or removing entities) are generally done by deferring them from inside of processors. 
 
@@ -850,43 +868,51 @@ As a rule of thumb, most entity mutations (adding/removing components, spawning 
 <a name="mass-cm-sae"></a>
 ## 5.1 Spawning entities
 
-### 5.1.1 Mass Spawner
+In this Section we are going to review different methods to spawn entities. First, we review the `Mass Spawner`, which is useful to spawn entities with predefined data. Then, we'll move to more complex spawning methods that enable us to have fine grained control over the spawning.
 
-Mass Spawner Actors are most useful for entities that will spawn ambiently in the world like NPCs and other environmental things. They require two things to spawn entities:
+### 5.1.1 Spawn entities with data predefined in the Editor - Mass Spawner
 
-- One or more Entity Types (`UMassEntityConfig`) to use as templates.
-- One or more Spawn Data Generators to set the new entity data. which is usually just their starting transform.
+Mass Spawners (`AMassSpawner`) are useful to spawn entities with static data in the world (predefined CDO and spawning transform).
 
-In the details of a `AMassSpawner` instance placed in the level:
+Mass Spawners require two things to spawn entities:
+- An array of entity types: Define which entities to spawn through a [`UMassEntityConfigAsset`](#mass-traits). 
+- An array of Spawn Data Generators (`FMassSpawnDataGenerator`): Define where to spawn entities (their starting transform).
+
+In the details panel of a `AMassSpawner` we can find the following:
 ![MassSpawnerSettings](Images/massspawneractor.jpg)
 
-In this image, a single `MEC_MovingCube` Entity Config will be used to spawn 25 entities on `BeginPlay`.
+In the above image, the `MEC_DebugVisualize` Entity Config is used to spawn 25 entities on `BeginPlay` (`bAutoSpawnOnBeginPlay` is set to `true`).
 
-The positions of these entities will be generated by an `EQS SpawnPoints Generator`. Let's expand the query section: 
-
-![MassSpawnerEQS](Images/massspawnereqs.jpg)
-
-`EQS SpawnPoints Generator` Is a built-in type of spawnpoint generator that uses an Environmental Query System graph asset to find locations in the world to spawn. In this one, we are creatomg a circle of locations around the spawn actor. 
+The spawning location of these entities is generated by the `EQS SpawnPoints Generator`, which is a built-in generator that uses the [Environmental Query System](https://docs.unrealengine.com/4.27/en-US/InteractiveExperiences/ArtificialIntelligence/EQS/EQSOverview/) to find locations in the world to spawn. In this example, we are creating a circle of locations around the spawn actor: 
 
 ![EQSCircle](Images/eqscircle.jpg)
 
 The result in game on BeginPlay:
 
-
 ![SpawnerCircleResult](Images/spawnercircleresult.jpg)
 
+Mass Spawners are placed in the level and can be queried in runtime to trigger spawns by calling `DoSpawning()` from C++ or Blueprints:
+
+![aa](Images/massspawner-lvl1minions.jpg)
+
+Mass Spawners provide a minimal API to do spawn related operations, following next we provide some of the user-friendly accessible functions from both, blueprints and C++:
+- `DoSpawning()`: Performs the spawning of all the agent types of this spawner.
+- `DoDespawning()`: Despawns all mass agents spawned by this spawner.
+- `ScaleSpawningCount(float Scale)`: Scales the spawning counts. Scale is the number to multiply the all counts of each agent types.
+- `GetCount()`: Returns the unscaled count of entities to spawn.
+- `GetSpawningCountScale()`: Returns the number to multiply the all counts of each agent types.
+
+**Note:** The Matrix demo uses extensively the Mass Spawner system.
 
 
+### 5.1.2 Spawn entities with runtime data
+In this section we explore more flexible spawn mechanism, in which we are able to spawn entities on demand with runtime data (ie: a passed in location).
 
-### 5.1.2 Runtime Spawning
+These spawning methods can be benefitial when we require to mutate entities on spawn, or when when the spawning data cannot be predefined (ie: the initial transform data for a projectile spawning from a weapon).
 
-`MassSpawner`s can be directed to spawn at any time by just calling `DoSpawning()` on them from C++ or blueprint. Otherwise, there are always the direct subsystem calls and [deferred actions](#mass-queries-FBuildEntityFromFragmentInstances)
+<!-- FIXMEVORI: Karl we need more movement in this section, I kind of repurposed it to make more sense! -->
 
-   
 #### 5.1.2.1 Batch Spawning
-
-An `AMassSpawner` could be appropriate for things that spawn in bursts in the world, like waves of enemies for example. 
-
 In C++, you can just call `BatchCreateEntities()` on an instance of a `UMassEntitySubSystem` by passing in a specific archetype with the number you want. This is actually how `AMassSpawner` spawns stuff internally! It calls `BatchSetEntityFragmentsValues()` afterwards to set the initial data on the returned `FEntityCreationContext`.
 
 <!--FIXMEKARL another struct to document (FEntityCreationContext) Weeeeee! It actually might be useful for our mutation merging idea. -->
