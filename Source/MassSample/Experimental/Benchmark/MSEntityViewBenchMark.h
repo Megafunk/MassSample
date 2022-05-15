@@ -7,6 +7,9 @@
 #include "UObject/Object.h"
 #include "MSEntityViewBenchMark.generated.h"
 
+DECLARE_STATS_GROUP(TEXT("MassSampleView"), STATGROUP_MASSSAMPLEVIEW, STATCAT_Advanced);
+DECLARE_STATS_GROUP(TEXT("MassSampleViewWrapped"), STATGROUP_MASSSAMPLEVIEWWRAPPED, STATCAT_Advanced);
+
 USTRUCT()
 struct FMassEntityWrapper
 {
@@ -76,6 +79,9 @@ public:
 	virtual void Initialize(UObject& Owner) override;
 protected:
 	virtual void ConfigureQueries() override;
+	void BenchA(FMassEntityHandle Entity);
+	void BenchB(FMassEntityHandle Entity);
+
 	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
 
 	uint32 Counter;
@@ -90,22 +96,3 @@ protected:
 
 };
 
-
-UCLASS()
-class MASSSAMPLE_API UMSEntityViewWrapperBenchMark : public UMassProcessor
-{
-	GENERATED_BODY()
-public:
-	UMSEntityViewWrapperBenchMark();
-protected:
-	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
-
-	uint32 Counter;
-
-	
-
-	FMassEntityQuery EntityWrapperQuery;
-
-
-};
