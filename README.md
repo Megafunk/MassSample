@@ -647,6 +647,25 @@ It is possible to create custom mutations by implementing your own commands deri
 Context.Defer().EmplaceCommand<FMyCustomComand>(...)
 ```
 
+The command needs to have a constructor and to override `FCommandBufferEntryBase::Execute()` but in order to correctly trigger observers two extra steps are required:
+
+1. Setting the `Type` definition to either `ECommandBufferOperationType::Remove` or `ECommandBufferOperationType::Add` in the header.
+```c++
+enum
+{
+	Type = ECommandBufferOperationType::Add
+};
+```
+2. Implementing (not overriding) `AppendAffectedEntitiesPerType` and calling functions on the passed in `FMassCommandsObservedTypes` as needed. Here we are adding a changed `Tag` and changed `Fragment`. `TargetEntity` is a member of the parent struct.
+```c++
+void AppendAffectedEntitiesPerType(FMassCommandsObservedTypes& ObservedTypes)
+{
+	ObservedTypes.TagAdded(TagType, TargetEntity);	
+	ObservedTypes.FragmentAdded(FragmentType, TargetEntity);
+}
+```
+
+
 <!-- FIXMEVORI: Provide example of custom commands and when they would be useful -->
 
 <a name="mass-traits"></a>
