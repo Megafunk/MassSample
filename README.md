@@ -99,7 +99,7 @@ In Mass, some ECS terminology differs from the norm in order to not get confused
 Typical Unreal Engine game code is expressed as actor objects that inherit from parent classes to change their data and functionality based on what they ***are***. 
 In an ECS, an entity is only composed of fragments that get manipulated by processors based on which ECS components they ***have***. 
 
-An entity is really just a small unique identifier that points to some fragments. A Processor defines a query that filters only for entities that have specific fragments. For example, a basic "movement" Processor could query for entities that have a transform and velocity component to add the velocity to their current transform position. 
+An entity is really just a small unique identifier that points to some fragments. A Processor defines a query that filters only for entities that have specific fragments, and then performs an operation on those fragments. For example, a basic "movement" Processor could query for entities that have a transform and velocity component to add the velocity to their current transform position. 
 
 Fragments are stored in memory as tightly packed arrays of other identical fragment arrangements called archetypes. Because of this, the aforementioned movement processor can be incredibly high performance because it does a simple operation on a small amount of data all at once. New functionality can easily be added by creating new fragments and processors.
 
