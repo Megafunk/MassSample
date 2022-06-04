@@ -103,7 +103,7 @@ class MASSSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 
 
 
-	//thanks to https://forums.unrealengine.com/t/tutorial-how-to-accept-wildcard-structs-in-your-ufunctions/18968/11?u=megafunk
+	// Thanks to https://forums.unrealengine.com/t/tutorial-how-to-accept-wildcard-structs-in-your-ufunctions/18968/11?u=megafunk
 
 
 	UFUNCTION(
@@ -124,9 +124,7 @@ class MASSSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 		// Grab the last property found when we walked the stack
 		// This does not contains the property value, only its type information
 		FStructProperty* StructProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
-
 		
-
 		// Grab the base address where the struct actually stores its data
 		// This is where the property value is truly stored
 		void* StructPtr = Stack.MostRecentPropertyAddress;
