@@ -963,6 +963,31 @@ Destroying an entity is rather straightfoward -->
 
 <!-- #### Direct Call -->
 
+<a name="mass-cm-oe"></a>
+## 5.2 Outside Entities
+
+In cases where we need to access entities outside of the current processing context (e.g. avoiding another crowd entity that this entity is close to) one can call all of the regular Mass Subsystem functions or deferred actions on them. This is not ideal for cache coherency but is nearly unavoidable in gameplay code. 
+
+## 5.2.1 FMassEntityView
+
+`FMassEntityView` is a struct that makes checking for and getting fragments on another entity easier. It is normally constructed with an `FMassEntityHandle` and a `UMassEntitySubsystem`. On construction, the Entity View caches the entity's current archetype data for use later, reducing repeated work needed when normally calling the subsystem to retrieve information about a it multiple times.
+
+It also has functions for retreiving or changing fragment data already on the entity.
+
+
+In this example we check for if another entity is an enemy and retrieve specific fragment data if it is.
+```c
+FMassEntityView EntityView(EntitySubsystem, NearbyEntity.Entity);
+
+if (EntityView.HasTag<FEnemyMassTag>())
+{
+	if(auto DamageOnHitFragment = EntityView.GetFragmentDataPtr<FDamageOnHit>())
+	{
+		// Do damage to this entity etc...
+	}
+}
+```
+<!--FIXMEKARL: Show better example?-->
 
 
 <a name="mass-pm"></a>
