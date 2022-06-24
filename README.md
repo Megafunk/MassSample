@@ -61,8 +61,11 @@ After installing the requirements from above, follow these steps:
 > 4.8 [Observers](#mass-o)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observers limitations](#mass-o-n)                
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.2 [Observing multiple Fragment/Tags](#mass-o-mft)       
-> 4.10 [Mulitthreading](#mass-mt)  
-> 5. [Mass common operations](#mass-cm)   
+> 4.10 [Multithreading](#mass-mt)  
+> 5. [Common Mass operations](#mass-cm)   
+> 5.1 [Spawning entities](#mass-cm-spae)  
+> 5.2 [Destroying entities](#mass-cm-dsae)  
+> 5.3 [Operating Entities](#mass-cm-opee)  
 > 6. [Mass Plugins and Modules](#mass-pm)  
 > 6.1 [MassEntity](#mass-pm-me)  
 > 6.2 [MassGameplay](#mass-pm-gp)  
@@ -135,6 +138,8 @@ Currently, the sample features the following:
 <a name="mass-entities"></a>
 ### 4.1 Entities
 Small unique identifiers that point to a combination of [fragments](#mass-fragments) and [tags](#mass-tags) in memory. Entities are mainly a simple integer ID. For example, entity 103 might point to a single projectile with transform, velocity, and damage data.
+
+<!-- TODO: Document the different ways in which we can identify an entity in mass and their purpose? FMassEntityHandle, FMassEntity, FMassEntityView?? -->
 
 <a name="mass-fragments"></a>
 ### 4.2 Fragments
@@ -451,7 +456,7 @@ MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& C
 	}
 });
 ```
-<!-- REVIEWMEVORI: Maybe move to mass common operations!! Spawning/Destroying subsections, although I think that wouldn't hurt having this here, and then referencing it back in the common mass operation section -->
+<!-- REVIEWMEVORI: Maybe move to common Mass operations!! Spawning/Destroying subsections, although I think that wouldn't hurt having this here, and then referencing it back in the common mass operation section -->
 <a name="mass-queries-mq"></a>
 #### 4.6.3 Mutating entities with `Defer()`
                                                         
@@ -869,7 +874,7 @@ Out of the box Mass can spread out work to threads in two different ways:
 
 
 <a name="mass-cm"></a>
-## 5. Mass common operations
+## 5. Common Mass operations
 This section is designed to serve as a quick reference for how to perform common operations with Mass. As usual, we are open to ideas on how to organize this stuff!!
 
 As a rule of thumb, most entity mutations (adding/removing components, spawning or removing entities) are generally done by deferring them from inside of processors. 
@@ -881,7 +886,7 @@ As a rule of thumb, most entity mutations (adding/removing components, spawning 
 
 <!--FIXMEFUNK: When does changing values require deferrment if ever? need more concurrency info for that-->
 
-<a name="mass-cm-sae"></a>
+<a name="mass-cm-spae"></a>
 ## 5.1 Spawning entities
 
 In this Section we are going to review different methods to spawn entities. First, we review the `Mass Spawner`, which is useful to spawn entities with predefined data. Then, we'll move to more complex spawning methods that enable us to have fine grained control over the spawning.
@@ -954,29 +959,35 @@ Currently, my best guess is to use `FBuildEntityFromFragmentInstances` and then 
 It is very important to remember that Observers are only triggered explicitely in certain functions out of the box. [Check out the list here.](#mass-o-n) 
 
 
-<!-- <a name="mass-cm-dae"></a>
-## 5.2 Destroying an entity
+<a name="mass-cm-dsae"></a>
+## 5.2 Destroying entities
 
-Destroying an entity is rather straightfoward -->
+[TODO]
 
 <!-- #### Deferred -->
 
 <!-- #### Direct Call -->
 
-<a name="mass-cm-oe"></a>
-## 5.2 Outside Entities
+<a name="mass-cm-opee"></a>
+## 5.3 Operating Entities
 
-In cases where we need to access entities outside of the current processing context (e.g. avoiding another crowd entity that this entity is close to) one can call all of the regular Mass Subsystem functions or deferred actions on them. This is not ideal for cache coherency but is nearly unavoidable in gameplay code. 
+In this Section we are going to explore the most relevant tools Mass offers to operate Entities. This covers all the get and set operations and structures to work with them (fragment, archetype, tags...).
 
-## 5.2.1 FMassEntityView
+**Note:** In cases where we need to operate with Entities outside the current processing context (e.g. avoidance between Entity crowds) it is possible to call all of the regular Mass Subsystem functions or deferred actions on them. This is not ideal for cache coherency but it is nearly unavoidable in gameplay code. 
 
-`FMassEntityView` is a struct that makes checking for and getting fragments on another entity easier. It is normally constructed with an `FMassEntityHandle` and a `UMassEntitySubsystem`. On construction, the Entity View caches the entity's current archetype data for use later, reducing repeated work needed when normally calling the subsystem to retrieve information about a it multiple times.
+## 5.2.1 `FMassEntityView`
 
-It also has functions for retreiving or changing fragment data already on the entity.
+`FMassEntityView` is a struct that eases all kinds of Entity operations. It is composed by a `FMassEntityHandle` and a `UMassEntitySubsystem`. On construction, the `FMassEntityView` caches the Entity's archetype data, which will later reduce repeated work needed to retrieve information about the Entity.
 
+Following next, we expose some of the relevant functions of `FMassEntityView`:
 
-In this example we check for if another entity is an enemy and retrieve specific fragment data if it is.
-```c
+<!--TODO: List of relevant functions interesting for the user:-->
+- [TODO]
+- [TODO]
+- [TODO]
+
+In the following example, we check if `NearbyEntity` is an enemy, if it is, we damage it:
+```c++
 FMassEntityView EntityView(EntitySubsystem, NearbyEntity.Entity);
 
 if (EntityView.HasTag<FEnemyMassTag>())
@@ -988,6 +999,7 @@ if (EntityView.HasTag<FEnemyMassTag>())
 }
 ```
 <!--FIXMEKARL: Show better example?-->
+<!--FORKARL: I think the damage is cool, but please, include also some simple code damaging the entity :) -->
 
 
 <a name="mass-pm"></a>
