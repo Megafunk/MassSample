@@ -8,40 +8,67 @@ public class MassCommunitySample : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
+		
+		
 		PublicIncludePaths.AddRange(
 			new string[] {
-				// ... add public include paths required here ...
+				ModuleDirectory
 			}
-			);
-				
-		
+		);
 		PrivateIncludePaths.AddRange(
 			new string[] {
 				// ... add other private include paths required here ...
 			}
 			);
-			
-		
 		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"Core",
-				// ... add other public dependencies that you statically link with here ...
+			new string[] { 
+				"Core", 
+				"CoreUObject", 
+				"Engine", 
+				"InputCore" 
 			}
-			);
-			
-		
+		);
+
 		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"CoreUObject",
-				"Engine",
-				"Slate",
-				"SlateCore",
-				// ... add private dependencies that you statically link with here ...	
+			new string[] {
+				"MassEntity",
+				"StructUtils",
+				"MassCommon",
+				"MassMovement",
+				"MassActors",
+				"MassSpawner",
+				"MassGameplayDebug",
+				"MassSignals",
+				"MassCrowd",
+				"MassActors",
+				"MassSpawner",
+				"MassRepresentation",
+				"MassReplication",
+				"MassNavigation",
+				//needed for replication setup
+				"NetCore",
+				"AIModule",
+
+				"ZoneGraph",
+				"MassGameplayDebug",
+				"MassZoneGraphNavigation", 
+				"Niagara",
+				"DeveloperSettings",
+				"GeometryCore",
+				"MassAIBehavior",
+				"StateTreeModule",
+				"MassLOD",
+				"NavigationSystem",
+				//todo: maybe do thee editor only stuff on another module?
+				
 			}
-			);
+		);
 		
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.Add("CodeView");
+			PrivateDependencyModuleNames.Add("UnrealEd");
+		}
 		
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
