@@ -30,14 +30,13 @@ protected:
 	{
 		DebugPointDisplay.ForEachEntityChunk(EntitySubsystem, Context, [&, this](FMassExecutionContext& Context)
 		{
-
 #if WITH_EDITOR
 			const auto Transforms = Context.GetFragmentView<FTransformFragment>().GetData();
-			
+
 			auto Entity = Context.GetEntity(0);
 			FStringOutputDevice Description;
 			EntitySubsystem.DebugGetStringDesc(EntitySubsystem.GetArchetypeForEntity(Entity), Description);
-			
+
 			for (int32 i = 0; i < Context.GetNumEntities(); ++i)
 			{
 				auto Location = Transforms[i].GetTransform().GetTranslation();
@@ -45,12 +44,8 @@ protected:
 				DrawDebugString(GetWorld(), Location, static_cast<FString>(Description), 0, FColor::White, 0, true);
 			}
 #endif
-
 		});
-
 	}
-	
-	
-	FMassEntityQuery DebugPointDisplay;
 
+	FMassEntityQuery DebugPointDisplay;
 };

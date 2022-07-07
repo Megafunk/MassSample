@@ -11,11 +11,12 @@
  * FMassFragments are simple structs that can hold data.
  * If you want to, it is possible to add functions as well for getter/setters and the like.
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FSampleColorFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	
+
+	UPROPERTY(BlueprintReadWrite,EditAnywhere)
 	FColor Color = FColor::Red;
 };
 

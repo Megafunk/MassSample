@@ -112,13 +112,10 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferred(
 }
 
 
-
-
 FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredBugRepro(
 	AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
 	const UObject* WorldContextObject)
 {
-	
 	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
 
 	if (const FMassEntityTemplate* EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
@@ -157,7 +154,7 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredBu
 			                                         InstanceStructs,
 			                                         TagsTypeList,
 			                                         EntityTemplate->GetSharedFragmentValues()));
-		
+
 		EntitySubSystem->FlushCommands();
 		//EntitySubSystem->FlushCommands(MakeShareable(new FMassCommandBuffer()));
 		return FEntityHandleWrapper{ReservedEntity};
@@ -165,9 +162,6 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredBu
 
 	return FEntityHandleWrapper();
 }
-
-
-
 
 
 void UMSBPFunctionLibrary::SetEntityTransform(const FEntityHandleWrapper EntityHandle, const FTransform Transform,
@@ -251,12 +245,15 @@ void UMSBPFunctionLibrary::FindHashGridEntitiesInSphere(const FVector Location, 
 		TArray<FMassEntityHandle> EntitiesFound;
 
 		int32 numfound = MassSampleSystem->HashGrid.FindPointsInBall(Location, Radius,
-             //todo-performance it feels bad to get random entities to query... 
-             [&,Location](const FMassEntityHandle Entity)
-             {
-                const FVector EntityLocation = EntitySystem->GetFragmentDataPtr<FTransformFragment>(Entity)->GetTransform().GetLocation();
-                return UE::Geometry::DistanceSquared(Location, EntityLocation);
-             }, EntitiesFound);
+		                                                             //todo-performance it feels bad to get random entities to query... 
+		                                                             [&,Location](const FMassEntityHandle Entity)
+		                                                             {
+			                                                             const FVector EntityLocation = EntitySystem->
+				                                                             GetFragmentDataPtr<FTransformFragment>(
+					                                                             Entity)->GetTransform().GetLocation();
+			                                                             return UE::Geometry::DistanceSquared(
+				                                                             Location, EntityLocation);
+		                                                             }, EntitiesFound);
 
 		Entities.Reserve(numfound);
 		for (auto EntityFound : EntitiesFound)
@@ -269,7 +266,7 @@ void UMSBPFunctionLibrary::FindHashGridEntitiesInSphere(const FVector Location, 
 void UMSBPFunctionLibrary::FindClosestHashGridEntityInSphere(const FVector Location, const double Radius,
                                                              FEntityHandleWrapper& Entity,
                                                              const UObject* WorldContextObject,
-                                                             TEnumAsByte<EReturnSuccess>& ReturnBranch)
+                                                             EReturnSuccess& ReturnBranch)
 {
 	QUICK_SCOPE_CYCLE_COUNTER(FindCloestHashGridEntityInSphere);
 
@@ -298,12 +295,6 @@ void UMSBPFunctionLibrary::FindClosestHashGridEntityInSphere(const FVector Locat
 	}
 }
 
-void UMSBPFunctionLibrary::AddFragmentToEntity(FStructViewBPWrapper Fragment, FEntityHandleWrapper Entity,
-                                               const UObject* WorldContextObject)
-{
-	auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-	EntitySystem->AddFragmentToEntity(Entity.Entity, Fragment.Struct.GetScriptStruct());
-}
 
 FString UMSBPFunctionLibrary::GetEntityDebugString(FEntityHandleWrapper Entity, const UObject* WorldContextObject)
 {
@@ -317,11 +308,190 @@ FString UMSBPFunctionLibrary::GetEntityDebugString(FEntityHandleWrapper Entity, 
 	FStringOutputDevice OutPut;
 	OutPut.SetAutoEmitLineTerminator(true);
 
-	#if WITH_EDITOR
+#if WITH_EDITOR
 	EntitySystem->DebugPrintEntity(Entity.Entity, OutPut);
-	#endif
-	
+#endif
 
 
 	return FString{OutPut};
 }
+
+void UMSBPFunctionLibrary::SetEntityFragment(FEntityHandleWrapper Entity, FInstancedStructBPWrapper Fragment,
+	const UObject* WorldContextObject)
+{
+
+	const UMassEntitySubsystem* EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	check(EntitySystem)
+
+	if (!Entity.Entity.IsValid())
+	{
+		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in an invalid Entity"));
+		return;
+	}
+	if (!Fragment.Struct.IsValid())
+	{
+		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in an invalid FInstancedStructBPWrapper"));
+		return;
+	}
+
+	if (!Fragment.Struct.GetScriptStruct()->IsChildOf(FMassFragment::StaticStruct()))
+	{
+		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in a non fragment type to GetEntityFragmentByType: '%s'."), *Fragment.Struct.GetScriptStruct()->GetName());
+		return;
+	}
+	
+	FStructView structview = EntitySystem->GetFragmentDataStruct(Entity.Entity, Fragment.Struct.GetScriptStruct());
+
+	if (structview.IsValid())
+	{
+		const auto memory = structview.GetMutableMemory();
+			*memory = *Fragment.Struct.GetMemory();
+	}
+	
+}
+
+
+// Thanks to https://forums.unrealengine.com/t/tutorial-how-to-accept-wildcard-structs-in-your-ufunctions/18968/11?u=megafunk
+// And also Jambax! (shamelessly stolen from: https://github.com/EpicGames/UnrealEngine/pull/9282/files)
+
+// I recommend you do not rely on the existence of these functions too much in your projects as it will probably change a lot and be hard to replace in BP
+
+#define LOCTEXT_NAMESPACE "UStructUtilsFunctionLibrary"
+
+
+FInstancedStructBPWrapper UMSBPFunctionLibrary::GetEntityFragmentByType(FEntityHandleWrapper Entity,
+                                                                        FInstancedStructBPWrapper Fragment,
+                                                                        const UObject* WorldContextObject,
+                                                                        EReturnSuccess& ReturnBranch)
+{
+	ReturnBranch = EReturnSuccess::Failure;
+
+	const UMassEntitySubsystem* EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	check(EntitySystem)
+
+	if (!Entity.Entity.IsValid())
+	{
+		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in an invalid Entity"));
+		return FInstancedStructBPWrapper();
+	}
+	if (!Fragment.Struct.IsValid())
+	{
+		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in an invalid FInstancedStructBPWrapper"));
+		return FInstancedStructBPWrapper();
+	}
+
+	if (!Fragment.Struct.GetScriptStruct()->IsChildOf(FMassFragment::StaticStruct()))
+	{
+		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in a non fragment type to GetEntityFragmentByType: '%s'."), *Fragment.Struct.GetScriptStruct()->GetName());
+		return FInstancedStructBPWrapper();
+	}
+	
+	FStructView structview = EntitySystem->GetFragmentDataStruct(Entity.Entity, Fragment.Struct.GetScriptStruct());
+
+	if (structview.IsValid())
+	{
+		ReturnBranch = EReturnSuccess::Success;
+		return FInstancedStructBPWrapper{structview};
+	}
+
+	return FInstancedStructBPWrapper();
+	
+}
+
+// Stubs to avoid linker errors
+FInstancedStructBPWrapper UMSBPFunctionLibrary::MakeInstancedStruct(EReturnSuccess& ExecResult, const int32& Data)
+{
+	checkNoEntry();
+	return {};
+}
+
+void BreakInstancedStruct(EReturnSuccess& ExecResult, const FInstancedStructBPWrapper& Fragment, int32& Data)
+{
+	checkNoEntry();
+}
+
+DEFINE_FUNCTION(UMSBPFunctionLibrary::execMakeInstancedStruct)
+{
+	P_GET_ENUM_REF(EReturnSuccess, ExecResult);
+
+	Stack.Step(Stack.Object, nullptr);
+
+	const FStructProperty* StructProperty = CastField<FStructProperty>(Stack.MostRecentProperty);
+	const uint8* StructData = Stack.MostRecentPropertyAddress;
+
+	P_FINISH;
+
+	if (!StructProperty || !StructData)
+	{
+		FBlueprintExceptionInfo ExceptionInfo(EBlueprintExceptionType::FatalError
+		                                      , LOCTEXT("InstancedStruct_InvalidInputStructWarning",
+		                                                "Data must be a valid Struct type"));
+
+		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
+
+		P_NATIVE_BEGIN;
+			ExecResult = EReturnSuccess::Failure;
+			(*(FInstancedStructBPWrapper*)RESULT_PARAM).Struct.Reset();
+		P_NATIVE_END;
+	}
+	else
+	{
+		P_NATIVE_BEGIN;
+
+			ExecResult = EReturnSuccess::Success;
+			(*(FInstancedStructBPWrapper*)RESULT_PARAM).Struct.InitializeAs(StructProperty->Struct, StructData);
+		P_NATIVE_END;
+	}
+}
+
+DEFINE_FUNCTION(UMSBPFunctionLibrary::execBreakInstancedStruct)
+{
+	P_GET_ENUM_REF(EReturnSuccess, ExecResult);
+	P_GET_STRUCT_REF(FInstancedStructBPWrapper, InstancedStruct);
+
+	Stack.StepCompiledIn<FProperty>(nullptr);
+	const FProperty* ValueProp = Stack.MostRecentProperty;
+	void* ValuePtr = Stack.MostRecentPropertyAddress;
+
+	P_FINISH;
+
+	ExecResult = EReturnSuccess::Failure;
+
+	if (!ValueProp || !ValuePtr)
+	{
+		FBlueprintExceptionInfo ExceptionInfo(
+			EBlueprintExceptionType::FatalError,
+			LOCTEXT("InstancedStruct_InvalidStructWarning",
+			        "Failed to resolve the data type for Break Instanced Struct")
+		);
+
+		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
+	}
+
+	const FStructProperty* OutputStructProp = CastField<FStructProperty>(ValueProp);
+	if (!OutputStructProp)
+	{
+		FBlueprintExceptionInfo ExceptionInfo(
+			EBlueprintExceptionType::NonFatalError,
+			LOCTEXT("InstancedStruct_InvalidOutputStructWarning", "Output must be a valid Struct type"));
+
+		FBlueprintCoreDelegates::ThrowScriptException(P_THIS, Stack, ExceptionInfo);
+	}
+	else
+	{
+		P_NATIVE_BEGIN;
+			if (InstancedStruct.Struct.IsValid() && InstancedStruct.Struct.GetScriptStruct()->IsChildOf(
+				OutputStructProp->Struct))
+			{
+				OutputStructProp->Struct->CopyScriptStruct(ValuePtr, InstancedStruct.Struct.GetMemory());
+				ExecResult = EReturnSuccess::Success;
+			}
+			else
+			{
+				ExecResult = EReturnSuccess::Failure;
+			}
+		P_NATIVE_END;
+	}
+}
+
+#undef LOCTEXT_NAMESPACE
