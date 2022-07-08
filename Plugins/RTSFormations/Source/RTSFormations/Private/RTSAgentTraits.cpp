@@ -76,8 +76,7 @@ void URTSFormationInitializer::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 						MoveTarget.Center = FVector(w*BufferDistance,l*BufferDistance,0.f);
 						MoveTarget.Forward = (Transform.GetLocation() - MoveTarget.Center).GetSafeNormal();
 						MoveTarget.DistanceToGoal = (Transform.GetLocation() - MoveTarget.Center).Length();
-						//MoveTarget.DesiredSpeed = FMassInt16Real(200.f);
-						UE_LOG(LogTemp, Error, TEXT("MOVE TARGET: %s"), *(MoveTarget.Center.ToString()));
+						MoveTarget.SlackRadius = 50.f;
 					}
 				}
 			}
@@ -104,6 +103,11 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 			
 			MoveTarget.DistanceToGoal = (MoveTarget.Center - Transform.GetLocation()).Length();
 			MoveTarget.Forward = (MoveTarget.Center - Transform.GetLocation()).GetSafeNormal();
+
+			if (MoveTarget.DistanceToGoal <= MoveTarget.SlackRadius)
+			{
+				MoveTarget.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
+			}
 		}
 	});
 }
