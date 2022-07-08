@@ -25,7 +25,7 @@ public class RTSFormations : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "MassSpawner", "MassEntity", "MassCommon"
+				"Core", "MassSpawner", "MassEntity", "MassCommon", "StructUtils"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
