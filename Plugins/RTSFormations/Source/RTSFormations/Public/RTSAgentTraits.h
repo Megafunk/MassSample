@@ -18,6 +18,25 @@ struct RTSFORMATIONS_API FRTSFormationAgent : public FMassFragment
 	int UnitIndex = 0;
 };
 
+USTRUCT()
+struct RTSFORMATIONS_API FRTSFormationSettings : public FMassSharedFragment
+{
+	GENERATED_BODY()
+
+	// Distance between each unit
+	UPROPERTY(EditAnywhere, Category = "Formation")
+	float BufferDistance = 100.f;
+
+	// Width ratio for formation
+	UPROPERTY(EditAnywhere, Category = "Formation")
+	int UnitRatioX = 1;
+
+	// Length ratio for formation
+	UPROPERTY(EditAnywhere, Category = "Formation")
+	int UnitRatioY = 1;
+};
+
+// Provides entity with FRTSFormationAgent fragment to enable formations
 UCLASS()
 class RTSFORMATIONS_API URTSFormationAgentTrait : public UMassEntityTraitBase
 {
@@ -26,7 +45,7 @@ class RTSFORMATIONS_API URTSFormationAgentTrait : public UMassEntityTraitBase
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 };
 
-// Ensure that units are in formation
+// Observer that runs when a unit is spawned. Calculates square formation position based on unit count
 UCLASS()
 class RTSFORMATIONS_API URTSFormationInitializer : public UMassObserverProcessor
 {
@@ -42,6 +61,7 @@ class RTSFORMATIONS_API URTSFormationInitializer : public UMassObserverProcessor
 	FMassEntityQuery MoveEntityQuery;
 };
 
+// Simple movement processor to get agents from a to b
 UCLASS()
 class RTSFORMATIONS_API URTSAgentMovement : public UMassProcessor
 {
