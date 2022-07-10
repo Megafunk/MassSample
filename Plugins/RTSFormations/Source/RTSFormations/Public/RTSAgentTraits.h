@@ -5,8 +5,9 @@
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
 #include "MassEntityTypes.h"
-#include "MassObserverProcessor.h"
 #include "RTSAgentTraits.generated.h"
+
+class URTSFormationSubsystem;
 
 // Store basic info about the unit
 USTRUCT()
@@ -27,13 +28,9 @@ struct RTSFORMATIONS_API FRTSFormationSettings : public FMassSharedFragment
 	UPROPERTY(EditAnywhere, Category = "Formation")
 	float BufferDistance = 100.f;
 
-	// Width ratio for formation
+	// Unit width of formation
 	UPROPERTY(EditAnywhere, Category = "Formation")
-	int UnitRatioX = 1;
-
-	// Length ratio for formation
-	UPROPERTY(EditAnywhere, Category = "Formation")
-	int UnitRatioY = 1;
+	int FormationLength = 1;
 };
 
 // Provides entity with FRTSFormationAgent fragment to enable formations
@@ -43,32 +40,11 @@ class RTSFORMATIONS_API URTSFormationAgentTrait : public UMassEntityTraitBase
 	GENERATED_BODY()
 	
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
+
+	UPROPERTY(EditAnywhere)
+	FRTSFormationSettings FormationSettings;
 };
 
-// Observer that runs when a unit is spawned. Calculates square formation position based on unit count
-UCLASS()
-class RTSFORMATIONS_API URTSFormationInitializer : public UMassObserverProcessor
-{
-	GENERATED_BODY()
-
-	URTSFormationInitializer();
-	virtual void ConfigureQueries() override;
-	virtual void Initialize(UObject& Owner) override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
-
-	FMassEntityQuery EntityQuery;
-
-	FMassEntityQuery MoveEntityQuery;
-};
-
-// Simple movement processor to get agents from a to b
-UCLASS()
-class RTSFORMATIONS_API URTSAgentMovement : public UMassProcessor
-{
-	GENERATED_BODY()
-	
-	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
-
-	FMassEntityQuery EntityQuery;
-};
+//@todo create destroyer observer processor to handle updating units
+//@todo create another processor to handle when units need to be updated (using bUpdateUnitPosition in SharedFragment)
+//@todo I definitely went overboard in terms of complexity, this example should really just be straightforward to read and have performance second i think
