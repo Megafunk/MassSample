@@ -11,6 +11,8 @@
 void URTSFormationSubsystem::DestroyEntity(UMassAgentComponent* Entity)
 {
 	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	check(EntitySubsystem);
+	
 	EntitySubsystem->Defer().DestroyEntity(Entity->GetEntityHandle());
 	
 	// My current observer implementation doesnt handle entity destruction properly, so the logic is performed here for the time
