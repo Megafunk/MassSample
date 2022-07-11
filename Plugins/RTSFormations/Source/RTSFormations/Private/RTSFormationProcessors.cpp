@@ -167,10 +167,11 @@ void URTSFormationUpdate::SignalEntities(UMassEntitySubsystem& EntitySubsystem, 
 
 			// We want the formation to be 'centered' so we need to create an offset
 			const FVector CenterOffset((RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, (FormationSubsystem->Units.Num()/RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, 0.f);
+			const FVector UnitPosition = FormationSubsystem->UnitPosition + CenterOffset;
 
 			// Create movement action
 			MoveTarget.CreateNewAction(EMassMovementAction::Move, *GetWorld());
-			MoveTarget.Center = FVector(w*RTSFormationSettings.BufferDistance-CenterOffset.Y,l*RTSFormationSettings.BufferDistance-CenterOffset.X,0.f);
+			MoveTarget.Center = FVector(w*RTSFormationSettings.BufferDistance-UnitPosition.Y,l*RTSFormationSettings.BufferDistance-UnitPosition.X,0.f);
 			MoveTarget.Forward = (Transform.GetLocation() - MoveTarget.Center).GetSafeNormal();
 			MoveTarget.DistanceToGoal = (Transform.GetLocation() - MoveTarget.Center).Length();
 			MoveTarget.SlackRadius = 10.f;
