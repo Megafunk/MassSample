@@ -19,7 +19,7 @@ class MASSCOMMUNITYSAMPLE_API UMSObserverProcessor : public UMassProcessor
 	GENERATED_BODY()
 public:
 	UMSObserverProcessor();
-	
+
 	virtual void ConfigureQueries() override;
 	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
 	UFUNCTION(BlueprintImplementableEvent, meta=(WorldContext="WorldContextObject"))
@@ -29,9 +29,10 @@ public:
 	FMassEntityQuery EntityQuery;
 
 
-	UPROPERTY(Category="Query", EditAnywhere, meta = (BaseStruct = "MassFragment", ExcludeBaseStruct))
+	UPROPERTY(Category="Query", EditAnywhere,
+		meta = (BaseStruct = "MassFragment", ExcludeBaseStruct, NoElementDuplicate))
 	TArray<FInstancedStruct> FragmentRequirements;
-	UPROPERTY(Category="Query", EditAnywhere,  meta = (BaseStruct = "MassTag", ExcludeBaseStruct))
+	UPROPERTY(Category="Query", EditAnywhere, meta = (BaseStruct = "MassTag", ExcludeBaseStruct, NoElementDuplicate))
 	TArray<FInstancedStruct> TagRequirements;
 
 	UPROPERTY(Category="Query", EditAnywhere, meta = (BaseStruct = "MassFragment", ExcludeBaseStruct))
@@ -44,12 +45,9 @@ class MASSCOMMUNITYSAMPLE_API UMSObserverSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 public:
-	
 	UPROPERTY(config, EditAnywhere, Category = "Visible", meta = (AllowAbstract = "false"))
 	TArray<TSubclassOf<UMSObserverProcessor>> ObserversToRegister;
-
 };
-
 
 
 UCLASS()
@@ -65,16 +63,14 @@ public:
 
 		for (auto ObserverClass : Settings->ObserversToRegister)
 		{
-			if(!ObserverClass) continue;
-			
+			if (!ObserverClass) continue;
+
 			auto CDO = ObserverClass.GetDefaultObject();
-			
-			if(!GetClass()->HasAnyFlags(RF_ClassDefaultObject) && CDO->ObservedFragment.IsValid())
-				
-				UMassObserverRegistry::GetMutable().RegisterObserver(*CDO->ObservedFragment.GetScriptStruct(), EMassObservedOperation::Add, ObserverClass);
+
+			if (!GetClass()->HasAnyFlags(RF_ClassDefaultObject) && CDO->ObservedFragment.IsValid())
+
+				UMassObserverRegistry::GetMutable().RegisterObserver(*CDO->ObservedFragment.GetScriptStruct(),
+				                                                     EMassObservedOperation::Add, ObserverClass);
 		}
-
-		
-
 	};
 };

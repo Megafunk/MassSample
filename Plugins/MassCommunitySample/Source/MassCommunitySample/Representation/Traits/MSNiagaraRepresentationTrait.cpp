@@ -6,7 +6,7 @@
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
-#include "ProjectileSim/MSProjectileSubsystem.h"
+#include "ProjectileSim/MSNiagaraSubsystem.h"
 #include "NiagaraSystem.h"
 #include "Common/Fragments/MSFragments.h"
 
@@ -14,7 +14,7 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 {
 
 	
-	UMSProjectileSubsystem* ProjectileSubsystem = UWorld::GetSubsystem<UMSProjectileSubsystem>(&World);
+	UMSNiagaraSubsystem* ProjectileSubsystem = UWorld::GetSubsystem<UMSNiagaraSubsystem>(&World);
 
 	BuildContext.AddFragment<FTransformFragment>();
 	

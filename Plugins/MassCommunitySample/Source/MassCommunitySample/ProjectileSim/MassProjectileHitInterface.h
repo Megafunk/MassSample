@@ -20,10 +20,6 @@ class MASSCOMMUNITYSAMPLE_API IMassProjectileHitInterface
 {
 	GENERATED_BODY()
 public:
-
 	UFUNCTION(BlueprintImplementableEvent, Category="Mass")
 	void ProjectileHit(FEntityHandleWrapper Entity, FHitResult HitResult);
-
-	
-
 };

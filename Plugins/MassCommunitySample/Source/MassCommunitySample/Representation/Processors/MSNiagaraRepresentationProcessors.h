@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "ProjectileSim/MSProjectileSubsystem.h"
+#include "ProjectileSim/MSNiagaraSubsystem.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "MassCommonFragments.h"
 #include "MassMovementFragments.h"

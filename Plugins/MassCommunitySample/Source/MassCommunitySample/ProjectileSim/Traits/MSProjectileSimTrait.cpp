@@ -7,21 +7,16 @@
 #include "MassEntityTemplateRegistry.h"
 #include "MassMovementFragments.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
-#include "NiagaraSystem.h"
 
 void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {
-	
-	
 	BuildContext.AddFragment<FLineTraceFragment>();
 	BuildContext.AddFragment<FTransformFragment>();
 	BuildContext.AddFragment<FMassVelocityFragment>();
 	BuildContext.AddTag<FProjectileTag>();
 
-	if(bFiresHitEventToActors)
+	if (bFiresHitEventToActors)
 	{
 		BuildContext.AddTag<FFireHitEventTag>();
 	}
-
-	
 }

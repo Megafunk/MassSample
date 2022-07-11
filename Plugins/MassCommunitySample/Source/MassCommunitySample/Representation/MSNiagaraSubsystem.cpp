@@ -1,11 +1,11 @@
-﻿#include "MSProjectileSubsystem.h"
+﻿#include "MSNiagaraSubsystem.h"
 
 #include "MSNiagaraActor.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "NiagaraComponent.h"
 
 
-void UMSProjectileSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 		
@@ -13,12 +13,7 @@ void UMSProjectileSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 }
 
-void UMSProjectileSubsystem::OnWorldBeginPlay(UWorld& InWorld)
-{
-		
-}
-
-FSharedStruct UMSProjectileSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem)
+FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem)
 {
 
 	//we only want to key these based off of unique types of niagara systems! Usually the entire fragment would be hashed.
