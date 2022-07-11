@@ -1,4 +1,5 @@
 # Community Mass Sample
+### **Note:** This project requires `Git LFS` for it to work properly, `zip` downloads **won't work**.
 
 #### **Authors:**
 - Karl Mavko - [@Megafunk](https://github.com/Megafunk)
@@ -12,7 +13,7 @@ Currently built for the Unreal Engine 5 latest version binary from the Epic Game
 This documentation will be updated often!
 
 #### **Requirements:**
-- Unreal Engine 5.0.1 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- Unreal Engine 5.0.2 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - `Git` version control:
   - [Windows](https://gitforwindows.org/)
   - [Linux/Unix & macOS](https://git-scm.com/downloads)
@@ -35,7 +36,6 @@ After installing the requirements from above, follow these steps:
 4. Once LFS finishes, close the terminal.
 
 
-**Note:** This project requires `Git LFS` for it to work properly, `zip` downloads **won't work**. 
 
 <!--- Introduce here table of contents -->
 <a name="tocs"></a>

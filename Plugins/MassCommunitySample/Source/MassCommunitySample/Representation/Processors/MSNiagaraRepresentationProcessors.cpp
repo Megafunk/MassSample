@@ -2,9 +2,11 @@
 
 
 #include "MSNiagaraRepresentationProcessors.h"
-
+#include "MassCommonFragments.h"
 #include "NiagaraComponent.h"
-#include "ProjectileSim/MSNiagaraActor.h"
+#include "NiagaraDataInterfaceArrayFunctionLibrary.h"
+#include "Representation//MSNiagaraActor.h"
+#include "Representation/Fragments/MSRepresentationFragments.h"
 
 UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
 {

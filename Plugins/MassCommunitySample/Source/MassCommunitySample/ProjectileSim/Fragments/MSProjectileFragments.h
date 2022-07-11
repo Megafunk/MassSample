@@ -15,16 +15,15 @@ struct MASSCOMMUNITYSAMPLE_API FDamageFragment : public FMassFragment
 };
 
 // FIXME: Performance investigate making part of this shared? it's going to be very common besides the ignored actors etc?
-USTRUCT(BlueprintType)
+USTRUCT()
 struct MASSCOMMUNITYSAMPLE_API FLineTraceFragment : public FMassFragment
 {
 	GENERATED_BODY()
 	FCollisionQueryParams QueryParams = FCollisionQueryParams();
-
-	
 };
 
-USTRUCT()
+// TODO: Move this elsewhere? It's not entirely projectile specific
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FHitResultFragment : public FMassFragment
 {
 	GENERATED_BODY()
@@ -35,7 +34,7 @@ struct MASSCOMMUNITYSAMPLE_API FHitResultFragment : public FMassFragment
 	{
 	}
 
-
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FHitResult HitResult;
 
 };
