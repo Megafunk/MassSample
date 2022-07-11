@@ -25,7 +25,7 @@ public class RTSFormations : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "MassSpawner", "MassEntity", "MassCommon", "StructUtils", "MassSignals", "MassMovement"
+				"Core", "MassSpawner", "MassEntity", "MassCommon", "StructUtils", "MassSignals", "MassMovement", "MassCommunitySample"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -37,7 +37,7 @@ public class RTSFormations : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore", "MassNavigation", "MassSample", "MassActors",
+				"SlateCore", "MassNavigation", "MassActors"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
