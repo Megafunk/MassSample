@@ -1,4 +1,5 @@
 # Community Mass Sample
+### **Note:** This project requires `Git LFS` for it to work properly, `zip` downloads **won't work**.
 
 #### **Authors:**
 - Karl Mavko - [@Megafunk](https://github.com/Megafunk)
@@ -12,7 +13,7 @@ Currently built for the Unreal Engine 5 latest version binary from the Epic Game
 This documentation will be updated often!
 
 #### **Requirements:**
-- Unreal Engine 5.0.1 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- Unreal Engine 5.0.2 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - `Git` version control:
   - [Windows](https://gitforwindows.org/)
   - [Linux/Unix & macOS](https://git-scm.com/downloads)
@@ -35,7 +36,6 @@ After installing the requirements from above, follow these steps:
 4. Once LFS finishes, close the terminal.
 
 
-**Note:** This project requires `Git LFS` for it to work properly, `zip` downloads **won't work**. 
 
 <!--- Introduce here table of contents -->
 <a name="tocs"></a>
@@ -147,7 +147,7 @@ Data-only `UScriptStructs` that entities can own and processors can query on. To
 
 ```c++
 USTRUCT()
-struct MASSSAMPLE_API FLifeTimeFragment : public FMassFragment
+struct MASSCOMMUNITYSAMPLE_API FLifeTimeFragment : public FMassFragment
 {
 	GENERATED_BODY()
 	float Time;
@@ -162,7 +162,7 @@ A Shared Fragment is a type of Fragment that multiple entities can point to. Thi
 
 ```c++
 USTRUCT()
-struct MASSSAMPLE_API FClockSharedFragment : public FMassSharedFragment
+struct MASSCOMMUNITYSAMPLE_API FClockSharedFragment : public FMassSharedFragment
 {
 	GENERATED_BODY()
 	float Clock;
@@ -185,7 +185,7 @@ Empty `UScriptStructs` that [processors](#mass-processors) can use to filter ent
 
 ```c++
 USTRUCT()
-struct MASSSAMPLE_API FProjectileTag : public FMassTag
+struct MASSCOMMUNITYSAMPLE_API FProjectileTag : public FMassTag
 {
 	GENERATED_BODY()
 };
@@ -699,7 +699,7 @@ Traits are created by inheriting `UMassEntityTraitBase` and overriding `BuildTem
 
 ```c++
 UCLASS(meta = (DisplayName = "Debug Printing"))
-class MASSSAMPLE_API UMSDebugTagTrait : public UMassEntityTraitBase
+class MASSCOMMUNITYSAMPLE_API UMSDebugTagTrait : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
 public:
