@@ -30,12 +30,6 @@ void URTSFormationInitializer::Initialize(UObject& Owner)
 void URTSFormationInitializer::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
 	// First query is to give all units an appropriate unit index.
-	// @todo The unit index is given 'randomly' regardless of distance to closest formation position.
-	// Ideas: When a unit is already assigned an index, we shouldnt have to recalculate it unless a unit was destroyed and the index destroyed is less than
-	// the units index - pretty much like an array, would it be inefficient though?
-	// Another issue is that the center offset changes when enough units are spawned, causing the positions of the other units to be off
-
-	// Since I really want this example to be straightforward, Im going to streamline adding/remove entities so that the formation gets recalculated
 	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
 	{
 		TArrayView<FRTSFormationAgent> RTSFormationAgents = Context.GetMutableFragmentView<FRTSFormationAgent>();
@@ -62,7 +56,6 @@ URTSFormationDestroyer::URTSFormationDestroyer()
 
 void URTSFormationDestroyer::ConfigureQueries()
 {
-	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadOnly);
 }
 
 void URTSFormationDestroyer::Initialize(UObject& Owner)
@@ -73,17 +66,20 @@ void URTSFormationDestroyer::Initialize(UObject& Owner)
 
 void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this, &EntitySubsystem](FMassExecutionContext& Context)
 	{
-		const FRTSFormationSettings& RTSFormationSettings = Context.GetSharedFragment<FRTSFormationSettings>();
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
 			// Remove entity from units array
-			// @todo using RemoveAtSwap will cause the last unit to swap with the destroyed unit, need to fix index
 			const int32 ItemIndex = FormationSubsystem->Units.IndexOfByKey(Context.GetEntity(EntityIndex));
 			if (ItemIndex != INDEX_NONE)
 			{
 				// Since we are caching the index, we need to fix the entity index that replaces the destroyed one
+				// Not sure if this is the 'correct' way to handle this, but it works for now
+				FRTSFormationAgent* FormationAgent = EntitySubsystem.GetFragmentDataPtr<FRTSFormationAgent>(FormationSubsystem->Units.Last());
+				if (FormationAgent)
+					FormationAgent->UnitIndex = ItemIndex;
+				
 				FormationSubsystem->Units.RemoveAtSwap(ItemIndex, 1, false);
 			}
 		}
