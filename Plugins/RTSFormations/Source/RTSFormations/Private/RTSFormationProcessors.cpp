@@ -4,7 +4,6 @@
 #include "MassMovementFragments.h"
 #include "MassNavigationFragments.h"
 #include "MassNavigationTypes.h"
-#include "MassObserverRegistry.h"
 #include "MassSignalSubsystem.h"
 #include "RTSAgentTraits.h"
 #include "RTSFormationSubsystem.h"
@@ -18,10 +17,6 @@ URTSFormationInitializer::URTSFormationInitializer()
 void URTSFormationInitializer::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadWrite);
-
-	DestroyQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::None, EMassFragmentPresence::None);
-	DestroyQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadWrite);
 }
 
 void URTSFormationInitializer::Initialize(UObject& Owner)
@@ -41,37 +36,63 @@ void URTSFormationInitializer::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 	// Another issue is that the center offset changes when enough units are spawned, causing the positions of the other units to be off
 
 	// Since I really want this example to be straightforward, Im going to streamline adding/remove entities so that the formation gets recalculated
-	int UnitIndex = 0;
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this, &UnitIndex](FMassExecutionContext& Context)
+	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
 	{
 		TArrayView<FRTSFormationAgent> RTSFormationAgents = Context.GetMutableFragmentView<FRTSFormationAgent>();
-		FRTSFormationSettings& RTSFormationSettings = Context.GetMutableSharedFragment<FRTSFormationSettings>();
+
+		// Reserve units in advance to prevent resizing array every time
+		FormationSubsystem->Units.Reserve(FormationSubsystem->Units.Num()+Context.GetNumEntities());
+		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
 			FRTSFormationAgent& RTSFormationAgent = RTSFormationAgents[EntityIndex];
-			RTSFormationAgent.UnitIndex = UnitIndex;
+			RTSFormationAgent.UnitIndex = FormationSubsystem->Units.Num();
 			FormationSubsystem->Units.Emplace(Context.GetEntity(EntityIndex));
-			SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units);
 		}
-	});
-
-	DestroyQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this, &UnitIndex](FMassExecutionContext& Context)
-	{
-		FRTSFormationSettings& RTSFormationSettings = Context.GetMutableSharedFragment<FRTSFormationSettings>();
-		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
-		{
-			FormationSubsystem->Units.Remove(Context.GetEntity(EntityIndex));
-			SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units);
-		}
+		
+		SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units);
 	});
 }
 
-void URTSFormationInitializer::Register()
+URTSFormationDestroyer::URTSFormationDestroyer()
 {
-	Super::Register();
+	ObservedType = FRTSFormationAgent::StaticStruct();
+	Operation = EMassObservedOperation::Remove;
+}
 
-	// Register removal of entity
-	UMassObserverRegistry::GetMutable().RegisterObserver(*ObservedType, EMassObservedOperation::Remove, GetClass());
+void URTSFormationDestroyer::ConfigureQueries()
+{
+	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadOnly);
+}
+
+void URTSFormationDestroyer::Initialize(UObject& Owner)
+{
+	SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
+	FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(Owner.GetWorld());
+}
+
+void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+{
+	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	{
+		const FRTSFormationSettings& RTSFormationSettings = Context.GetSharedFragment<FRTSFormationSettings>();
+		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		{
+			// Remove entity from units array
+			// @todo using RemoveAtSwap will cause the last unit to swap with the destroyed unit, need to fix index
+			const int32 ItemIndex = FormationSubsystem->Units.IndexOfByKey(Context.GetEntity(EntityIndex));
+			if (ItemIndex != INDEX_NONE)
+			{
+				// Since we are caching the index, we need to fix the entity index that replaces the destroyed one
+				FormationSubsystem->Units.RemoveAtSwap(ItemIndex, 1, false);
+			}
+		}
+		// Shrink array and signal entities
+		FormationSubsystem->Units.Shrink();
+		
+		if (!FormationSubsystem->Units.IsEmpty())
+			SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units);
+	});
 }
 
 void URTSAgentMovement::ConfigureQueries()
@@ -144,12 +165,9 @@ void URTSFormationUpdate::SignalEntities(UMassEntitySubsystem& EntitySubsystem, 
 			FMassMoveTargetFragment& MoveTarget = MoveTargetFragments[EntityIndex];
 			const FTransform& Transform = TransformFragments[EntityIndex].GetTransform();
 
-			// Can be optimized by caching?
-			const int UnitIndex = FormationSubsystem->Units.Find(Context.GetEntity(EntityIndex));
-
 			// Convert UnitIndex to X/Y coords
-			const int w = UnitIndex / RTSFormationSettings.FormationLength;
-			const int l = UnitIndex % RTSFormationSettings.FormationLength;
+			const int w = RTSFormationAgent.UnitIndex / RTSFormationSettings.FormationLength;
+			const int l = RTSFormationAgent.UnitIndex % RTSFormationSettings.FormationLength;
 
 			// We want the formation to be 'centered' so we need to create an offset
 			const FVector CenterOffset((RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, (FormationSubsystem->Units.Num()/RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, 0.f);

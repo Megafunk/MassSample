@@ -18,18 +18,29 @@ class RTSFORMATIONS_API URTSFormationInitializer : public UMassObserverProcessor
 	virtual void ConfigureQueries() override;
 	virtual void Initialize(UObject& Owner) override;
 	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
-	virtual void Register() override;
 
 	FMassEntityQuery EntityQuery;
 
-	FMassEntityQuery MoveEntityQuery;
-
-	FMassEntityQuery DestroyQuery;
-
 	TObjectPtr<UMassSignalSubsystem> SignalSubsystem;
-	
 	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
 };
+
+UCLASS()
+class RTSFORMATIONS_API URTSFormationDestroyer : public UMassObserverProcessor
+{
+	GENERATED_BODY()
+
+	URTSFormationDestroyer();
+	virtual void ConfigureQueries() override;
+	virtual void Initialize(UObject& Owner) override;
+	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+
+	FMassEntityQuery EntityQuery;
+
+	TObjectPtr<UMassSignalSubsystem> SignalSubsystem;
+	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
+};
+
 
 // Simple movement processor to get agents from a to b
 UCLASS()
