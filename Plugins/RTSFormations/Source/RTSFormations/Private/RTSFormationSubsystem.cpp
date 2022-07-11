@@ -19,3 +19,9 @@ void URTSFormationSubsystem::DestroyEntity(UMassAgentComponent* Entity)
 	//Units.Remove(Entity->GetEntityHandle());
 	//GetWorld()->GetSubsystem<UMassSignalSubsystem>()->SignalEntities(FormationUpdated, Units);
 }
+
+void URTSFormationSubsystem::SetUnitPosition(FVector NewPosition)
+{
+	UnitPosition = NewPosition;
+	GetWorld()->GetSubsystem<UMassSignalSubsystem>()->SignalEntities(FormationUpdated, Units);
+}

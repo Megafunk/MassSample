@@ -23,4 +23,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DestroyEntity(UMassAgentComponent* Entity);
+
+	UFUNCTION(BlueprintCallable)
+	void SetUnitPosition(FVector NewPosition);
+	
+	UPROPERTY()
+	FVector UnitPosition;
 };
