@@ -9,6 +9,7 @@
 
 UMSEntityViewBenchMark::UMSEntityViewBenchMark()
 {
+	bAutoRegisterWithProcessingPhases = false;
 	int shouldregister = -1;
 	if(FParse::Value(FCommandLine::Get(), TEXT("ViewBenchmarkCount="), shouldregister))
 	{

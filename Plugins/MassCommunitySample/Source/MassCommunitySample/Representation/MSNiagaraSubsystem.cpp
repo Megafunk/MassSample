@@ -1,8 +1,8 @@
 ﻿#include "MSNiagaraSubsystem.h"
 
 #include "MSNiagaraActor.h"
-#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "NiagaraComponent.h"
+#include "Fragments/MSRepresentationFragments.h"
 
 
 void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)

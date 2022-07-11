@@ -16,7 +16,7 @@ struct FSparseStorageMap
 	UPROPERTY(meta = (BaseStruct = "FMassSparseFragment"))
 	TMap<int32, FInstancedStruct> StorageMap;
 
-	//Zebli says FScriptArray instead of FInstancedStruct to avoid allocs
+	//todo: FScriptArray instead of FInstancedStruct to avoid allocs
 };
 
 USTRUCT()
@@ -39,7 +39,7 @@ struct FMassSparseFragmentOwner : public FMassFragment
 	GENERATED_BODY()
 };
 
-//Ultra lazy sparse ECS alongside Mass
+// My very own lazy sparse ECS intended to be used alongside Mass for super-dynamic gameplay code
 UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSSparseStorage : public UWorldSubsystem
 {

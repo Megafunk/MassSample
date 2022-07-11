@@ -11,12 +11,12 @@
 
 
 UCLASS()
-class MASSSAMPLE_API UismPerInstanceDataChanger : public UMassProcessor
+class MASSCOMMUNITYSAMPLE_API UismPerInstanceDataUpdater : public UMassProcessor
 {
 	GENERATED_BODY()
 
 public:
-	UismPerInstanceDataChanger();
+	UismPerInstanceDataUpdater();
 
 protected:
 	virtual void ConfigureQueries() override;
@@ -27,7 +27,7 @@ private:
 
 
 UCLASS()
-class UISMPerInstanceDataChangerExampleProcessor : public UMassProcessor
+class MASSCOMMUNITYSAMPLE_API UISMPerInstanceDataChangerExampleProcessor : public UMassProcessor
 {
 	GENERATED_BODY()
 

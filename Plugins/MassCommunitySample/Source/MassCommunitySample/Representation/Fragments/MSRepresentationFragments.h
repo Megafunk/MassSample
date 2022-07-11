@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
 #include "MassEntityTypes.h"
-#include  "MSProjectileFragments.generated.h"
+#include  "MSRepresentationFragments.generated.h"
 
 /**	Please keep in mind that we key FSharedNiagaraSystemFragment off of the pointer
 *	to the niagara system select in the trait.
@@ -27,8 +27,8 @@ struct MASSCOMMUNITYSAMPLE_API FSharedNiagaraSystemFragment : public FMassShared
 };
 
 USTRUCT()
-struct FSampleISMPerInstanceSingleFloatFragment : public FMassFragment
+struct MASSCOMMUNITYSAMPLE_API FSampleISMPerInstanceSingleFloatFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	float Data = 0;
+	float Data = 0.0f;
 };

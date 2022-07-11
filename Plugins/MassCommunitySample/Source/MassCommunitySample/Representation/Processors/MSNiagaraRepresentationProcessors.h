@@ -1,13 +1,9 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "ProjectileSim/MSNiagaraSubsystem.h"
-#include "ProjectileSim/Fragments/MSProjectileFragments.h"
-#include "MassCommonFragments.h"
-#include "MassMovementFragments.h"
+#include "Representation/MSNiagaraSubsystem.h"
 #include "MassProcessor.h"
 #include "UObject/Object.h"
-#include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "MSNiagaraRepresentationProcessors.generated.h"
 
 

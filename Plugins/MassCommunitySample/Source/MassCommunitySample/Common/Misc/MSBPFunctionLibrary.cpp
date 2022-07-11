@@ -317,9 +317,8 @@ FString UMSBPFunctionLibrary::GetEntityDebugString(FEntityHandleWrapper Entity, 
 }
 
 void UMSBPFunctionLibrary::SetEntityFragment(FEntityHandleWrapper Entity, FInstancedStructBPWrapper Fragment,
-	const UObject* WorldContextObject)
+                                             const UObject* WorldContextObject)
 {
-
 	const UMassEntitySubsystem* EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	check(EntitySystem)
 
@@ -336,18 +335,18 @@ void UMSBPFunctionLibrary::SetEntityFragment(FEntityHandleWrapper Entity, FInsta
 
 	if (!Fragment.Struct.GetScriptStruct()->IsChildOf(FMassFragment::StaticStruct()))
 	{
-		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in a non fragment type to GetEntityFragmentByType: '%s'."), *Fragment.Struct.GetScriptStruct()->GetName());
+		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in a non fragment type to GetEntityFragmentByType: '%s'."),
+		       *Fragment.Struct.GetScriptStruct()->GetName());
 		return;
 	}
-	
+
 	FStructView structview = EntitySystem->GetFragmentDataStruct(Entity.Entity, Fragment.Struct.GetScriptStruct());
 
 	if (structview.IsValid())
 	{
 		const auto memory = structview.GetMutableMemory();
-			*memory = *Fragment.Struct.GetMemory();
+		*memory = *Fragment.Struct.GetMemory();
 	}
-	
 }
 
 
@@ -382,10 +381,11 @@ FInstancedStructBPWrapper UMSBPFunctionLibrary::GetEntityFragmentByType(FEntityH
 
 	if (!Fragment.Struct.GetScriptStruct()->IsChildOf(FMassFragment::StaticStruct()))
 	{
-		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in a non fragment type to GetEntityFragmentByType: '%s'."), *Fragment.Struct.GetScriptStruct()->GetName());
+		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in a non fragment type to GetEntityFragmentByType: '%s'."),
+		       *Fragment.Struct.GetScriptStruct()->GetName());
 		return FInstancedStructBPWrapper();
 	}
-	
+
 	FStructView structview = EntitySystem->GetFragmentDataStruct(Entity.Entity, Fragment.Struct.GetScriptStruct());
 
 	if (structview.IsValid())
@@ -395,7 +395,6 @@ FInstancedStructBPWrapper UMSBPFunctionLibrary::GetEntityFragmentByType(FEntityH
 	}
 
 	return FInstancedStructBPWrapper();
-	
 }
 
 // Stubs to avoid linker errors

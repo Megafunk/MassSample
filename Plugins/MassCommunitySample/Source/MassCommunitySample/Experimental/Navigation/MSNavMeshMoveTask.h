@@ -82,6 +82,8 @@ protected:
 	{
 
 		Linker.LinkInstanceDataProperty(TargetLocationHandle, STATETREE_INSTANCEDATA_PROPERTY(FMassFindNavMeshPathTargetInstanceData, MoveTargetLocation));
+		
+		Linker.LinkExternalData(TransformHandle);
 
 		return true;
 
@@ -93,9 +95,11 @@ protected:
 
 		auto NavSystem = Cast<UNavigationSystemV1>(Context.GetWorld()->GetNavigationSystem());
 		FNavLocation NavLocation;
+		const FVector Origin = Context.GetExternalData(TransformHandle).GetTransform().GetLocation();
+
 
 		// todo-navigation pass in nav property stuff
-			NavSystem->GetRandomReachablePointInRadius(Origin,Radius,NavLocation);
+		NavSystem->GetRandomReachablePointInRadius(Origin,Radius,NavLocation);
 
 		Context.GetInstanceData(TargetLocationHandle) = NavLocation.Location;
 
@@ -103,10 +107,11 @@ protected:
 	};
 
 
+
 	UPROPERTY(EditAnywhere)
-	FVector Origin;
-	UPROPERTY(EditAnywhere)
-	float Radius;
-	TStateTreeInstanceDataPropertyHandle<FVector> TargetLocationHandle;
+	float Radius = 5000.0f;
 	
+	TStateTreeInstanceDataPropertyHandle<FVector> TargetLocationHandle;
+	TStateTreeExternalDataHandle<FTransformFragment> TransformHandle;
+
 };
