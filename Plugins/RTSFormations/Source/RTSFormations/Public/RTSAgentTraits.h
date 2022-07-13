@@ -15,7 +15,10 @@ struct RTSFORMATIONS_API FRTSFormationAgent : public FMassFragment
 {
 	GENERATED_BODY()
 
-	// The index of the unit in the formation
+	// The index of the entity in the formation
+	int EntityIndex = 0;
+
+	// The unit that this entity is a part of
 	int UnitIndex = 0;
 };
 
@@ -44,7 +47,3 @@ class RTSFORMATIONS_API URTSFormationAgentTrait : public UMassEntityTraitBase
 	UPROPERTY(EditAnywhere)
 	FRTSFormationSettings FormationSettings;
 };
-
-//@todo create destroyer observer processor to handle updating units
-//@todo create another processor to handle when units need to be updated (using bUpdateUnitPosition in SharedFragment)
-//@todo I definitely went overboard in terms of complexity, this example should really just be straightforward to read and have performance second i think
