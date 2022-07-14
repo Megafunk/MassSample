@@ -44,9 +44,7 @@ void URTSFormationSubsystem::SpawnEntitiesForUnit(int UnitIndex, const UMassEnti
 	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 
 	// Reserve space for the new units, the space will be filled in a processor
-	// Give a random Unit position for the heck of it
 	Units[UnitIndex].Entities.Reserve(Units[UnitIndex].Entities.Num()+Count);
-	Units[UnitIndex].UnitPosition = FVector(FMath::RandRange(-2000.f,2000.f), FMath::RandRange(-1000.f,1000.f), 0.f);
 	
 	TArray<FMassEntityHandle> Entities;
 	const FMassEntityTemplate* EntityTemplate = EntityConfig->GetConfig().GetOrCreateEntityTemplate(*UGameplayStatics::GetPlayerPawn(this, 0), *EntityConfig);
@@ -70,10 +68,12 @@ void URTSFormationSubsystem::SpawnEntitiesForUnit(int UnitIndex, const UMassEnti
 	EntitySubsystem->BatchSetEntityFragmentsValues(CreationContext->GetChunkCollection(), Fragments);
 }
 
-int URTSFormationSubsystem::SpawnNewUnit(const UMassEntityConfigAsset* EntityConfig, int Count)
+int URTSFormationSubsystem::SpawnNewUnit(const UMassEntityConfigAsset* EntityConfig, int Count, const FVector& Position)
 {
 	int UnitIndex = Units.Num();
 	Units.AddDefaulted(1);
+	Units[UnitIndex].UnitPosition = Position;
+	
 	SpawnEntitiesForUnit(UnitIndex, EntityConfig, Count);
 	return UnitIndex;
 }
