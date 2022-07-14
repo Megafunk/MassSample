@@ -23,13 +23,16 @@ void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int Uni
 {
 	if (!ensure(Units.IsValidIndex(UnitIndex))) { return; }
 
-	DrawDebugPoint(GetWorld(), Units[UnitIndex].UnitPosition, 20.f, FColor::Red, false, 10.f);
-	DrawDebugPoint(GetWorld(), NewPosition, 20.f, FColor::Green, false, 10.f);
+	DrawDebugDirectionalArrow(GetWorld(), NewPosition, NewPosition+((NewPosition-Units[UnitIndex].UnitPosition).GetSafeNormal()*250.f), 150.f, FColor::Red, false, 10.f, 0, 25.f);
+
+	// Calculate turn direction and angle for entities in unit
+	Units[UnitIndex].TurnDirection = (NewPosition-Units[UnitIndex].UnitPosition).GetSafeNormal().Y > 0 ? 1.f : -1.f;
+	Units[UnitIndex].Angle = FMath::RadiansToDegrees(acosf(FVector::DotProduct(FVector::ForwardVector, (NewPosition-Units[UnitIndex].UnitPosition).GetSafeNormal())));
+	Units[UnitIndex].Angle += 180.f; // Temporary fix to resolve unit facing the wrong direction
 	
-	Units[UnitIndex].Angle = FMath::RadiansToDegrees(acosf(FVector::DotProduct(FVector::ForwardVector, (NewPosition - Units[UnitIndex].UnitPosition).GetSafeNormal())));
-	//UE_LOG(LogTemp, Error, TEXT("Angle: %f"), Units[UnitIndex].Angle);
-	Units[UnitIndex].ForwardDirection = (NewPosition-Units[UnitIndex].UnitPosition).GetSafeNormal();
 	Units[UnitIndex].UnitPosition = NewPosition;
+
+	// Signal entities of a position update
 	if (Units[UnitIndex].Entities.Num() > 0)
 		GetWorld()->GetSubsystem<UMassSignalSubsystem>()->SignalEntities(FormationUpdated, Units[UnitIndex].Entities);
 }
@@ -43,7 +46,7 @@ void URTSFormationSubsystem::SpawnEntitiesForUnit(int UnitIndex, const UMassEnti
 	// Reserve space for the new units, the space will be filled in a processor
 	// Give a random Unit position for the heck of it
 	Units[UnitIndex].Entities.Reserve(Units[UnitIndex].Entities.Num()+Count);
-	Units[UnitIndex].UnitPosition = FVector(FMath::RandRange(-1000.f,1000.f), FMath::RandRange(-1000.f,1000.f), 0.f);
+	Units[UnitIndex].UnitPosition = FVector(FMath::RandRange(-2000.f,2000.f), FMath::RandRange(-1000.f,1000.f), 0.f);
 	
 	TArray<FMassEntityHandle> Entities;
 	const FMassEntityTemplate* EntityTemplate = EntityConfig->GetConfig().GetOrCreateEntityTemplate(*UGameplayStatics::GetPlayerPawn(this, 0), *EntityConfig);
@@ -65,8 +68,6 @@ void URTSFormationSubsystem::SpawnEntitiesForUnit(int UnitIndex, const UMassEnti
 	TArray<FInstancedStruct> Fragments;
 	Fragments.Add(FConstStructView::Make(FormationAgent));
 	EntitySubsystem->BatchSetEntityFragmentsValues(CreationContext->GetChunkCollection(), Fragments);
-	
-	//@todo Look into MassArchetypeSubChunks since it might be a key to iterating through units
 }
 
 int URTSFormationSubsystem::SpawnNewUnit(const UMassEntityConfigAsset* EntityConfig, int Count)

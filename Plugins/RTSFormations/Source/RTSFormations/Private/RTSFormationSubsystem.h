@@ -27,7 +27,7 @@ public:
 	FVector UnitPosition;
 
 	UPROPERTY()
-	FVector ForwardDirection;
+	float TurnDirection = 1.f;
 
 	UPROPERTY()
 	float FormationLength = 0;
