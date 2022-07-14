@@ -100,7 +100,9 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 						ReplacementFormationAgent->EntityIndex = ItemIndex;
 					
 					FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.RemoveAtSwap(ItemIndex, 1, true);
-					
+
+					// Really the only time we need to notify every entity in the unit is when the center point changes
+					// Every other time we just have to notify the entity thats replacing the destroyed one
 					if (!FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.IsEmpty())
 						SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[FormationAgent.UnitIndex].Entities);
 				}
@@ -188,15 +190,20 @@ void URTSFormationUpdate::SignalEntities(UMassEntitySubsystem& EntitySubsystem, 
 			
 			// We want the formation to be 'centered' so we need to create an offset
 			const FVector CenterOffset = FVector((FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()/RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, (RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, 0.f);
-			const FVector UnitPosition = FormationSubsystem->Units[RTSFormationAgent.UnitIndex].UnitPosition - CenterOffset;
 
 			// Create movement action
 			MoveTarget.CreateNewAction(EMassMovementAction::Move, *GetWorld());
 
+			// Set entity position based on index in formation
 			FVector EntityPosition = FVector(w,l,0.f);
 			EntityPosition *= RTSFormationSettings.BufferDistance;
-			EntityPosition += UnitPosition;
-			FVector RotateValue = EntityPosition.RotateAngleAxis(FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Angle, FVector(0.f,0.f,1.f));
+			EntityPosition -= CenterOffset;
+
+			// Rotate unit by calculated angle
+			FVector RotateValue = EntityPosition.RotateAngleAxis(FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Angle, FVector(0.f,0.f,FormationSubsystem->Units[RTSFormationAgent.UnitIndex].TurnDirection));
+
+			// Finally add the units position to the entity position
+			RotateValue += FormationSubsystem->Units[RTSFormationAgent.UnitIndex].UnitPosition;
 			
 			MoveTarget.Center = RotateValue;
 			MoveTarget.Forward = (Transform.GetLocation() - MoveTarget.Center).GetSafeNormal();
