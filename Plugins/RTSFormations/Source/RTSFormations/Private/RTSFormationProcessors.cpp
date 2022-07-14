@@ -7,8 +7,10 @@
 #include "MassSignalSubsystem.h"
 #include "RTSAgentTraits.h"
 #include "RTSFormationSubsystem.h"
-#include "Kismet/KismetMathLibrary.h"
 
+//----------------------------------------------------------------------//
+//  URTSFormationInitializer
+//----------------------------------------------------------------------//
 URTSFormationInitializer::URTSFormationInitializer()
 {
 	ObservedType = FRTSFormationAgent::StaticStruct();
@@ -62,6 +64,9 @@ void URTSFormationInitializer::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 	});
 }
 
+//----------------------------------------------------------------------//
+//  URTSFormationDestroyer
+//----------------------------------------------------------------------//
 URTSFormationDestroyer::URTSFormationDestroyer()
 {
 	ObservedType = FRTSFormationAgent::StaticStruct();
@@ -84,6 +89,11 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this, &EntitySubsystem](FMassExecutionContext& Context)
 	{
 		TConstArrayView<FRTSFormationAgent> FormationAgents = Context.GetFragmentView<FRTSFormationAgent>();
+
+		// Signal affected units/entities at the end
+		TArray<int> UnitSignals;
+		UnitSignals.Reserve(FormationSubsystem->Units.Num());
+		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
 			const FRTSFormationAgent& FormationAgent = FormationAgents[EntityIndex];
@@ -100,24 +110,36 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 						ReplacementFormationAgent->EntityIndex = ItemIndex;
 					
 					FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.RemoveAtSwap(ItemIndex, 1, true);
-
-					// Really the only time we need to notify every entity in the unit is when the center point changes
-					// Every other time we just have to notify the entity thats replacing the destroyed one
-					if (!FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.IsEmpty())
-						SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[FormationAgent.UnitIndex].Entities);
+					UnitSignals.Emplace(FormationAgent.UnitIndex);
 				}
 			}
 		}
-		// Shrink array and signal entities
-		//FormationSubsystem->Units.Shrink();
+
+		// Signal affected units/entities
+		for(const int& Unit : UnitSignals)
+		{
+			//@todo add a consistent way to reference units since the index isn't reliable
+			if (FormationSubsystem->Units[Unit].Entities.Num() == 0)
+			{
+				FormationSubsystem->Units.RemoveAtSwap(Unit);
+				continue;
+			}
+
+			// Really the only time we should notify every entity in the unit is when the center point changes
+			// Every other time we just have to notify the entity that is replacing the destroyed one
+			FormationSubsystem->Units[Unit].Entities.Shrink();
+			SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[Unit].Entities);
+		}
 	});
 }
 
+//----------------------------------------------------------------------//
+//  URTSAgentMovement
+//----------------------------------------------------------------------//
 void URTSAgentMovement::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 }
 
@@ -127,7 +149,6 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 	{
 		TArrayView<FMassMoveTargetFragment> MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
 		TConstArrayView<FTransformFragment> TransformFragments = Context.GetFragmentView<FTransformFragment>();
-		FRTSFormationSettings& FormationSettings = Context.GetMutableSharedFragment<FRTSFormationSettings>();
 		TArrayView<FMassVelocityFragment> VelocityFragments = Context.GetMutableFragmentView<FMassVelocityFragment>();
 		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
@@ -150,6 +171,9 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 	});
 }
 
+//----------------------------------------------------------------------//
+//  URTSFormationUpdate
+//----------------------------------------------------------------------//
 void URTSFormationUpdate::Initialize(UObject& Owner)
 {
 	Super::Initialize(Owner);
