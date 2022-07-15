@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "LODExample",
+	"Description": "Simple example showcasing LODs for Visualization and Processor logic",
+	"Category": "Other",
+	"CreatedBy": "JiRath",
+	"CreatedByURL": "https://github.com/Ji-Rath",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "LODExample",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
