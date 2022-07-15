@@ -16,6 +16,8 @@ void UismPerInstanceDataUpdater::ConfigureQueries()
 	EntityQuery.AddRequirement<FMassRepresentationFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FMassRepresentationLODFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddSharedRequirement<FMassRepresentationSubsystemSharedFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddChunkRequirement<FMassVisualizationChunkFragment>(EMassFragmentAccess::ReadOnly);
+    EntityQuery.SetChunkFilter(&FMassVisualizationChunkFragment::AreAnyEntitiesVisibleInChunk);
 }
 
 void UismPerInstanceDataUpdater::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
@@ -42,7 +44,7 @@ void UismPerInstanceDataUpdater::Execute(UMassEntitySubsystem& EntitySubsystem, 
 
 
 				// This can accept any struct that the size of n floats. It seems to be required to be called every frame we want to change it
-				ISMInfo.AddBatchedCustomData(RenderData.Data, RepresentationLOD.LODSignificance);
+				ISMInfo.AddBatchedCustomData(RenderData.Data, RepresentationLOD.LODSignificance, Representation.PrevLODSignificance);
 			}
 		}
 	});
