@@ -10,15 +10,12 @@
 ULODCollectorExampleProcessor::ULODCollectorExampleProcessor()
 {
 	bAutoRegisterWithProcessingPhases = true;
-	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
-
-	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::LODCollector;
-	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::SyncWorldToMass);
 }
 
 ULODExampleProcessor::ULODExampleProcessor()
 {
-	
+	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Tasks;
+	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::LOD);
 }
 
 void ULODExampleProcessor::Initialize(UObject& Owner)
@@ -31,7 +28,7 @@ void ULODExampleProcessor::ConfigureQueries()
 	EntityQueryBase.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 
 	// Dont perform logic if outside view
-	// @note CulledByFrustumTag appears to only be added when the LOD tag is FMassOffLODTag
+	// @note CulledByFrustumTag appears to only be added when not affected by LOD Max Count
 	EntityQueryBase.AddTagRequirement<FMassVisibilityCulledByFrustumTag>(EMassFragmentPresence::None);
 
 	//Chunk fragments to tick at specified intervals
@@ -46,15 +43,12 @@ void ULODExampleProcessor::ConfigureQueries()
 	EntityQuery_High.AddTagRequirement<FMassHighLODTag>(EMassFragmentPresence::All); // Query for high LOD
 	EntityQuery_Medium.AddTagRequirement<FMassMediumLODTag>(EMassFragmentPresence::All); // Query for medium LOD
 	EntityQuery_Low.AddTagRequirement<FMassLowLODTag>(EMassFragmentPresence::All); // Query for low
-
-	//@note it seems like when FMassOffLODTag is set, it will fluctuate between Off and High LOD settings.
-	// I can only guess that it is a bug
 }
 
 void ULODExampleProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
 	// High LOD logic
-	EntityQuery_High.ForEachEntityChunk(EntitySubsystem, Context, [this](const FMassExecutionContext& Context)
+	EntityQuery_High.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](const FMassExecutionContext& Context)
 	{
 		TConstArrayView<FTransformFragment> Transforms = Context.GetFragmentView<FTransformFragment>();
 		for (int EntityIdx = 0; EntityIdx < Context.GetNumEntities(); EntityIdx++)
@@ -65,7 +59,7 @@ void ULODExampleProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassE
 	});
 
 	// Med LOD logic
-	EntityQuery_Medium.ForEachEntityChunk(EntitySubsystem, Context, [this](const FMassExecutionContext& Context)
+	EntityQuery_Medium.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](const FMassExecutionContext& Context)
 	{
 		TConstArrayView<FTransformFragment> Transforms = Context.GetFragmentView<FTransformFragment>();
 		for (int EntityIdx = 0; EntityIdx < Context.GetNumEntities(); EntityIdx++)
@@ -76,7 +70,7 @@ void ULODExampleProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassE
 	});
 
 	// Low LOD logic
-	EntityQuery_Low.ForEachEntityChunk(EntitySubsystem, Context, [this](const FMassExecutionContext& Context)
+	EntityQuery_Low.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](const FMassExecutionContext& Context)
 	{
 		TConstArrayView<FTransformFragment> Transforms = Context.GetFragmentView<FTransformFragment>();
 		for (int EntityIdx = 0; EntityIdx < Context.GetNumEntities(); EntityIdx++)
