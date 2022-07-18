@@ -23,12 +23,22 @@ void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int Uni
 {
 	if (!ensure(Units.IsValidIndex(UnitIndex))) { return; }
 
-	DrawDebugDirectionalArrow(GetWorld(), NewPosition, NewPosition+((NewPosition-Units[UnitIndex].UnitPosition).GetSafeNormal()*250.f), 150.f, FColor::Red, false, 10.f, 0, 25.f);
+	DrawDebugDirectionalArrow(GetWorld(), NewPosition, NewPosition+((NewPosition-Units[UnitIndex].UnitPosition).GetSafeNormal()*250.f), 150.f, FColor::Red, false, 5.f, 0, 25.f);
 
 	// Calculate turn direction and angle for entities in unit
+	float OldAngle = Units[UnitIndex].Angle * Units[UnitIndex].TurnDirection;
 	Units[UnitIndex].TurnDirection = (NewPosition-Units[UnitIndex].UnitPosition).GetSafeNormal().Y > 0 ? 1.f : -1.f;
 	Units[UnitIndex].Angle = FMath::RadiansToDegrees(acosf(FVector::DotProduct(FVector::ForwardVector, (NewPosition-Units[UnitIndex].UnitPosition).GetSafeNormal())));
+
+	// Basically whenever we can 
+	if (abs(OldAngle-Units[UnitIndex].Angle*Units[UnitIndex].TurnDirection) > 90.f)
+	{
+		Units[UnitIndex].bReverseUnit = !Units[UnitIndex].bReverseUnit;
+	}
+	
 	Units[UnitIndex].Angle += 180.f; // Temporary fix to resolve unit facing the wrong direction
+
+	
 	
 	Units[UnitIndex].UnitPosition = NewPosition;
 

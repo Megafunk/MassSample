@@ -118,17 +118,20 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 		// Signal affected units/entities
 		for(const int& Unit : UnitSignals)
 		{
-			//@todo add a consistent way to reference units since the index isn't reliable
-			if (FormationSubsystem->Units[Unit].Entities.Num() == 0)
+			if (FormationSubsystem->Units.IsValidIndex(Unit))
 			{
-				FormationSubsystem->Units.RemoveAtSwap(Unit);
-				continue;
-			}
+				//@todo add a consistent way to reference units since the index isn't reliable
+				if (FormationSubsystem->Units[Unit].Entities.Num() == 0)
+				{
+					FormationSubsystem->Units.RemoveAtSwap(Unit);
+					continue;
+				}
 
-			// Really the only time we should notify every entity in the unit is when the center point changes
-			// Every other time we just have to notify the entity that is replacing the destroyed one
-			FormationSubsystem->Units[Unit].Entities.Shrink();
-			SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[Unit].Entities);
+				// Really the only time we should notify every entity in the unit is when the center point changes
+				// Every other time we just have to notify the entity that is replacing the destroyed one
+				FormationSubsystem->Units[Unit].Entities.Shrink();
+				SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[Unit].Entities);
+			}
 		}
 	});
 }
@@ -207,13 +210,15 @@ void URTSFormationUpdate::SignalEntities(UMassEntitySubsystem& EntitySubsystem, 
 			const FRTSFormationAgent& RTSFormationAgent = RTSFormationAgents[EntityIndex];
 			FMassMoveTargetFragment& MoveTarget = MoveTargetFragments[EntityIndex];
 			const FTransform& Transform = TransformFragments[EntityIndex].GetTransform();
-
+			
+			const int Index = FormationSubsystem->Units[RTSFormationAgent.UnitIndex].bReverseUnit ? FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()-1 - RTSFormationAgent.EntityIndex : RTSFormationAgent.EntityIndex;
 			// Convert UnitIndex to X/Y coords
-			const int w = RTSFormationAgent.EntityIndex / RTSFormationSettings.FormationLength;
-			const int l = RTSFormationAgent.EntityIndex % RTSFormationSettings.FormationLength;
+			const int w = Index / RTSFormationSettings.FormationLength;
+			const int l = Index % RTSFormationSettings.FormationLength;
 			
 			// We want the formation to be 'centered' so we need to create an offset
-			const FVector CenterOffset = FVector((FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()/RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, (RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, 0.f);
+			const FVector CenterOffset = FVector(0.f, (RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, 0.f);
+			//(FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()/RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance
 
 			// Create movement action
 			MoveTarget.CreateNewAction(EMassMovementAction::Move, *GetWorld());

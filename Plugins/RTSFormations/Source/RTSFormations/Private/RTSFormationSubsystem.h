@@ -43,6 +43,9 @@ public:
 	UPROPERTY()
 	float Angle = 0;
 
+	UPROPERTY()
+	bool bReverseUnit = false;
+
 	FUnitInfo() {};
 };
 
