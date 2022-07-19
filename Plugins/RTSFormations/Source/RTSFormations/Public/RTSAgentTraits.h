@@ -20,6 +20,8 @@ struct RTSFORMATIONS_API FRTSFormationAgent : public FMassFragment
 
 	// The unit that this entity is a part of
 	int UnitIndex = 0;
+
+	FVector Position;
 };
 
 USTRUCT()

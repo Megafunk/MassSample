@@ -210,31 +210,32 @@ void URTSFormationUpdate::SignalEntities(UMassEntitySubsystem& EntitySubsystem, 
 			const FRTSFormationAgent& RTSFormationAgent = RTSFormationAgents[EntityIndex];
 			FMassMoveTargetFragment& MoveTarget = MoveTargetFragments[EntityIndex];
 			const FTransform& Transform = TransformFragments[EntityIndex].GetTransform();
-			
-			const int Index = FormationSubsystem->Units[RTSFormationAgent.UnitIndex].bReverseUnit ? FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()-1 - RTSFormationAgent.EntityIndex : RTSFormationAgent.EntityIndex;
+
+			//const int Index = FormationSubsystem->Units[RTSFormationAgent.UnitIndex].bReverseUnit ? FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()-1 - RTSFormationAgent.EntityIndex : RTSFormationAgent.EntityIndex;
+			//const int Index = RTSFormationAgent.EntityIndex;
 			// Convert UnitIndex to X/Y coords
-			const int w = Index / RTSFormationSettings.FormationLength;
-			const int l = Index % RTSFormationSettings.FormationLength;
+			//const int w = Index / RTSFormationSettings.FormationLength;
+			//const int l = 4-RTSFormationAgent.EntityIndex % RTSFormationSettings.FormationLength;
 			
 			// We want the formation to be 'centered' so we need to create an offset
-			const FVector CenterOffset = FVector(0.f, (RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, 0.f);
+			//const FVector CenterOffset = FVector(0.f, (RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, 0.f);
 			//(FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()/RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance
 
 			// Create movement action
 			MoveTarget.CreateNewAction(EMassMovementAction::Move, *GetWorld());
 
 			// Set entity position based on index in formation
-			FVector EntityPosition = FVector(w,l,0.f);
-			EntityPosition *= RTSFormationSettings.BufferDistance;
-			EntityPosition -= CenterOffset;
+			//FVector EntityPosition = FVector(w,l,0.f);
+			//EntityPosition *= RTSFormationSettings.BufferDistance;
+			//EntityPosition -= CenterOffset;
 
 			// Rotate unit by calculated angle
-			FVector RotateValue = EntityPosition.RotateAngleAxis(FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Angle, FVector(0.f,0.f,FormationSubsystem->Units[RTSFormationAgent.UnitIndex].TurnDirection));
+			//FVector RotateValue = EntityPosition.RotateAngleAxis(FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Angle, FVector(0.f,0.f,FormationSubsystem->Units[RTSFormationAgent.UnitIndex].TurnDirection));
 
 			// Finally add the units position to the entity position
-			RotateValue += FormationSubsystem->Units[RTSFormationAgent.UnitIndex].UnitPosition;
+			//RotateValue += FormationSubsystem->Units[RTSFormationAgent.UnitIndex].UnitPosition;
 			
-			MoveTarget.Center = RotateValue;
+			MoveTarget.Center = RTSFormationAgent.Position;
 			MoveTarget.Forward = (Transform.GetLocation() - MoveTarget.Center).GetSafeNormal();
 			MoveTarget.DistanceToGoal = (Transform.GetLocation() - MoveTarget.Center).Length();
 			MoveTarget.SlackRadius = 10.f;

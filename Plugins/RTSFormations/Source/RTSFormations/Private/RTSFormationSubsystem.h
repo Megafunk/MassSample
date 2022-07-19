@@ -28,12 +28,15 @@ public:
 	FVector UnitPosition;
 
 	// The direction to turn the unit when rotating
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	float TurnDirection = 1.f;
 
 	// The entity length of the 'front' of the unit
-	UPROPERTY()
-	float FormationLength = 0;
+	UPROPERTY(BlueprintReadWrite)
+	float FormationLength = 7;
+
+	UPROPERTY(BlueprintReadWrite)
+	float BufferDistance = 100.f;
 
 	// The type of formation - WIP
 	UPROPERTY()
@@ -61,7 +64,7 @@ class RTSFORMATIONS_API URTSFormationSubsystem : public UWorldSubsystem
 	
 public:
 	// Stores the num of units in the formation
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	TArray<FUnitInfo> Units;
 
 	// Destroy a specified entity
