@@ -141,9 +141,12 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 //----------------------------------------------------------------------//
 void URTSAgentMovement::ConfigureQueries()
 {
+	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddConstSharedRequirement<FMassMovementParameters>(EMassFragmentPresence::All);
+	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadOnly);
 }
 
 void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
@@ -153,12 +156,41 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 		TArrayView<FMassMoveTargetFragment> MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
 		TConstArrayView<FTransformFragment> TransformFragments = Context.GetFragmentView<FTransformFragment>();
 		TArrayView<FMassVelocityFragment> VelocityFragments = Context.GetMutableFragmentView<FMassVelocityFragment>();
+		TConstArrayView<FRTSFormationAgent> RTSFormationAgents = Context.GetFragmentView<FRTSFormationAgent>();
+
+		const FRTSFormationSettings& FormationSettings = Context.GetSharedFragment<FRTSFormationSettings>();
+		const FMassMovementParameters& MovementParameters = Context.GetConstSharedFragment<FMassMovementParameters>();
+
+		URTSFormationSubsystem* FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(GetWorld());
 		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
 			FMassMoveTargetFragment& MoveTarget = MoveTargetFragments[EntityIndex];
 			const FTransform& Transform = TransformFragments[EntityIndex].GetTransform();
 			FVector& Velocity = VelocityFragments[EntityIndex].Value;
+			const FRTSFormationAgent& RTSFormationAgent = RTSFormationAgents[EntityIndex];
+
+			const FUnitInfo& Unit = FormationSubsystem->Units[RTSFormationAgent.UnitIndex];
+			
+			// Convert UnitIndex to X/Y coords
+			const int w = RTSFormationAgent.EntityIndex / Unit.FormationLength;
+			const int l = RTSFormationAgent.EntityIndex % Unit.FormationLength;
+						
+			// We want the formation to be 'centered' so we need to create an offset
+			const FVector CenterOffset = FVector((Unit.Entities.Num()/Unit.FormationLength/2) * Unit.BufferDistance, (Unit.FormationLength/2) * Unit.BufferDistance, 0.f);
+
+			// Set entity position based on index in formation
+			FVector EntityPosition = FVector(w,l,0.f);
+			EntityPosition *= Unit.BufferDistance;
+			EntityPosition -= CenterOffset;
+
+			// Rotate unit by calculated angle
+			FVector RotateValue = EntityPosition.RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
+
+			// Finally add the units position to the entity position
+			RotateValue += FormationSubsystem->Units[RTSFormationAgent.UnitIndex].InterpolatedDestination;
+			
+			MoveTarget.Center = RotateValue;
 			
 			// Update move target values
 			MoveTarget.DistanceToGoal = (MoveTarget.Center - Transform.GetLocation()).Length();
@@ -167,8 +199,14 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 			// Once we are close enough to our goal, create stand action
 			if (MoveTarget.DistanceToGoal <= MoveTarget.SlackRadius)
 			{
-				MoveTarget.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
-				Velocity = FVector::Zero();
+				//MoveTarget.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
+				MoveTarget.DesiredSpeed = FMassInt16Real(MovementParameters.GenerateDesiredSpeed(FormationSettings.WalkMovement, Context.GetEntity(EntityIndex).Index));
+				if (FMath::IsNearlyEqual(MoveTarget.DistanceToGoal, 0.f, 1.f) && MoveTarget.GetCurrentAction() == EMassMovementAction::Move)
+				{
+					// We've reached the end and should be standing still.
+					MoveTarget.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
+					Velocity = FVector::Zero();
+				}
 			} 
 		}
 	});
@@ -181,8 +219,6 @@ void URTSFormationUpdate::Initialize(UObject& Owner)
 {
 	Super::Initialize(Owner);
 	SubscribeToSignal(FormationUpdated);
-
-	FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(Owner.GetWorld());
 }
 
 void URTSFormationUpdate::ConfigureQueries()
@@ -190,6 +226,7 @@ void URTSFormationUpdate::ConfigureQueries()
 	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddConstSharedRequirement<FMassMovementParameters>(EMassFragmentPresence::All);
 	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadOnly);
 }
 
@@ -199,47 +236,24 @@ void URTSFormationUpdate::SignalEntities(UMassEntitySubsystem& EntitySubsystem, 
 	// Query to calculate move target for entities based on unit index
 	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
 	{
-		TConstArrayView<FRTSFormationAgent> RTSFormationAgents = Context.GetFragmentView<FRTSFormationAgent>();
 		TArrayView<FMassMoveTargetFragment> MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
 		TConstArrayView<FTransformFragment> TransformFragments = Context.GetFragmentView<FTransformFragment>();
-		const FRTSFormationSettings& RTSFormationSettings = Context.GetSharedFragment<FRTSFormationSettings>();
+
+		const FRTSFormationSettings& FormationSettings = Context.GetSharedFragment<FRTSFormationSettings>();
+		const FMassMovementParameters& MovementParameters = Context.GetConstSharedFragment<FMassMovementParameters>();
 		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
-			
-			const FRTSFormationAgent& RTSFormationAgent = RTSFormationAgents[EntityIndex];
 			FMassMoveTargetFragment& MoveTarget = MoveTargetFragments[EntityIndex];
 			const FTransform& Transform = TransformFragments[EntityIndex].GetTransform();
 
-			//const int Index = FormationSubsystem->Units[RTSFormationAgent.UnitIndex].bReverseUnit ? FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()-1 - RTSFormationAgent.EntityIndex : RTSFormationAgent.EntityIndex;
-			//const int Index = RTSFormationAgent.EntityIndex;
-			// Convert UnitIndex to X/Y coords
-			//const int w = Index / RTSFormationSettings.FormationLength;
-			//const int l = 4-RTSFormationAgent.EntityIndex % RTSFormationSettings.FormationLength;
-			
-			// We want the formation to be 'centered' so we need to create an offset
-			//const FVector CenterOffset = FVector(0.f, (RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance, 0.f);
-			//(FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num()/RTSFormationSettings.FormationLength/2) * RTSFormationSettings.BufferDistance
-
 			// Create movement action
 			MoveTarget.CreateNewAction(EMassMovementAction::Move, *GetWorld());
-
-			// Set entity position based on index in formation
-			//FVector EntityPosition = FVector(w,l,0.f);
-			//EntityPosition *= RTSFormationSettings.BufferDistance;
-			//EntityPosition -= CenterOffset;
-
-			// Rotate unit by calculated angle
-			//FVector RotateValue = EntityPosition.RotateAngleAxis(FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Angle, FVector(0.f,0.f,FormationSubsystem->Units[RTSFormationAgent.UnitIndex].TurnDirection));
-
-			// Finally add the units position to the entity position
-			//RotateValue += FormationSubsystem->Units[RTSFormationAgent.UnitIndex].UnitPosition;
-			
-			MoveTarget.Center = RTSFormationAgent.Position;
 			MoveTarget.Forward = (Transform.GetLocation() - MoveTarget.Center).GetSafeNormal();
 			MoveTarget.DistanceToGoal = (Transform.GetLocation() - MoveTarget.Center).Length();
 			MoveTarget.SlackRadius = 10.f;
 			MoveTarget.IntentAtGoal = EMassMovementAction::Stand;
+			MoveTarget.DesiredSpeed = FMassInt16Real(MovementParameters.GenerateDesiredSpeed(FormationSettings.RunMovement, Context.GetEntity(EntityIndex).Index));
 		}
 	});
 }

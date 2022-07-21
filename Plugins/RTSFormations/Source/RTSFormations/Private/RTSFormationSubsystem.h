@@ -13,6 +13,35 @@ enum FormationType
 	Circle
 };
 
+USTRUCT()
+struct FSortNewPos
+{
+	GENERATED_BODY()
+	
+	FVector Position;
+	int Index;
+
+	bool operator==(const FSortNewPos& Other) const
+	{
+		return Other.Index == Index;
+	}
+
+	FSortNewPos()
+	{
+		Index = 0;
+		Position = FVector::Zero();
+	}
+};
+#if UE_BUILD_DEBUG
+uint32 GetTypeHash(const FSortNewPos& Thing);
+#else // optimize by inlining in shipping and development builds
+FORCEINLINE uint32 GetTypeHash(const FSortNewPos& Thing)
+{
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FSortNewPos));
+	return Hash;
+}
+#endif
+
 USTRUCT(BlueprintType)
 struct FUnitInfo
 {
@@ -33,7 +62,7 @@ public:
 
 	// The entity length of the 'front' of the unit
 	UPROPERTY(BlueprintReadWrite)
-	float FormationLength = 7;
+	int FormationLength = 7;
 
 	UPROPERTY(BlueprintReadWrite)
 	float BufferDistance = 100.f;
@@ -49,6 +78,19 @@ public:
 	UPROPERTY()
 	bool bReverseUnit = false;
 
+	UPROPERTY()
+	FVector ForwardVector;
+
+	// Interpolated movement
+	UPROPERTY()
+	FVector InterpolatedDestination;
+
+	UPROPERTY()
+	float InterpolatedAngle = 0.f;
+
+	UPROPERTY()
+	float InterpolationSpeed = 5.f;
+
 	FUnitInfo() {};
 };
 
@@ -58,7 +100,7 @@ struct FMassEntityHandle;
  * Subsystem that handles the bulk of data shared among entities for the formation system. Enables simple unit creation and entity spawning
  */
 UCLASS()
-class RTSFORMATIONS_API URTSFormationSubsystem : public UWorldSubsystem
+class RTSFORMATIONS_API URTSFormationSubsystem : public UTickableWorldSubsystem
 {
 	GENERATED_BODY()
 	
@@ -72,9 +114,12 @@ public:
 	void DestroyEntity(UMassAgentComponent* Entity);
 
 	// Set the position of a unit
+	UFUNCTION()
+	void UpdateUnitPosition(const FVector& NewPosition, int UnitIndex = 0);
+
 	UFUNCTION(BlueprintCallable)
 	void SetUnitPosition(const FVector& NewPosition, int UnitIndex = 0);
-
+	
 	// Spawn entities for a unit
 	UFUNCTION(BlueprintCallable)
 	void SpawnEntitiesForUnit(int UnitIndex, const UMassEntityConfigAsset* EntityConfig, int Count);
@@ -82,4 +127,15 @@ public:
 	// Spawn a new unit
 	UFUNCTION(BlueprintCallable)
 	int SpawnNewUnit(const UMassEntityConfigAsset* EntityConfig, int Count, const FVector& Position);
+
+	virtual void Tick(float DeltaTime) override;
+	virtual bool IsTickable() const override;
+	virtual TStatId GetStatId() const override;
+
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+
+	UPROPERTY()
+	FTimerHandle MoveHandle;
+	
+	int CurrentIndex = 0;
 };

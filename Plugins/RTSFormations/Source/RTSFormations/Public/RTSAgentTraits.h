@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
 #include "MassEntityTypes.h"
+#include "MassMovementTypes.h"
 #include "RTSAgentTraits.generated.h"
 
 class URTSFormationSubsystem;
@@ -20,22 +21,18 @@ struct RTSFORMATIONS_API FRTSFormationAgent : public FMassFragment
 
 	// The unit that this entity is a part of
 	int UnitIndex = 0;
-
-	FVector Position;
 };
 
 USTRUCT()
 struct RTSFORMATIONS_API FRTSFormationSettings : public FMassSharedFragment
 {
 	GENERATED_BODY()
-
-	// Distance between each unit
+	
 	UPROPERTY(EditAnywhere, Category = "Formation")
-	float BufferDistance = 100.f;
+	FMassMovementStyleRef WalkMovement;
 
-	// Unit width of formation
 	UPROPERTY(EditAnywhere, Category = "Formation")
-	int FormationLength = 1;
+	FMassMovementStyleRef RunMovement;
 };
 
 // Provides entity with FRTSFormationAgent fragment to enable formations
