@@ -5,6 +5,7 @@
 #include "MassNavigationFragments.h"
 #include "MassNavigationTypes.h"
 #include "MassSignalSubsystem.h"
+#include "MassSimulationLOD.h"
 #include "RTSAgentTraits.h"
 #include "RTSFormationSubsystem.h"
 
@@ -60,7 +61,7 @@ void URTSFormationInitializer::Execute(UMassEntitySubsystem& EntitySubsystem, FM
 		// Signal entities in the unit that their position is updated
 		// @todo only notify affected entities
 		for(const int& Unit : UnitSignals)
-			SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[Unit].Entities);
+			SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[Unit].Entities.Array());
 	});
 }
 
@@ -101,16 +102,16 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 			// Remove entity from units array
 			if (FormationSubsystem->Units.IsValidIndex(FormationAgent.UnitIndex))
 			{
-				const int32 ItemIndex = FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.IndexOfByKey(Context.GetEntity(EntityIndex));
-				if (ItemIndex != INDEX_NONE)
+				const FMassEntityHandle* ItemIndex = FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.Find(Context.GetEntity(EntityIndex));
+				if (ItemIndex)
 				{
 					// Since we are caching the index, we need to fix the entity index that replaces the destroyed one
 					// Not sure if this is the 'correct' way to handle this, but it works for now
-					if (FRTSFormationAgent* ReplacementFormationAgent = EntitySubsystem.GetFragmentDataPtr<FRTSFormationAgent>(FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.Last()))
-						ReplacementFormationAgent->EntityIndex = ItemIndex;
+					if (FRTSFormationAgent* ReplacementFormationAgent = EntitySubsystem.GetFragmentDataPtr<FRTSFormationAgent>(FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.Array().Last()))
+						ReplacementFormationAgent->EntityIndex = FormationAgent.EntityIndex;
 					
-					FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.RemoveAtSwap(ItemIndex, 1, true);
-					UnitSignals.Emplace(FormationAgent.UnitIndex);
+					FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.Remove(*ItemIndex);
+					UnitSignals.AddUnique(FormationAgent.UnitIndex);
 				}
 			}
 		}
@@ -130,7 +131,7 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 				// Really the only time we should notify every entity in the unit is when the center point changes
 				// Every other time we just have to notify the entity that is replacing the destroyed one
 				FormationSubsystem->Units[Unit].Entities.Shrink();
-				SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[Unit].Entities);
+				SignalSubsystem->SignalEntities(FormationUpdated, FormationSubsystem->Units[Unit].Entities.Array());
 			}
 		}
 	});
@@ -147,6 +148,8 @@ void URTSAgentMovement::ConfigureQueries()
 	EntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddConstSharedRequirement<FMassMovementParameters>(EMassFragmentPresence::All);
 	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddChunkRequirement<FMassSimulationVariableTickChunkFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
+	EntityQuery.SetChunkFilter(&FMassSimulationVariableTickChunkFragment::ShouldTickChunkThisFrame);
 }
 
 void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
@@ -188,7 +191,7 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 			FVector RotateValue = EntityPosition.RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
 
 			// Finally add the units position to the entity position
-			RotateValue += FormationSubsystem->Units[RTSFormationAgent.UnitIndex].InterpolatedDestination;
+			RotateValue += Unit.InterpolatedDestination;
 			
 			MoveTarget.Center = RotateValue;
 			
@@ -201,7 +204,8 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 			{
 				//MoveTarget.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
 				MoveTarget.DesiredSpeed = FMassInt16Real(MovementParameters.GenerateDesiredSpeed(FormationSettings.WalkMovement, Context.GetEntity(EntityIndex).Index));
-				if (FMath::IsNearlyEqual(MoveTarget.DistanceToGoal, 0.f, 1.f) && MoveTarget.GetCurrentAction() == EMassMovementAction::Move)
+
+				if (FMath::IsNearlyEqual(MoveTarget.DistanceToGoal, 0.f, 0.5f) && MoveTarget.GetCurrentAction() == EMassMovementAction::Move)
 				{
 					// We've reached the end and should be standing still.
 					MoveTarget.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
