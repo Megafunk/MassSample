@@ -13,35 +13,6 @@ enum FormationType
 	Circle
 };
 
-USTRUCT()
-struct FSortNewPos
-{
-	GENERATED_BODY()
-	
-	FVector Position;
-	int Index;
-
-	bool operator==(const FSortNewPos& Other) const
-	{
-		return Other.Index == Index;
-	}
-
-	FSortNewPos()
-	{
-		Index = 0;
-		Position = FVector::Zero();
-	}
-};
-#if UE_BUILD_DEBUG
-uint32 GetTypeHash(const FSortNewPos& Thing);
-#else // optimize by inlining in shipping and development builds
-FORCEINLINE uint32 GetTypeHash(const FSortNewPos& Thing)
-{
-	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FSortNewPos));
-	return Hash;
-}
-#endif
-
 USTRUCT(BlueprintType)
 struct FUnitInfo
 {
@@ -50,7 +21,7 @@ struct FUnitInfo
 public:
 	// Entities in the unit
 	UPROPERTY()
-	TArray<FMassEntityHandle> Entities;
+	TSet<FMassEntityHandle> Entities;
 
 	// The current unit position
 	UPROPERTY(BlueprintReadOnly)
@@ -62,7 +33,7 @@ public:
 
 	// The entity length of the 'front' of the unit
 	UPROPERTY(BlueprintReadWrite)
-	int FormationLength = 7;
+	int FormationLength = 8;
 
 	UPROPERTY(BlueprintReadWrite)
 	float BufferDistance = 100.f;
