@@ -205,7 +205,7 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 				//MoveTarget.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
 				MoveTarget.DesiredSpeed = FMassInt16Real(MovementParameters.GenerateDesiredSpeed(FormationSettings.WalkMovement, Context.GetEntity(EntityIndex).Index));
 
-				if (FMath::IsNearlyEqual(MoveTarget.DistanceToGoal, 0.f, 0.5f) && MoveTarget.GetCurrentAction() == EMassMovementAction::Move)
+				if (FMath::IsNearlyEqual(MoveTarget.DistanceToGoal, 0.f, 1.f) && MoveTarget.GetCurrentAction() == EMassMovementAction::Move)
 				{
 					// We've reached the end and should be standing still.
 					MoveTarget.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
