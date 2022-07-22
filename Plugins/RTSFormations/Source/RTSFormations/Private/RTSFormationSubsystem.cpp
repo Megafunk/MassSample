@@ -6,6 +6,8 @@
 #include "MassAgentComponent.h"
 #include "MassCommonFragments.h"
 #include "MassEntitySubsystem.h"
+#include "MassMovementFragments.h"
+#include "MassNavigationFragments.h"
 #include "MassSignalSubsystem.h"
 #include "MassSpawnerSubsystem.h"
 #include "RTSAgentTraits.h"
@@ -25,97 +27,87 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("UpdateUnitPosition"))
 	if (!ensure(Units.IsValidIndex(UnitIndex))) { return; }
 
+	// Convenience variables
 	FUnitInfo& Unit = Units[UnitIndex];
+	UMassEntitySubsystem* EntitySubsystem = UWorld::GetSubsystem<UMassEntitySubsystem>(GetWorld());
+	TMap<int, FVector>& NewPositions = Unit.NewPositions;
+
+	// Empty NewPositions Map to make room for new calculations
+	NewPositions.Empty();
+	NewPositions.Reserve(Unit.Entities.Num());
+
+	// Calculate entity positions for new destination
+	const FVector CenterOffset = FVector((Unit.Entities.Num()/Unit.FormationLength/2) * Unit.BufferDistance, (Unit.FormationLength/2) * Unit.BufferDistance, 0.f);
+	for(int i=0;i<Unit.Entities.Num();++i)
+	{
+		const int w = i / Unit.FormationLength;
+		const int l = i % Unit.FormationLength;
+		
+		FVector Position = FVector(w,l,0.f);
+		Position *= Unit.BufferDistance;
+		Position -= CenterOffset;
+		Position = Position.RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
+		Position += NewPosition;
+		NewPositions.Emplace(i, Position);
+	}
+
+	// The position to order entities/positions is based on the furthest destination location
+	Unit.FarCorner = NewPosition;
+	if (NewPositions.Num())
+	{
+		TArray<FVector> NewArray;
+		NewArray.Reserve(NewPositions.Num());
+		NewPositions.GenerateValueArray(NewArray);
+		Unit.FarCorner = NewArray[0];
+	}
 	
+	
+	Unit.Entities.Sort([&EntitySubsystem, &Unit](const FMassEntityHandle& A, const FMassEntityHandle& B)
+	{
+		//@todo Find if theres a way to move this logic to a processor, most of the cost is coming from retrieving the location
+		const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(A).GetTransform().GetLocation();
+		const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(B).GetTransform().GetLocation();
+		return FVector::DistSquared2D(LocA, Unit.FarCorner) > FVector::DistSquared2D(LocB, Unit.FarCorner);
+	});
+	
+	NewPositions.ValueSort([&Unit](const FVector& A, const FVector& B)
+	{
+		return FVector::DistSquared2D(A, Unit.FarCorner) > FVector::DistSquared2D(B, Unit.FarCorner);
+	});
+
+	// Update the entities new index gradually using signals. This allows the bulk of processing to be spread out between frames
+	FMassExecutionContext Context = EntitySubsystem->CreateExecutionContext(GetWorld()->GetDeltaSeconds());
+	TArray<FMassEntityHandle> Entities = Unit.Entities.Array();
+	for(int i=0;i<Unit.Entities.Num();++i)
+	{
+		GetWorld()->GetSubsystem<UMassSignalSubsystem>()->DelaySignalEntity(UpdateIndex, Entities[i], 0.01*(i/Unit.FormationLength));
+	} 
+	
+}
+
+void URTSFormationSubsystem::MoveEntities(int UnitIndex)
+{
+	FUnitInfo& Unit = Units[UnitIndex];
 	UMassEntitySubsystem* EntitySubsystem = UWorld::GetSubsystem<UMassEntitySubsystem>(GetWorld());
 	
-	TMap<int, FVector> NewPositions;
-	NewPositions.Reserve(Unit.Entities.Num());
-	
-	const FVector CenterOffset = FVector((Unit.Entities.Num()/Unit.FormationLength/2) * Unit.BufferDistance, (Unit.FormationLength/2) * Unit.BufferDistance, 0.f);
-
-	{
-		TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("CalculateNewPositions"))
-		for(int i=0;i<Unit.Entities.Num();++i)
-		{
-			const int w = i / Unit.FormationLength;
-			const int l = i % Unit.FormationLength;
-			
-			FVector Position = FVector(w,l,0.f);
-			Position *= Unit.BufferDistance;
-			Position -= CenterOffset;
-			Position = Position.RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
-			Position += NewPosition;
-			NewPositions.Emplace(i, Position);
-		}
-	}
-	
-	FVector FrontCenter = FVector((Unit.Entities.Num()/Unit.FormationLength/2) * Unit.BufferDistance, 0.f, 0.f).RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
-	TArray<FVector> NewArray;
-	NewArray.Reserve(NewPositions.Num());
-	NewPositions.GenerateValueArray(NewArray);
-	FVector FrontMidPosition = NewPosition - FrontCenter;
-	FVector FarCorner = NewArray[0];
-	{
-		TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SortPositions"))
-		Unit.Entities.Sort([&EntitySubsystem, &FarCorner](const FMassEntityHandle& A, const FMassEntityHandle& B)
-		{
-			// Find if theres a way to move this logic to a processor, most of the cost is coming from retrieving the location
-			const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(A).GetTransform().GetLocation();
-			const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(B).GetTransform().GetLocation();
-			return FVector::DistSquared2D(LocA, FarCorner) > FVector::DistSquared2D(LocB, FarCorner);
-		});
-	}
-	NewPositions.ValueSort([&FarCorner](const FVector& A, const FVector& B)
-	{
-		return FVector::DistSquared2D(A, FarCorner) > FVector::DistSquared2D(B, FarCorner);
-	});
-	DrawDebugPoint(GetWorld(), FrontMidPosition, 20.f, FColor::Yellow, false, 10.f);
-
-	// We should not be doing this but for the convenience of the current logic in place, this is the fastest option i think
-	// @todo performance and transfer to processor?
-	TSet<int> IndexesTaken;
-	IndexesTaken.Reserve(Unit.Entities.Num());
-	
-	{
-		TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SetEntityIndex"))
-		for(const FMassEntityHandle& Entity : Unit.Entities)
-		{
-			const FVector& Location = EntitySubsystem->GetFragmentDataPtr<FTransformFragment>(Entity)->GetTransform().GetLocation();
-			// Get first index since it is sorted
-			TPair<int, FVector> ClosestPos;
-			float ClosestDistance = -1;
-			int i=0;
-			for(const TPair<int, FVector>& NewPos : NewPositions)
-			{
-				float Dist = FVector::DistSquared2D(NewPos.Value, Location);
-				if (ClosestDistance == -1 || Dist < ClosestDistance)
-				{
-					ClosestPos = NewPos;
-					ClosestDistance = Dist;
-					// While its not perfect, this adds a hard cap to how many positions to check
-					if (++i > Unit.FormationLength*2)
-						break;
-				}
-			}
-
-			// Basically scoot up entities if there is space in the front
-			int& Index = ClosestPos.Key;
-			
-			IndexesTaken.Emplace(Index);
-			EntitySubsystem->GetFragmentDataPtr<FRTSFormationAgent>(Entity)->EntityIndex = Index;
-			NewPositions.Remove(Index);
-		}
-	}
-
 	// Final sort to ensure that entities are signaled from front to back
-	Unit.Entities.Sort([&EntitySubsystem, &FarCorner](const FMassEntityHandle& A, const FMassEntityHandle& B)
+	Unit.Entities.Sort([&EntitySubsystem, &Unit](const FMassEntityHandle& A, const FMassEntityHandle& B)
 	{
 		// Find if theres a way to move this logic to a processor, most of the cost is coming from retrieving the location
 		const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(A).GetTransform().GetLocation();
 		const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(B).GetTransform().GetLocation();
-		return FVector::DistSquared2D(LocA, FarCorner) < FVector::DistSquared2D(LocB, FarCorner);
+		return FVector::DistSquared2D(LocA, Unit.FarCorner) < FVector::DistSquared2D(LocB, Unit.FarCorner);
 	});
+	
+	CurrentIndex = 0;
+
+	// Signal entities to begin moving
+	FMassExecutionContext Context = EntitySubsystem->CreateExecutionContext(GetWorld()->GetDeltaSeconds());
+	TArray<FMassEntityHandle> Entities = Unit.Entities.Array();
+	for(int i=0;i<Unit.Entities.Num();++i)
+	{
+		GetWorld()->GetSubsystem<UMassSignalSubsystem>()->DelaySignalEntity(FormationUpdated, Entities[i], 0.1*(i/Unit.FormationLength));
+	} 
 }
 
 void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int UnitIndex)
@@ -126,31 +118,21 @@ void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int Uni
 	// Calculate turn direction and angle for entities in unit
 	Unit.TurnDirection = (NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal().Y > 0 ? 1.f : -1.f;
 	Unit.Angle = FMath::RadiansToDegrees(acosf(FVector::DotProduct((NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal(),FVector::ForwardVector)));
-	Unit.ForwardVector = (NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal();
-	Unit.Angle += 180.f; // Temporary fix to resolve unit facing the wrong direction
+	Unit.Angle += 180.f; // Resolve unit facing the wrong direction
+
+	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	for(const FMassEntityHandle& Entity : Unit.Entities)
+	{
+		EntitySubsystem->GetFragmentDataPtr<FMassMoveTargetFragment>(Entity)->CreateNewAction(EMassMovementAction::Stand, *GetWorld());
+		EntitySubsystem->GetFragmentDataPtr<FMassVelocityFragment>(Entity)->Value = FVector::Zero();
+	}
 	
 	Unit.UnitPosition = NewPosition;
 
-	// Instantly set the angle since we are not keeping complete formation right now
+	// Instantly set the angle since entity indexes will change
 	Unit.InterpolatedAngle = Units[UnitIndex].Angle;
+	
 	UpdateUnitPosition(NewPosition, UnitIndex);
-
-	CurrentIndex = 0;
-
-	// Signal entities to begin moving
-	FTimerDelegate TimerDelegate;
-	TimerDelegate.BindLambda([&]()
-	{
-		// Signal entities of a position update
-		if (Units[0].Entities.Num() > 0)
-		{
-			CurrentIndex = FMath::Clamp(CurrentIndex, 0, Units[0].Entities.Num()-1);
-			GetWorld()->GetSubsystem<UMassSignalSubsystem>()->SignalEntity(FormationUpdated, Units[0].Entities.Array()[CurrentIndex]);
-			CurrentIndex++;
-		}
-	});
-	GetWorld()->GetTimerManager().ClearTimer(MoveHandle);
-	GetWorld()->GetTimerManager().SetTimer(MoveHandle, TimerDelegate, 0.05, true);
 }
 
 void URTSFormationSubsystem::SpawnEntitiesForUnit(int UnitIndex, const UMassEntityConfigAsset* EntityConfig, int Count)

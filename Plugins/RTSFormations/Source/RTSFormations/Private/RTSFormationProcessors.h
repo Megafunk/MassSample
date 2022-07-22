@@ -7,6 +7,7 @@
 
 class URTSFormationSubsystem;
 const FName FormationUpdated = FName(TEXT("FormationUpdated"));
+const FName UpdateIndex = FName(TEXT("UpdateIndex"));
 
 // Observer that runs when a unit is spawned. Its main purpose is to add entities to a unit array
 // in the subsystem and cache the index for future use in URTSFormationUpdate
@@ -61,6 +62,18 @@ class RTSFORMATIONS_API URTSAgentMovement : public UMassProcessor
 // Main bulk of formation logic. Calculates position of entities and sends it to the FMassMoveTargetFragment.
 UCLASS()
 class RTSFORMATIONS_API URTSFormationUpdate : public UMassSignalProcessorBase
+{
+	GENERATED_BODY()
+	
+	virtual void Initialize(UObject& Owner) override;
+	virtual void ConfigureQueries() override;
+	virtual void SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals) override;
+
+	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
+};
+
+UCLASS()
+class RTSFORMATIONS_API URTSUpdateEntityIndex : public UMassSignalProcessorBase
 {
 	GENERATED_BODY()
 	

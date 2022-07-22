@@ -23,12 +23,15 @@ public:
 	UPROPERTY()
 	TSet<FMassEntityHandle> Entities;
 
+	UPROPERTY()
+	TMap<int, FVector> NewPositions;
+
 	// The current unit position
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY()
 	FVector UnitPosition;
 
 	// The direction to turn the unit when rotating
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY()
 	float TurnDirection = 1.f;
 
 	// The entity length of the 'front' of the unit
@@ -39,18 +42,14 @@ public:
 	float BufferDistance = 100.f;
 
 	// The type of formation - WIP
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<FormationType> Formation = Rectangle;
 
 	// The angle of the unit
 	UPROPERTY()
 	float Angle = 0;
 
-	UPROPERTY()
-	bool bReverseUnit = false;
-
-	UPROPERTY()
-	FVector ForwardVector;
+	FVector FarCorner;
 
 	// Interpolated movement
 	UPROPERTY()
@@ -90,6 +89,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetUnitPosition(const FVector& NewPosition, int UnitIndex = 0);
+
+	UFUNCTION()
+	void MoveEntities(int UnitIndex);
 	
 	// Spawn entities for a unit
 	UFUNCTION(BlueprintCallable)
