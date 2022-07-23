@@ -39,10 +39,41 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 	// Calculate entity positions for new destination
 	// This is the logic that can change formation types
 	const FVector CenterOffset = FVector((Unit.Entities.Num()/Unit.FormationLength/2) * Unit.BufferDistance, (Unit.FormationLength/2) * Unit.BufferDistance, 0.f);
+	int PlacedUnits = 0;
+	int PosIndex = 0;
+	while (PlacedUnits < Unit.Entities.Num())
+	{
+		int w = PosIndex / Unit.FormationLength;
+		int l = PosIndex % Unit.FormationLength;
+
+		// Hollow formation logic (2 layers)
+		int Switch = Unit.Entities.Num() - Unit.FormationLength*2;
+		if (w != 0 && w != 1 && !(PlacedUnits >= Switch)
+			&& l != 0 && l != 1 && l != Unit.FormationLength-1 && l != Unit.FormationLength-2)
+		{
+			PosIndex++;
+			continue;
+		}
+		
+		
+		PlacedUnits++;
+		FVector Position = FVector(w,l,0.f);
+		Position *= Unit.BufferDistance;
+		Position -= CenterOffset;
+		Position = Position.RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
+		Position += NewPosition;
+		NewPositions.Emplace(PosIndex, Position);
+
+		//DrawDebugPoint(GetWorld(), Position, 20.f, FColor::Red, false, 10.f);
+		
+		PosIndex++;
+	}
+	/*
 	for(int i=0;i<Unit.Entities.Num();++i)
 	{
-		const int w = i / Unit.FormationLength;
-		const int l = i % Unit.FormationLength;
+		int w = PosIndex / Unit.FormationLength;
+		int l = PosIndex % Unit.FormationLength;
+		// An easier approach is to simply create a new variable for placed positions
 		
 		FVector Position = FVector(w,l,0.f);
 		Position *= Unit.BufferDistance;
@@ -51,6 +82,7 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 		Position += NewPosition;
 		NewPositions.Emplace(i, Position);
 	}
+	*/
 
 	// The position to order entities/positions is based on the furthest destination location
 	Unit.FarCorner = NewPosition;
