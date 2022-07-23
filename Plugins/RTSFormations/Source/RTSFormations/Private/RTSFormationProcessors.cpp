@@ -176,25 +176,7 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 
 			const FUnitInfo& Unit = FormationSubsystem->Units[RTSFormationAgent.UnitIndex];
 			
-			// Convert UnitIndex to X/Y coords
-			const int w = RTSFormationAgent.EntityIndex / Unit.FormationLength;
-			const int l = RTSFormationAgent.EntityIndex % Unit.FormationLength;
-						
-			// We want the formation to be 'centered' so we need to create an offset
-			const FVector CenterOffset = FVector((Unit.Entities.Num()/Unit.FormationLength/2) * Unit.BufferDistance, (Unit.FormationLength/2) * Unit.BufferDistance, 0.f);
-
-			// Set entity position based on index in formation
-			FVector EntityPosition = FVector(w,l,0.f);
-			EntityPosition *= Unit.BufferDistance;
-			EntityPosition -= CenterOffset;
-
-			// Rotate unit by calculated angle
-			FVector RotateValue = EntityPosition.RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
-
-			// Finally add the units position to the entity position
-			RotateValue += Unit.InterpolatedDestination;
-			
-			MoveTarget.Center = RotateValue;
+			MoveTarget.Center = Unit.InterpolatedDestination - RTSFormationAgent.Offset;
 			
 			// Update move target values
 			MoveTarget.DistanceToGoal = (MoveTarget.Center - Transform.GetLocation()).Length();
@@ -313,6 +295,7 @@ void URTSUpdateEntityIndex::SignalEntities(UMassEntitySubsystem& EntitySubsystem
 			int& Index = ClosestPos.Key;
 			
 			FormationAgent.EntityIndex = Index;
+			FormationAgent.Offset = FormationSubsystem->Units[FormationAgent.UnitIndex].UnitPosition - ClosestPos.Value;
 			FormationSubsystem->Units[FormationAgent.UnitIndex].NewPositions.Remove(Index);
 
 			// Call subsystem function to get entities to move

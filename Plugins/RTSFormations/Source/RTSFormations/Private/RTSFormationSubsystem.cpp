@@ -37,6 +37,7 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 	NewPositions.Reserve(Unit.Entities.Num());
 
 	// Calculate entity positions for new destination
+	// This is the logic that can change formation types
 	const FVector CenterOffset = FVector((Unit.Entities.Num()/Unit.FormationLength/2) * Unit.BufferDistance, (Unit.FormationLength/2) * Unit.BufferDistance, 0.f);
 	for(int i=0;i<Unit.Entities.Num();++i)
 	{
