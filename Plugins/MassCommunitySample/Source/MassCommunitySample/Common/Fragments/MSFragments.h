@@ -20,6 +20,12 @@ struct MASSCOMMUNITYSAMPLE_API FSampleColorFragment : public FMassFragment
 	FColor Color = FColor::Red;
 };
 
+USTRUCT()
+struct FISMPerInstanceDataFragment : public FMassFragment
+{
+	GENERATED_BODY()
+	float data = 0;
+};
 
 USTRUCT()
 struct MASSCOMMUNITYSAMPLE_API FInterpLocationFragment : public FMassFragment
