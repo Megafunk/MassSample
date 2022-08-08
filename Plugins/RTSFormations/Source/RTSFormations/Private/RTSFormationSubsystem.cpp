@@ -47,21 +47,26 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 		float l = PosIndex % Unit.FormationLength;
 
 		// Hollow formation logic (2 layers)
-		/*
-		int Switch = Unit.Entities.Num() - Unit.FormationLength*2;
-		if (w != 0 && w != 1 && !(PlacedUnits >= Switch)
-			&& l != 0 && l != 1 && l != Unit.FormationLength-1 && l != Unit.FormationLength-2)
+		if (Unit.bHollow)
 		{
-			PosIndex++;
-			continue;
+			int Switch = Unit.Entities.Num() - Unit.FormationLength*2;
+			if (w != 0 && w != 1 && !(PlacedUnits >= Switch)
+				&& l != 0 && l != 1 && l != Unit.FormationLength-1 && l != Unit.FormationLength-2)
+			{
+				PosIndex++;
+				continue;
+			}
 		}
-		*/
-		int Rings = 2;
-		int AmountPerRing = Unit.Entities.Num() / Rings;
-		float Angle = PosIndex * PI * (2) / AmountPerRing;
-		float Radius = Unit.FormationLength + (PosIndex / (AmountPerRing) * 1.5f);
-		w = FMath::Cos(Angle) * Radius;
-		l = FMath::Sin(Angle) * Radius;
+
+		// Circle formation
+		if (Unit.Formation == Circle)
+		{
+			int AmountPerRing = Unit.Entities.Num() / Unit.Rings;
+			float Angle = PosIndex * PI * 2 / AmountPerRing;
+			float Radius = Unit.FormationLength + (PosIndex / AmountPerRing * 1.5f);
+			w = FMath::Cos(Angle) * Radius;
+			l = FMath::Sin(Angle) * Radius;
+		}
 		
 		PlacedUnits++;
 		FVector Position = FVector(w,l,0.f);
@@ -72,24 +77,8 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 		NewPositions.Emplace(PosIndex, Position);
 
 		//DrawDebugPoint(GetWorld(), Position, 20.f, FColor::Red, false, 10.f);
-		
 		PosIndex++;
 	}
-	/*
-	for(int i=0;i<Unit.Entities.Num();++i)
-	{
-		int w = PosIndex / Unit.FormationLength;
-		int l = PosIndex % Unit.FormationLength;
-		// An easier approach is to simply create a new variable for placed positions
-		
-		FVector Position = FVector(w,l,0.f);
-		Position *= Unit.BufferDistance;
-		Position -= CenterOffset;
-		Position = Position.RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
-		Position += NewPosition;
-		NewPositions.Emplace(i, Position);
-	}
-	*/
 
 	// The position to order entities/positions is based on the furthest destination location
 	Unit.FarCorner = NewPosition;
@@ -214,6 +203,20 @@ int URTSFormationSubsystem::SpawnNewUnit(const UMassEntityConfigAsset* EntityCon
 	
 	SpawnEntitiesForUnit(UnitIndex, EntityConfig, Count);
 	return UnitIndex;
+}
+
+void URTSFormationSubsystem::SetFormationPreset(int UnitIndex, UFormationPresets* FormationAsset)
+{
+	if (!ensure(FormationAsset && Units.IsValidIndex(UnitIndex))) { return; }
+	
+	FUnitInfo& Unit = Units[UnitIndex];
+	Unit.FormationLength = FormationAsset->FormationLength;
+	Unit.BufferDistance = FormationAsset->BufferDistance;
+	Unit.Formation = FormationAsset->Formation;
+	Unit.Rings = FormationAsset->Rings;
+	Unit.bHollow = FormationAsset->bHollow;
+
+	GetWorld()->GetSubsystem<UMassSignalSubsystem>()->SignalEntities(FormationUpdated, Unit.Entities.Array());
 }
 
 void URTSFormationSubsystem::Tick(float DeltaTime)
