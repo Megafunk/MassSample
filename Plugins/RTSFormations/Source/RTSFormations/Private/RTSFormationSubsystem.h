@@ -3,15 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FormationPresets.h"
 #include "Common/Misc/MSBPFunctionLibrary.h"
 #include "RTSFormationSubsystem.generated.h"
-
-UENUM()
-enum FormationType
-{
-	Rectangle,
-	Circle
-};
 
 USTRUCT(BlueprintType)
 struct FUnitInfo
@@ -44,6 +38,14 @@ public:
 	// The type of formation - WIP
 	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<FormationType> Formation = Rectangle;
+	
+	// Amount of rings for the circle formation
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Rings = 2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHollow = false;
+	
 
 	// The angle of the unit
 	UPROPERTY()
@@ -100,6 +102,9 @@ public:
 	// Spawn a new unit
 	UFUNCTION(BlueprintCallable)
 	int SpawnNewUnit(const UMassEntityConfigAsset* EntityConfig, int Count, const FVector& Position);
+
+	UFUNCTION(BlueprintCallable)
+	void SetFormationPreset(int UnitIndex, UFormationPresets* FormationAsset);
 
 	virtual void Tick(float DeltaTime) override;
 	virtual bool IsTickable() const override;
