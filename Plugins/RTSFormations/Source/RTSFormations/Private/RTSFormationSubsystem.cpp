@@ -43,10 +43,11 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 	int PosIndex = 0;
 	while (PlacedUnits < Unit.Entities.Num())
 	{
-		int w = PosIndex / Unit.FormationLength;
-		int l = PosIndex % Unit.FormationLength;
+		float w = PosIndex / Unit.FormationLength;
+		float l = PosIndex % Unit.FormationLength;
 
 		// Hollow formation logic (2 layers)
+		/*
 		int Switch = Unit.Entities.Num() - Unit.FormationLength*2;
 		if (w != 0 && w != 1 && !(PlacedUnits >= Switch)
 			&& l != 0 && l != 1 && l != Unit.FormationLength-1 && l != Unit.FormationLength-2)
@@ -54,7 +55,13 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 			PosIndex++;
 			continue;
 		}
-		
+		*/
+		int Rings = 2;
+		int AmountPerRing = Unit.Entities.Num() / Rings;
+		float Angle = PosIndex * PI * (2) / AmountPerRing;
+		float Radius = Unit.FormationLength + (PosIndex / (AmountPerRing) * 1.5f);
+		w = FMath::Cos(Angle) * Radius;
+		l = FMath::Sin(Angle) * Radius;
 		
 		PlacedUnits++;
 		FVector Position = FVector(w,l,0.f);
