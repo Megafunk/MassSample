@@ -2,10 +2,10 @@
 
 
 #include "MSDocumentationActor.h"
+#include "Modules/ModuleManager.h"
 // todo let's make an editor module for this actor because this sucks
 #if WITH_EDITOR
 #include "SourceCodeNavigation.h"
-#include "Misc/PathViews.h"
 #endif
 
 // Sets default values

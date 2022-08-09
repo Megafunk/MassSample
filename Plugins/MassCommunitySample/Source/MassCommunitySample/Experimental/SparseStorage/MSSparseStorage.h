@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "MassEntityTypes.h"
 #include "MassObserverRegistry.h"
+#include "Engine/World.h"
+#include "UObject/UObjectIterator.h"
 #include "MSSparseStorage.generated.h"
 
 USTRUCT()
