@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
+#include "CollisionQueryParams.h"
 #include "MassEntityTypes.h"
 #include "GameplayEffect.h"
 #include  "MSProjectileFragments.generated.h"

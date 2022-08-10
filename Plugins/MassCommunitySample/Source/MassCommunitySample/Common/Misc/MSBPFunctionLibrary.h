@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityConfigAsset.h"
-#include "StructView.h"
 
 #include "MassEntityTypes.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 
 #include "MSBPFunctionLibrary.generated.h"
 
