@@ -3,6 +3,7 @@
 
 #include "RTSFormationSubsystem.h"
 
+#include "DrawDebugHelpers.h"
 #include "MassAgentComponent.h"
 #include "MassCommonFragments.h"
 #include "MassEntitySubsystem.h"
@@ -12,6 +13,7 @@
 #include "MassSpawnerSubsystem.h"
 #include "RTSAgentTraits.h"
 #include "RTSFormationProcessors.h"
+#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
 void URTSFormationSubsystem::DestroyEntity(UMassAgentComponent* Entity)
@@ -47,7 +49,7 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 		float l = PosIndex % Unit.FormationLength;
 
 		// Hollow formation logic (2 layers)
-		if (Unit.bHollow)
+		if (Unit.bHollow && Unit.Formation == Rectangle)
 		{
 			int Switch = Unit.Entities.Num() - Unit.FormationLength*2;
 			if (w != 0 && w != 1 && !(PlacedUnits >= Switch)
@@ -71,17 +73,25 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 		PlacedUnits++;
 		FVector Position = FVector(w,l,0.f);
 		Position *= Unit.BufferDistance;
-		Position -= CenterOffset;
-		Position = Position.RotateAngleAxis(Unit.Angle, FVector(0.f,0.f,Unit.TurnDirection));
-		Position += NewPosition;
+		if (Unit.Formation == Rectangle)
+			Position -= CenterOffset;
+		if (!Unit.bBlendAngle)
+			Position = Position.RotateAngleAxis(Unit.InterpolatedAngle, FVector(0.f,0.f,Unit.TurnDirection));
+		//Position += NewPosition;
 		NewPositions.Emplace(PosIndex, Position);
 
-		//DrawDebugPoint(GetWorld(), Position, 20.f, FColor::Red, false, 10.f);
+		DrawDebugPoint(GetWorld(), Position, 20.f, FColor::Red, false, 10.f);
 		PosIndex++;
 	}
 
 	// The position to order entities/positions is based on the furthest destination location
 	Unit.FarCorner = NewPosition;
+
+	NewPositions.ValueSort([&Unit, &NewPosition](const FVector& A, const FVector& B)
+	{
+		return FVector::DistSquared2D(A+NewPosition, Unit.InterpolatedDestination) < FVector::DistSquared2D(B+NewPosition, Unit.InterpolatedDestination);
+	});
+	
 	if (NewPositions.Num())
 	{
 		TArray<FVector> NewArray;
@@ -89,13 +99,13 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 		NewPositions.GenerateValueArray(NewArray);
 		Unit.FarCorner = NewArray[0];
 	}
-	
+	DrawDebugPoint(GetWorld(), Unit.FarCorner, 30.f, FColor::Green, false, 10.f);
 	
 	Unit.Entities.Sort([&EntitySubsystem, &Unit](const FMassEntityHandle& A, const FMassEntityHandle& B)
 	{
 		//@todo Find if theres a way to move this logic to a processor, most of the cost is coming from retrieving the location
-		const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(A).GetTransform().GetLocation();
-		const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(B).GetTransform().GetLocation();
+		const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FRTSFormationAgent>(A).Offset;
+		const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FRTSFormationAgent>(B).Offset;
 		return FVector::DistSquared2D(LocA, Unit.FarCorner) > FVector::DistSquared2D(LocB, Unit.FarCorner);
 	});
 	
@@ -110,8 +120,7 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 	for(int i=0;i<Unit.Entities.Num();++i)
 	{
 		GetWorld()->GetSubsystem<UMassSignalSubsystem>()->DelaySignalEntity(UpdateIndex, Entities[i], 0.01*(i/Unit.FormationLength));
-	} 
-	
+	}
 }
 
 void URTSFormationSubsystem::MoveEntities(int UnitIndex)
@@ -123,8 +132,8 @@ void URTSFormationSubsystem::MoveEntities(int UnitIndex)
 	Unit.Entities.Sort([&EntitySubsystem, &Unit](const FMassEntityHandle& A, const FMassEntityHandle& B)
 	{
 		// Find if theres a way to move this logic to a processor, most of the cost is coming from retrieving the location
-		const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(A).GetTransform().GetLocation();
-		const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(B).GetTransform().GetLocation();
+		const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FRTSFormationAgent>(A).Offset;
+		const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FRTSFormationAgent>(B).Offset;
 		return FVector::DistSquared2D(LocA, Unit.FarCorner) < FVector::DistSquared2D(LocB, Unit.FarCorner);
 	});
 	
@@ -146,8 +155,9 @@ void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int Uni
 	FUnitInfo& Unit = Units[UnitIndex];
 	// Calculate turn direction and angle for entities in unit
 	Unit.TurnDirection = (NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal().Y > 0 ? 1.f : -1.f;
+	FVector OldDir = Unit.ForwardDir;
+	Unit.ForwardDir = (NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal();
 	Unit.Angle = FMath::RadiansToDegrees(acosf(FVector::DotProduct((NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal(),FVector::ForwardVector)));
-	Unit.Angle += 180.f; // Resolve unit facing the wrong direction
 
 	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	for(const FMassEntityHandle& Entity : Unit.Entities)
@@ -159,7 +169,10 @@ void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int Uni
 	Unit.UnitPosition = NewPosition;
 
 	// Instantly set the angle since entity indexes will change
-	Unit.InterpolatedAngle = Units[UnitIndex].Angle;
+	Unit.InterpolatedAngle = OldDir.Dot(Unit.ForwardDir) > 0.25 ? Unit.InterpolatedAngle : Unit.Angle;
+	Unit.bBlendAngle = OldDir.Dot(Unit.ForwardDir) > 0.25;
+	UE_LOG(LogTemp, Error, TEXT("Dot: %f"), OldDir.Dot(Unit.ForwardDir));
+	
 	
 	UpdateUnitPosition(NewPosition, UnitIndex);
 }
@@ -224,7 +237,11 @@ void URTSFormationSubsystem::Tick(float DeltaTime)
 	for(int i=0;i<Units.Num();++i)
 	{
 		FUnitInfo& Unit = Units[i];
-		Unit.InterpolatedAngle = FMath::FInterpConstantTo(Unit.InterpolatedAngle, Unit.Angle, DeltaTime, 50.f);
+		if (Unit.Formation != Circle)
+		{
+			Unit.InterpolatedAngle = LerpDegrees(Unit.InterpolatedAngle, Unit.Angle, DeltaTime);
+		}
+		
 		Unit.InterpolatedDestination = FMath::VInterpConstantTo(Unit.InterpolatedDestination, Unit.UnitPosition, DeltaTime, 150.f);
 	}
 }
@@ -242,4 +259,36 @@ TStatId URTSFormationSubsystem::GetStatId() const
 void URTSFormationSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	
+}
+
+float URTSFormationSubsystem::LerpDegrees(float start, float end, float amount)
+{
+	// Credit where credit is due! Definitely not complicated but rather out of convenience
+	// https://stackoverflow.com/a/2708740
+	float difference = abs(end - start);
+	if (difference > 180)
+	{
+		// We need to add on to one of the values.
+		if (end > start)
+		{
+			// We'll add it on to start...
+			start += 360;
+		}
+		else
+		{
+			// Add it on to end.
+			end += 360;
+		}
+	}
+
+	// Interpolate it.
+	float value = (start + ((end - start) * amount));
+
+	// Wrap it..
+	float rangeZero = 360;
+
+	if (value >= 0 && value <= 360)
+		return value;
+
+	return fmod(value,rangeZero);
 }

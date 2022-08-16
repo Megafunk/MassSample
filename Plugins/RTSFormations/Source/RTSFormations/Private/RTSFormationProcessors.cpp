@@ -8,6 +8,7 @@
 #include "MassSimulationLOD.h"
 #include "RTSAgentTraits.h"
 #include "RTSFormationSubsystem.h"
+#include "Engine/World.h"
 
 //----------------------------------------------------------------------//
 //  URTSFormationInitializer
@@ -175,8 +176,11 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 			const FRTSFormationAgent& RTSFormationAgent = RTSFormationAgents[EntityIndex];
 
 			const FUnitInfo& Unit = FormationSubsystem->Units[RTSFormationAgent.UnitIndex];
-			
-			MoveTarget.Center = Unit.InterpolatedDestination - RTSFormationAgent.Offset;
+
+			FVector Offset = RTSFormationAgent.Offset;
+			if (Unit.bBlendAngle && Unit.Formation != Circle)
+				Offset = RTSFormationAgent.Offset.RotateAngleAxis(Unit.InterpolatedAngle, FVector(0.f,0.f,Unit.TurnDirection));
+			MoveTarget.Center = Unit.InterpolatedDestination - Offset;
 			
 			// Update move target values
 			MoveTarget.DistanceToGoal = (MoveTarget.Center - Transform.GetLocation()).Length();
@@ -279,7 +283,7 @@ void URTSUpdateEntityIndex::SignalEntities(UMassEntitySubsystem& EntitySubsystem
 			int i=0;
 			for(const TPair<int, FVector>& NewPos : FormationSubsystem->Units[FormationAgent.UnitIndex].NewPositions)
 			{
-				float Dist = FVector::DistSquared2D(NewPos.Value, Location);
+				float Dist = FVector::DistSquared2D(NewPos.Value, FormationAgent.Offset);
 				if (ClosestDistance == -1 || Dist < ClosestDistance)
 				{
 					ClosestPos = NewPos;
@@ -295,7 +299,7 @@ void URTSUpdateEntityIndex::SignalEntities(UMassEntitySubsystem& EntitySubsystem
 			int& Index = ClosestPos.Key;
 			
 			FormationAgent.EntityIndex = Index;
-			FormationAgent.Offset = FormationSubsystem->Units[FormationAgent.UnitIndex].UnitPosition - ClosestPos.Value;
+			FormationAgent.Offset = ClosestPos.Value;
 			FormationSubsystem->Units[FormationAgent.UnitIndex].NewPositions.Remove(Index);
 
 			// Call subsystem function to get entities to move

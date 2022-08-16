@@ -62,6 +62,10 @@ public:
 
 	UPROPERTY()
 	float InterpolationSpeed = 5.f;
+	
+	bool bBlendAngle = false;
+
+	FVector ForwardDir;
 
 	FUnitInfo() {};
 };
@@ -111,6 +115,8 @@ public:
 	virtual TStatId GetStatId() const override;
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+
+	static float LerpDegrees(float start, float end, float amount);
 
 	UPROPERTY()
 	FTimerHandle MoveHandle;
