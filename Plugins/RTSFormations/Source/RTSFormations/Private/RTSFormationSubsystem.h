@@ -45,7 +45,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHollow = false;
-	
 
 	// The angle of the unit
 	UPROPERTY()
@@ -58,7 +57,13 @@ public:
 	FVector InterpolatedDestination;
 
 	UPROPERTY()
-	float InterpolatedAngle = 0.f;
+	FRotator Rotation;
+	
+	UPROPERTY()
+	FRotator InterpRotation;
+	
+	UPROPERTY()
+	FRotator OldRotation;
 
 	UPROPERTY()
 	float InterpolationSpeed = 5.f;
@@ -115,8 +120,6 @@ public:
 	virtual TStatId GetStatId() const override;
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
-
-	static float LerpDegrees(float start, float end, float amount);
 
 	UPROPERTY()
 	FTimerHandle MoveHandle;

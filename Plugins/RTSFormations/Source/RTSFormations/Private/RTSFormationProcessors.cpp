@@ -178,9 +178,12 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 			const FUnitInfo& Unit = FormationSubsystem->Units[RTSFormationAgent.UnitIndex];
 
 			FVector Offset = RTSFormationAgent.Offset;
-			if (Unit.bBlendAngle && Unit.Formation != Circle)
-				Offset = RTSFormationAgent.Offset.RotateAngleAxis(Unit.InterpolatedAngle, FVector(0.f,0.f,Unit.TurnDirection));
-			MoveTarget.Center = Unit.InterpolatedDestination - Offset;
+			if (Unit.bBlendAngle)
+			{
+				Offset = Offset.RotateAngleAxis(Unit.OldRotation.Yaw, FVector(0.f,0.f,-1.f));
+				Offset = Offset.RotateAngleAxis(Unit.InterpRotation.Yaw, FVector(0.f,0.f,1.f));
+			}
+			MoveTarget.Center = Unit.InterpolatedDestination + Offset;
 			
 			// Update move target values
 			MoveTarget.DistanceToGoal = (MoveTarget.Center - Transform.GetLocation()).Length();
@@ -290,8 +293,8 @@ void URTSUpdateEntityIndex::SignalEntities(UMassEntitySubsystem& EntitySubsystem
 					ClosestDistance = Dist;
 					
 					// While its not perfect, this adds a hard cap to how many positions to check
-					if (++i > FormationSubsystem->Units[FormationAgent.UnitIndex].FormationLength*2)
-						break;
+					//if (++i > FormationSubsystem->Units[FormationAgent.UnitIndex].FormationLength*2)
+					//	break;
 				}
 			}
 
