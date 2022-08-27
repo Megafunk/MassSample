@@ -46,10 +46,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHollow = false;
 
-	// The angle of the unit
-	UPROPERTY()
-	float Angle = 0;
-
 	FVector FarCorner;
 
 	// Interpolated movement
@@ -114,6 +110,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetFormationPreset(int UnitIndex, UFormationPresets* FormationAsset);
+
+	void CalculateNewPositions(FUnitInfo& Unit, TMap<int, FVector>& NewPositions);
 
 	virtual void Tick(float DeltaTime) override;
 	virtual bool IsTickable() const override;
