@@ -37,7 +37,7 @@ public class RTSFormations : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore", "MassNavigation", "MassActors", "MassLOD"
+				"SlateCore", "MassNavigation", "MassActors", "MassLOD", "GameplayDebugger"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
