@@ -46,6 +46,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHollow = false;
 
+	UPROPERTY()
 	FVector FarCorner;
 
 	// Interpolated movement
@@ -63,9 +64,11 @@ public:
 
 	UPROPERTY()
 	float InterpolationSpeed = 5.f;
-	
+
+	UPROPERTY()
 	bool bBlendAngle = false;
 
+	UPROPERTY()
 	FVector ForwardDir;
 
 	FUnitInfo() {};

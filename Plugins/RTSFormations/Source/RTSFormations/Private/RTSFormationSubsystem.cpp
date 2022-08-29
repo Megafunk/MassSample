@@ -161,16 +161,17 @@ void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int Uni
 	DrawDebugDirectionalArrow(GetWorld(), NewPosition, NewPosition+((NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal()*250.f), 150.f, FColor::Red, false, 5.f, 0, 25.f);
 
 	FUnitInfo& Unit = Units[UnitIndex];
-	// Calculate turn direction and angle for entities in unit
-	Unit.TurnDirection = (NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal().Y > 0 ? 1.f : -1.f;
-	
+
 	FVector OldDir = Unit.ForwardDir;
 	Unit.ForwardDir = (NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal();
+	
+	// Calculate turn direction and angle for entities in unit
+	Unit.TurnDirection = Unit.ForwardDir.Y > 0 ? 1.f : -1.f;
 	
 	Unit.OldRotation = Unit.Rotation;
 	Unit.Rotation = UKismetMathLibrary::MakeRotFromX(Unit.ForwardDir);
 	
-	Unit.bBlendAngle = OldDir.Dot(Unit.ForwardDir) > 0.6;
+	Unit.bBlendAngle = OldDir.Dot(Unit.ForwardDir) > 0.4;
 	Unit.InterpRotation = Unit.bBlendAngle ? Unit.InterpRotation : Unit.Rotation;
 
 	// Jank solution to stop entities from moving
@@ -248,7 +249,7 @@ void URTSFormationSubsystem::Tick(float DeltaTime)
 		FUnitInfo& Unit = Units[i];
 		if (Unit.Formation != Circle)
 		{
-			Unit.InterpRotation = UKismetMathLibrary::RInterpTo(Unit.InterpRotation, Unit.Rotation, DeltaTime, 1.f);
+			Unit.InterpRotation = UKismetMathLibrary::RInterpTo(Unit.InterpRotation, Unit.Rotation, DeltaTime, 0.5f);
 		}
 		
 		Unit.InterpolatedDestination = FMath::VInterpConstantTo(Unit.InterpolatedDestination, Unit.UnitPosition, DeltaTime, 150.f);
