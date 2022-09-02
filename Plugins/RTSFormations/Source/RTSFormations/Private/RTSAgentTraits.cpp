@@ -6,6 +6,7 @@
 #include "MassEntityTemplateRegistry.h"
 #include "MassNavigationFragments.h"
 #include "MassObserverRegistry.h"
+#include "Engine/World.h"
 
 void URTSFormationAgentTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {

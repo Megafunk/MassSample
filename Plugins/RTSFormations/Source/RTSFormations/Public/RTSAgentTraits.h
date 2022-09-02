@@ -6,6 +6,7 @@
 #include "MassEntityTraitBase.h"
 #include "MassEntityTypes.h"
 #include "MassMovementTypes.h"
+#include "RTSAgentSubsystem.h"
 #include "RTSAgentTraits.generated.h"
 
 class URTSFormationSubsystem;
@@ -23,6 +24,8 @@ struct RTSFORMATIONS_API FRTSFormationAgent : public FMassFragment
 	int UnitIndex = 0;
 
 	FVector Offset;
+
+	RTSAgentHashGrid2D::FCellLocation CellLoc;
 };
 
 USTRUCT()
