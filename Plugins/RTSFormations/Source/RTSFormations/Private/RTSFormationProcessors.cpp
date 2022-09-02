@@ -1,11 +1,13 @@
 ﻿#include "RTSFormationProcessors.h"
 
+#include "LaunchEntityProcessor.h"
 #include "MassCommonFragments.h"
 #include "MassMovementFragments.h"
 #include "MassNavigationFragments.h"
 #include "MassNavigationTypes.h"
 #include "MassSignalSubsystem.h"
 #include "MassSimulationLOD.h"
+#include "RTSAgentSubsystem.h"
 #include "RTSAgentTraits.h"
 #include "RTSFormationSubsystem.h"
 #include "Engine/World.h"
@@ -144,6 +146,7 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 //----------------------------------------------------------------------//
 void URTSAgentMovement::ConfigureQueries()
 {
+	EntityQuery.AddRequirement<FLaunchEntityFragment>(EMassFragmentAccess::None, EMassFragmentPresence::None);
 	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
@@ -312,4 +315,77 @@ void URTSUpdateEntityIndex::SignalEntities(UMassEntitySubsystem& EntitySubsystem
 			}
 		}
 	});
+}
+
+//----------------------------------------------------------------------//
+//  URTSUpdateHashPosition
+//----------------------------------------------------------------------//
+void URTSUpdateHashPosition::ConfigureQueries()
+{
+	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadWrite);
+}
+
+void URTSUpdateHashPosition::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+{
+	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	{
+		TConstArrayView<FTransformFragment> TransformFragments = Context.GetFragmentView<FTransformFragment>();
+		TArrayView<FRTSFormationAgent> FormationAgents = Context.GetMutableFragmentView<FRTSFormationAgent>();
+		
+		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		{
+			FRTSFormationAgent& RTSAgent = FormationAgents[EntityIndex];
+			const FVector& Location = TransformFragments[EntityIndex].GetTransform().GetLocation();
+			
+			float Radius = 25.f;
+			const FBox NewBounds(Location - FVector(Radius, Radius, 0.f), Location + FVector(Radius, Radius, 0.f));
+			RTSAgent.CellLoc = AgentSubsystem->AgentHashGrid.Move(Context.GetEntity(EntityIndex), RTSAgent.CellLoc, NewBounds);
+		}
+	});
+}
+
+void URTSUpdateHashPosition::Initialize(UObject& Owner)
+{
+	AgentSubsystem = UWorld::GetSubsystem<URTSAgentSubsystem>(Owner.GetWorld());
+}
+
+//----------------------------------------------------------------------//
+//  URTSInitializeHashPosition
+//----------------------------------------------------------------------//
+URTSInitializeHashPosition::URTSInitializeHashPosition()
+{
+	ObservedType = FRTSFormationAgent::StaticStruct();
+	Operation = EMassObservedOperation::Add;
+}
+
+void URTSInitializeHashPosition::ConfigureQueries()
+{
+	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+}
+
+void URTSInitializeHashPosition::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+{
+	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	{
+		TConstArrayView<FTransformFragment> TransformFragments = Context.GetFragmentView<FTransformFragment>();
+		TArrayView<FRTSFormationAgent> FormationAgents = Context.GetMutableFragmentView<FRTSFormationAgent>();
+		
+		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		{
+			FRTSFormationAgent& RTSAgent = FormationAgents[EntityIndex];
+			const FVector& Location = TransformFragments[EntityIndex].GetTransform().GetLocation();
+			
+			float Radius = 25.f;
+			const FBox NewBounds(Location - FVector(Radius, Radius, 0.f), Location + FVector(Radius, Radius, 0.f));
+			RTSAgent.CellLoc = AgentSubsystem->AgentHashGrid.Add(Context.GetEntity(EntityIndex), NewBounds);
+		}
+	});
+}
+
+void URTSInitializeHashPosition::Initialize(UObject& Owner)
+{
+	AgentSubsystem = UWorld::GetSubsystem<URTSAgentSubsystem>(Owner.GetWorld());
 }
