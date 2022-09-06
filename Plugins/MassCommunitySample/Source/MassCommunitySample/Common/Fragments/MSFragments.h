@@ -66,8 +66,12 @@ struct MASSCOMMUNITYSAMPLE_API FMassSampleDebuggableTag : public FMassTag
 };
 
 
-
-
-
+/**
+ * Signal names
+ */
+namespace MassSample::Signals
+{
+	const FName OnHit = FName(TEXT("SampleOnHit"));
+}
 
 

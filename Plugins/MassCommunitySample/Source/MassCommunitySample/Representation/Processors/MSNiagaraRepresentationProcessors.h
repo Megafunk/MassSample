@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Representation/MSNiagaraSubsystem.h"
 #include "MassProcessor.h"
+#include "MassSignalProcessorBase.h"
 #include "UObject/Object.h"
 #include "MSNiagaraRepresentationProcessors.generated.h"
 
@@ -33,3 +34,18 @@ public:
 	FMassEntityQuery PushArraysToNiagaraSystems;
 };
 
+UCLASS()
+class MASSCOMMUNITYSAMPLE_API UMSNiagaraRepresentationSpawnProcs : public UMassSignalProcessorBase
+{
+	GENERATED_BODY()
+public:
+	
+	UMSNiagaraRepresentationSpawnProcs();
+	
+	virtual void ConfigureQueries() override;
+	
+	virtual void SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context,
+		FMassSignalNameLookup& EntitySignals) override;
+protected:
+	virtual void Initialize(UObject& Owner) override;
+};

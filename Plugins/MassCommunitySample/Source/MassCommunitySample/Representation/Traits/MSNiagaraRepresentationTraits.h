@@ -6,7 +6,7 @@
 #include "MassEntityTraitBase.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "NiagaraSystem.h"
-#include "MSNiagaraRepresentationTrait.generated.h"
+#include "MSNiagaraRepresentationTraits.generated.h"
 
 /**
  * 
@@ -18,10 +18,8 @@ class MASSCOMMUNITYSAMPLE_API UMSNiagaraRepresentationTrait : public UMassEntity
 	GENERATED_BODY()
 public:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
-	virtual void ValidateTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = "Config")
 	UNiagaraSystem* SharedNiagaraSystem;
 
 };
-

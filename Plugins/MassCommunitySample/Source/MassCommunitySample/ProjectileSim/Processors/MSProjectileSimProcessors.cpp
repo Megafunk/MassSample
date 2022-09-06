@@ -7,13 +7,14 @@
 #include "MassObserverRegistry.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "MassRepresentationTypes.h"
+#include "MassSignalSubsystem.h"
 #include "Common/Fragments/MSFragments.h"
 #include "HAL/ThreadManager.h"
 
 
 void UMSProjectileSimProcessors::Initialize(UObject& Owner)
 {
-	
+	SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
 }
 
 
@@ -38,9 +39,10 @@ void UMSProjectileSimProcessors::ConfigureQueries()
 
 void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
+	TArray<FMassEntityHandle> EntitiesToSignal;
 
 	
-	LineTraceFromPreviousPosition.ForEachEntityChunk(EntitySubsystem,Context,[this](FMassExecutionContext& Context)
+	LineTraceFromPreviousPosition.ForEachEntityChunk(EntitySubsystem,Context,[&](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_LineTraceFromPreviousPosition);
 
@@ -75,12 +77,17 @@ void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, 
 				FConstStructView HitResultConstStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 		
 				Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResultConstStruct));
+				
+				EntitiesToSignal.Add(Entity);
 			}
 		}
 	});
 
 
-
+	if (EntitiesToSignal.Num())
+	{
+		SignalSubsystem->SignalEntities(MassSample::Signals::OnHit, EntitiesToSignal);
+	}
 
 		
 	MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)

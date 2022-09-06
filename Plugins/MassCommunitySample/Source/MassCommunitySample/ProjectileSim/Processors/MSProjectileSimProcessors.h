@@ -24,6 +24,7 @@ class MASSCOMMUNITYSAMPLE_API UMSProjectileSimProcessors : public UMassProcessor
 	
 	FMassEntityQuery LineTraceFromPreviousPosition;
 	FMassEntityQuery MyQuery;
+	class UMassSignalSubsystem* SignalSubsystem;
 };
 
 

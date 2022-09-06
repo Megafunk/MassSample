@@ -6,7 +6,7 @@
 
 UMSObserverOnAdd::UMSObserverOnAdd()
 {
-	ObservedType = FSampleColorFragment::StaticStruct();
+	ObservedType = FOriginalTransformFragment::StaticStruct();
 	Operation = EMassObservedOperation::Add;
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }
@@ -14,20 +14,22 @@ UMSObserverOnAdd::UMSObserverOnAdd()
 void UMSObserverOnAdd::ConfigureQueries()
 {
 	// We still make a query here. You can add other things to query for besides the observed fragments 
-	// EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FSampleColorFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+
 }
 
 void UMSObserverOnAdd::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
 {
 	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
 	{
-		auto Colors = Context.GetMutableFragmentView<FSampleColorFragment>();
+		auto OriginalTransforms = Context.GetMutableFragmentView<FOriginalTransformFragment>();
+		auto Transforms = Context.GetFragmentView<FTransformFragment>();
+
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
-			// When a color is added, make it a random color!
-			Colors[EntityIndex].Color = FColor::MakeRandomColor();			
-			UE_LOG( LogTemp, Warning, TEXT("%i SampleColorFragment Observer fired on frame %i"),Context.GetEntity(EntityIndex).Index,GFrameCounter);
+			// When an original transform is added, set it to our transform!
+			OriginalTransforms[EntityIndex].Transform = Transforms[EntityIndex].GetTransform();			
 		}
 	});
 }
