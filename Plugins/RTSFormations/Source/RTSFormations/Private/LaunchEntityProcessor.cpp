@@ -5,51 +5,52 @@
 #include "MassCommonFragments.h"
 #include "MassMovementFragments.h"
 #include "MassNavigationFragments.h"
+#include "TimerManager.h"
 #include "Engine/World.h"
 
 //----------------------------------------------------------------------//
 //  ULaunchEntityProcessor
 //----------------------------------------------------------------------//
-ULaunchEntityProcessor::ULaunchEntityProcessor()
-{
-	ObservedType = FLaunchEntityFragment::StaticStruct();
-	Operation = EMassObservedOperation::Add;
-}
 
 void ULaunchEntityProcessor::ConfigureQueries()
 {
-	EntityQuery.AddRequirement<FLaunchEntityFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddRequirement<FLaunchEntityFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	
+	EntityQuery.AddTagRequirement<FInitLaunchFragment>(EMassFragmentPresence::None);
 }
 
 void ULaunchEntityProcessor::Initialize(UObject& Owner)
 {
+	Super::Initialize(Owner);
 	SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
 	FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(Owner.GetWorld());
+	SubscribeToSignal(LaunchEntity);
 }
 
-void ULaunchEntityProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void ULaunchEntityProcessor::SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context,
+	FMassSignalNameLookup& EntitySignals)
 {
 	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this, &EntitySubsystem](FMassExecutionContext& Context)
 	{
-		TConstArrayView<FLaunchEntityFragment> LaunchEntityFragments = Context.GetFragmentView<FLaunchEntityFragment>();
+		TArrayView<FLaunchEntityFragment> LaunchEntityFragments = Context.GetMutableFragmentView<FLaunchEntityFragment>();
 		TArrayView<FMassMoveTargetFragment> MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
-		TArrayView<FMassForceFragment> ForceFragments = Context.GetMutableFragmentView<FMassForceFragment>();
 		TConstArrayView<FTransformFragment> TransformFragments = Context.GetFragmentView<FTransformFragment>();
 		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
 			const FLaunchEntityFragment& LaunchEntityFragment = LaunchEntityFragments[EntityIndex];
 			FMassMoveTargetFragment& MoveTargetFragment = MoveTargetFragments[EntityIndex];
-			FMassForceFragment& ForceFragment = ForceFragments[EntityIndex];
 			const FTransformFragment& TransformFragment = TransformFragments[EntityIndex];
 
-			MoveTargetFragment.CreateNewAction(EMassMovementAction::Animate, *GetWorld());
-			ForceFragment.Value = (TransformFragment.GetTransform().GetTranslation()-LaunchEntityFragment.Origin).GetSafeNormal()*LaunchEntityFragment.Magnitude;
-			UE_LOG(LogTemp, Log, TEXT("Initialize Force: %s"), *ForceFragment.Value.ToString())
+			MoveTargetFragment.CreateNewAction(EMassMovementAction::Move, *GetWorld());
+			MoveTargetFragment.Center = TransformFragment.GetTransform().GetLocation()+(TransformFragment.GetTransform().GetTranslation()-LaunchEntityFragment.Origin).GetSafeNormal()*LaunchEntityFragment.Magnitude;
+			MoveTargetFragment.Center.Z = 0.f;
+			MoveTargetFragment.Forward = (TransformFragment.GetTransform().GetTranslation()-LaunchEntityFragment.Origin).GetSafeNormal();
+			MoveTargetFragment.DistanceToGoal = (TransformFragment.GetTransform().GetTranslation()-LaunchEntityFragment.Origin).Length();
+			//DrawDebugPoint(GetWorld(), MoveTargetFragment.Center+(FVector::UpVector*200.f), 40.f, FColor::Green, false, 10.f);
+			//UE_LOG(LogTemp, Error, TEXT("MoveTarget: "), *MoveTargetFragment.Center.ToString());
+			Context.Defer().AddTag<FInitLaunchFragment>(Context.GetEntity(EntityIndex));
 		}
 	});
 }
@@ -64,6 +65,7 @@ void UMoveForceProcessor::ConfigureQueries()
 	EntityQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddTagRequirement<FInitLaunchFragment>(EMassFragmentPresence::All);
 	
 }
 
@@ -82,19 +84,22 @@ void UMoveForceProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassEx
 			FMassMoveTargetFragment& MoveTargetFragment = MoveTargetFragments[EntityIndex];
 			FMassForceFragment& ForceFragment = ForceFragments[EntityIndex];
 			FTransformFragment& TransformFragment = TransformFragments[EntityIndex];
+			
+			MoveTargetFragment.DistanceToGoal = (TransformFragment.GetTransform().GetTranslation()-MoveTargetFragment.Center).Length();
 
-			if(ForceFragment.Value.Length() > 0)
+			if(MoveTargetFragment.DistanceToGoal < 50.f)
 			{
-				TransformFragment.GetMutableTransform().AddToTranslation(ForceFragment.Value);
-				//ForceFragment.Value -= FVector(0.1f)*Context.GetDeltaTimeSeconds();
-				//UE_LOG(LogTemp, Log, TEXT("Force: %f"), ForceFragment.Value.Length());
-				DrawDebugSphere(GetWorld(), TransformFragment.GetTransform().GetLocation(), 40.f, 5, FColor::Red);
+				if (MoveTargetFragment.GetCurrentAction() == EMassMovementAction::Move)
+				{
+					//Context.Defer().RemoveFragment<FLaunchEntityFragment>(Context.GetEntity(EntityIndex));
+					//Context.Defer().RemoveTag<FInitLaunchFragment>(Context.GetEntity(EntityIndex));
+					Context.Defer().DestroyEntity(Context.GetEntity(EntityIndex));
+					MoveTargetFragment.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
+				}
 			}
 			else
 			{
-				EntitySubsystem.Defer().RemoveFragment<FLaunchEntityFragment>(Context.GetEntity(EntityIndex));
-				ForceFragment.Value = FVector::ZeroVector;
-				MoveTargetFragment.CreateNewAction(EMassMovementAction::Stand, *GetWorld());
+				DrawDebugSphere(GetWorld(), TransformFragment.GetTransform().GetLocation(), 40.f, 5, FColor::Red);
 			}
 		}
 	});
