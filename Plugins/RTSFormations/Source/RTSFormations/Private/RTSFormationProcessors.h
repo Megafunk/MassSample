@@ -72,6 +72,7 @@ class RTSFORMATIONS_API URTSFormationUpdate : public UMassSignalProcessorBase
 	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
 };
 
+// Signal Processor that updates the agents index in the unit based on values in the FormationSubsystem Unit Array
 UCLASS()
 class RTSFORMATIONS_API URTSUpdateEntityIndex : public UMassSignalProcessorBase
 {
@@ -82,33 +83,4 @@ class RTSFORMATIONS_API URTSUpdateEntityIndex : public UMassSignalProcessorBase
 	virtual void SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals) override;
 
 	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
-};
-
-// Simple movement processor to get agents from a to b
-UCLASS()
-class RTSFORMATIONS_API URTSUpdateHashPosition : public UMassProcessor
-{
-	GENERATED_BODY()
-	
-	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
-	virtual void Initialize(UObject& Owner) override;
-
-	FMassEntityQuery EntityQuery;
-	TObjectPtr<class URTSAgentSubsystem> AgentSubsystem;
-};
-
-// Simple movement processor to get agents from a to b
-UCLASS()
-class RTSFORMATIONS_API URTSInitializeHashPosition : public UMassObserverProcessor
-{
-	GENERATED_BODY()
-
-	URTSInitializeHashPosition();
-	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
-	virtual void Initialize(UObject& Owner) override;
-
-	FMassEntityQuery EntityQuery;
-	TObjectPtr<class URTSAgentSubsystem> AgentSubsystem;
 };
