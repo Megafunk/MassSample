@@ -123,11 +123,10 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 
 	// Signal entities to update their position index
 	FMassExecutionContext Context = EntitySubsystem->CreateExecutionContext(GetWorld()->GetDeltaSeconds());
-	TArray<FMassEntityHandle> Entities = Unit.Entities.Array();
-	for(int i=0;i<Unit.Entities.Num();++i)
+	if (Unit.Entities.Num())
 	{
-		//DrawDebugString(GetWorld(), Loc, FString::Printf(TEXT("%d"),i), NULL, FColor::Red, 5.f, false);
-		GetWorld()->GetSubsystem<UMassSignalSubsystem>()->SignalEntity(UpdateIndex, Entities[i]);
+		TArray<FMassEntityHandle> Entities = Unit.Entities.Array();
+		GetWorld()->GetSubsystem<UMassSignalSubsystem>()->SignalEntities(UpdateIndex, Entities);
 	}
 }
 
@@ -178,8 +177,11 @@ void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int Uni
 	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	for(const FMassEntityHandle& Entity : Unit.Entities)
 	{
-		EntitySubsystem->GetFragmentDataPtr<FMassMoveTargetFragment>(Entity)->CreateNewAction(EMassMovementAction::Stand, *GetWorld());
-		EntitySubsystem->GetFragmentDataPtr<FMassVelocityFragment>(Entity)->Value = FVector::Zero();
+		if (EntitySubsystem->GetFragmentDataPtr<FMassMoveTargetFragment>(Entity))
+		{
+			EntitySubsystem->GetFragmentDataPtr<FMassMoveTargetFragment>(Entity)->CreateNewAction(EMassMovementAction::Stand, *GetWorld());
+			EntitySubsystem->GetFragmentDataPtr<FMassVelocityFragment>(Entity)->Value = FVector::Zero();
+		}
 	}
 	
 	Unit.UnitPosition = NewPosition;
@@ -239,7 +241,7 @@ void URTSFormationSubsystem::SetFormationPreset(int UnitIndex, UFormationPresets
 	Unit.Rings = FormationAsset->Rings;
 	Unit.bHollow = FormationAsset->bHollow;
 
-	GetWorld()->GetSubsystem<UMassSignalSubsystem>()->SignalEntities(FormationUpdated, Unit.Entities.Array());
+	SetUnitPosition(Units[UnitIndex].UnitPosition, UnitIndex);
 }
 
 void URTSFormationSubsystem::Tick(float DeltaTime)
