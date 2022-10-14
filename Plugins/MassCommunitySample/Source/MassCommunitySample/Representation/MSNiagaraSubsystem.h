@@ -5,9 +5,6 @@
 #include "MassEntitySubsystem.h"
 #include "MassRepresentationProcessor.h"
 #include "MSNiagaraActor.h"
-#include "EntitySystem/MovieSceneEntityIDs.h"
-
-#include "Field/FieldSystemNodes.h"
 #include "MSNiagaraSubsystem.generated.h"
 
 UCLASS()
@@ -16,15 +13,21 @@ class UMSNiagaraSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 protected:
 	
-	UPROPERTY()
-	UMassEntitySubsystem* MassSubsystem;
+	TSharedPtr<FMassEntityManager> MassManager;
 	
 	FMassArchetypeHandle BulletArchetype;
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
+	virtual void Deinitialize() override
+	{
+		MassManager.Reset();
+		PreexistingSharedNiagaraActors.Empty();
+	};
+
 public:
 	FSharedStruct GetOrCreateSharedNiagaraFragmentForSystemType(class UNiagaraSystem* NiagaraSystem);
+	
 
 	TMap<uint32, AMSNiagaraActor*> PreexistingSharedNiagaraActors;
 };

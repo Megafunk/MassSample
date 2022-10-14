@@ -15,17 +15,16 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	const UWorld* World = GetWorld();
 
 	//cache our Mass Entity Subsystem
-	EntitySystem = World->GetSubsystem<UMassEntitySubsystem>();
+	EntityManager = World->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager().AsShared();
 
 
 	//To spawn entities from C++ we can make a new archetype like so:
-	MoverArchetype =  EntitySystem->CreateArchetype(
+	MoverArchetype =  EntityManager->CreateArchetype(
 	{
 		FTransformFragment::StaticStruct(),
 		FMassVelocityFragment::StaticStruct()
 	});
 
-	Context =  EntitySystem->CreateExecutionContext(0);
 
 	NavSystem = Cast<UNavigationSystemV1>(GetWorld()->GetNavigationSystem());
 
@@ -39,21 +38,21 @@ int32 UMSSubsystem::SpawnEntity()
 
 
 	//Create and store a handle to our new entity
-	FMassEntityHandle NewEntity = EntitySystem->CreateEntity(MoverArchetype);
+	FMassEntityHandle NewEntity = EntityManager->CreateEntity(MoverArchetype);
 
 
 	
 	//Afterwards you can add, remove or change fragments of the entity. Let's add a tag fragment!
-	EntitySystem->AddTagToEntity(NewEntity,
+	EntityManager->AddTagToEntity(NewEntity,
 		FSampleMoverTag::StaticStruct());
 	//Make sure you use AddTag for tags and AddFragment for fragments!
-	EntitySystem->AddFragmentToEntity(NewEntity,
+	EntityManager->AddFragmentToEntity(NewEntity,
 		FSampleColorFragment::StaticStruct());
 
 	
 	//How about changing data on a fragment?
-	EntitySystem->GetFragmentDataChecked<FMassVelocityFragment>(NewEntity).Value = FMath::VRand()*100.0f;
-	EntitySystem->GetFragmentDataChecked<FSampleColorFragment>(NewEntity).Color = FColor::Blue;
+	EntityManager->GetFragmentDataChecked<FMassVelocityFragment>(NewEntity).Value = FMath::VRand()*100.0f;
+	EntityManager->GetFragmentDataChecked<FSampleColorFragment>(NewEntity).Color = FColor::Blue;
 
 	
 

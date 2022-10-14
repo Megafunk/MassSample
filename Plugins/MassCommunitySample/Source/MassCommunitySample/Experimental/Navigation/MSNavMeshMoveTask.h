@@ -10,6 +10,7 @@
 #include "MassNavigationFragments.h"
 #include "MSNavMeshFragments.h"
 #include "MSSubsystem.h"
+#include "StateTreeLinker.h"
 #include "NavigationSystem.h"
 #include "StateTreeExecutionContext.h"
 #include "MSNavMeshMoveTask.generated.h"
@@ -52,12 +53,6 @@ protected:
 
 	TStateTreeExternalDataHandle<UMSSubsystem> MSSubsystemHandle;
 
-	
-
-	//todo: find some navigation struct for this
-	TStateTreeInstanceDataPropertyHandle<FVector> TargetLocationHandle;
-	TStateTreeInstanceDataPropertyHandle<FMassMovementStyleRef> MovementStyleHandle;
-	TStateTreeInstanceDataPropertyHandle<float> SpeedScaleHandle;
 };
 
 
@@ -67,7 +62,7 @@ struct MASSCOMMUNITYSAMPLE_API FMassFindNavMeshPathTargetInstanceData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = Output)
-	FVector MoveTargetLocation;
+	FVector MoveTargetLocation = FVector::ZeroVector;
 };
 
 
@@ -80,17 +75,13 @@ struct MASSCOMMUNITYSAMPLE_API FMassFindNavMeshPathWanderTargetInRadius : public
 protected:
 	virtual bool Link(FStateTreeLinker& Linker) override
 	{
-
-		Linker.LinkInstanceDataProperty(TargetLocationHandle, STATETREE_INSTANCEDATA_PROPERTY(FMassFindNavMeshPathTargetInstanceData, MoveTargetLocation));
 		
 		Linker.LinkExternalData(TransformHandle);
-
 		return true;
-
 	};
 	virtual const UStruct* GetInstanceDataType() const override { return FMassFindNavMeshPathTargetInstanceData::StaticStruct(); };
 
-	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const EStateTreeStateChangeType ChangeType, const FStateTreeTransitionResult& Transition) const override
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override
 	{
 
 		auto NavSystem = Cast<UNavigationSystemV1>(Context.GetWorld()->GetNavigationSystem());
@@ -101,7 +92,9 @@ protected:
 		// todo-navigation pass in nav property stuff
 		NavSystem->GetRandomReachablePointInRadius(Origin,Radius,NavLocation);
 
-		Context.GetInstanceData(TargetLocationHandle) = NavLocation.Location;
+		FMassFindNavMeshPathTargetInstanceData& InstanceData = Context.GetInstanceData<FMassFindNavMeshPathTargetInstanceData>(*this);
+
+		InstanceData.MoveTargetLocation = NavLocation.Location;
 
 		return EStateTreeRunStatus::Running;
 	};
@@ -111,7 +104,6 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float Radius = 5000.0f;
 	
-	TStateTreeInstanceDataPropertyHandle<FVector> TargetLocationHandle;
 	TStateTreeExternalDataHandle<FTransformFragment> TransformHandle;
 
 };

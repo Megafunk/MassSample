@@ -27,7 +27,7 @@ public:
 	
 	virtual void ConfigureQueries() override;
 
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
 
 	
 	FMassEntityQuery PositionToNiagaraFragmentQuery;
@@ -44,7 +44,7 @@ public:
 	
 	virtual void ConfigureQueries() override;
 	
-	virtual void SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context,
+	virtual void SignalEntities(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context,
 		FMassSignalNameLookup& EntitySignals) override;
 protected:
 	virtual void Initialize(UObject& Owner) override;

@@ -8,7 +8,7 @@
 #include "MassEntityTemplateRegistry.h"
 #include "Common/Fragments/MSFragments.h"
 
-void UMSActorMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+void UMSActorMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
 	 BuildContext.AddFragment<FMassActorFragment>();
 }

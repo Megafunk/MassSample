@@ -24,24 +24,23 @@ struct FMSEntitySpawnTemplate
 
 	FMSEntitySpawnTemplate(const UMassEntityConfigAsset* MassEntityConfig, const UWorld* World)
 	{
-		AGameStateBase* GameState = World->GetGameState();
-		Template = *MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*GameState, *MassEntityConfig);
+		Template = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*World, *MassEntityConfig);
 	};
 
-	FMassArchetypeHandle FinalizeTemplateArchetype(UMassEntitySubsystem* EntitySubSystem)
+	FMassArchetypeHandle FinalizeTemplateArchetype(FMassEntityManager& EntityManager)
 	{
-		Template.SetArchetype(EntitySubSystem->CreateArchetype(Template.GetCompositionDescriptor(),Template.GetSharedFragmentValues()));
+		Template.SetArchetype(EntityManager.CreateArchetype(Template.GetCompositionDescriptor()));
 		
 		return Template.GetArchetype();
 
 	};
 
 	
-	FMassEntityHandle SpawnEntity(UMassEntitySubsystem* EntitySubSystem) const
+	FMassEntityHandle SpawnEntity(FMassEntityManager& EntitySubSystem) const
 	{
 		TArray<FMassEntityHandle> SpawnedEntities;
-		EntitySubSystem->BatchCreateEntities(Template.GetArchetype(), 1, SpawnedEntities);
-		EntitySubSystem->SetEntityFragmentsValues(SpawnedEntities[0], Template.GetInitialFragmentValues());
+		EntitySubSystem.BatchCreateEntities(Template.GetArchetype(), 1, SpawnedEntities);
+		EntitySubSystem.SetEntityFragmentsValues(SpawnedEntities[0], Template.GetInitialFragmentValues());
 		return  SpawnedEntities[0];
 	};
 

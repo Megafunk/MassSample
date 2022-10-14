@@ -74,10 +74,7 @@ class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLi
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
 	static void FindClosestHashGridEntityInSphere(const FVector Location,const double Radius, FEntityHandleWrapper& Entity, const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
-
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	FString GetEntityDebugString(FEntityHandleWrapper Entity, const UObject* WorldContextObject);
-
+	
 	/**
 	 * Sets an entity's fragment data or adds it if it isn't present.
 	 */

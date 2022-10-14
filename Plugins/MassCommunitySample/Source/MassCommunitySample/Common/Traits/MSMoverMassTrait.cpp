@@ -8,7 +8,7 @@
 #include "MassMovementFragments.h"
 #include "Common/Fragments/MSFragments.h"
 
-void UMSMoverMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+void UMSMoverMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
 	BuildContext.AddTag<FSampleMoverTag>();
 	BuildContext.AddFragment<FTransformFragment>();

@@ -15,7 +15,7 @@ UCLASS(meta=(DisplayName="Assorted Tags"))
 class MASSCOMMUNITYSAMPLE_API UMSAssortedTags : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
-	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
+	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, meta = (BaseStruct = "MassTag", ExcludeBaseStruct))
 	TArray<FInstancedStruct> Tags;

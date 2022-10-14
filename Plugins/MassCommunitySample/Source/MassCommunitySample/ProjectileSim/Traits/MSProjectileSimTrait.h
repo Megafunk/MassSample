@@ -15,7 +15,7 @@ class MASSCOMMUNITYSAMPLE_API UMSProjectileSimTrait : public UMassEntityTraitBas
 {
 	GENERATED_BODY()
 public:
-	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
+	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
 
 	// Whether to try to call the IMassProjectileHitInterface on actors we hit. This just adds a tag to the template conditionally 
 	UPROPERTY(EditAnywhere)
