@@ -22,6 +22,7 @@ public:
 	
 	FMassArchetypeHandle MoverArchetype;
 
+	//FMSSpatialHash SpatialHashGrid;
 	FMSHashGrid3D HashGrid = FMSHashGrid3D(100.0f,FMassEntityHandle());
 	
 	UPROPERTY()

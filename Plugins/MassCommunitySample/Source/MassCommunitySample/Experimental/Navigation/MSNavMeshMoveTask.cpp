@@ -22,7 +22,6 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 {
 	FMassStateTreeExecutionContext& MassContext = static_cast<FMassStateTreeExecutionContext&>(Context);
 
-	const UMSSubsystem& MSSubsystem = Context.GetExternalData(MSSubsystemHandle);
 	const FAgentRadiusFragment& AgentRadius = Context.GetExternalData(AgentRadiusHandle);
 	FMassMoveTargetFragment& MoveTarget = Context.GetExternalData(MoveTargetHandle);
 	FMassNavMeshPathFollowTaskInstanceData& InstanceData = Context.GetInstanceData<
@@ -34,13 +33,7 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 	const FMassMovementParameters& MovementParams = Context.GetExternalData(MovementParamsHandle);
 
 	const FVector AgentNavLocation = Context.GetExternalData(TransformHandle).GetTransform().GetLocation();
-
-	// const FMassMovementStyleRef MovementStyle = Context.GetInstanceData(MovementStyleHandle);
-	//
-	// const FVector TargetLocation = Context.GetInstanceData(TargetLocationHandle);
-	// const float SpeedScale = Context.GetInstanceData(SpeedScaleHandle);
-
-
+	
 	auto NavMeshSubsystem = Cast<UNavigationSystemV1>(Context.GetWorld()->GetNavigationSystem());
 
 

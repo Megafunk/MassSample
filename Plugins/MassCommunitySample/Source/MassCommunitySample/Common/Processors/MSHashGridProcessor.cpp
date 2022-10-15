@@ -10,6 +10,8 @@
 UMSHashGridProcessor::UMSHashGridProcessor()
 {
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
+	// In theory it should be thread save but I'm seeing wackiness so I'm slapping on singlethreaded for now
+	bRequiresGameThreadExecution = true;
 	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 }
 
@@ -49,6 +51,7 @@ void UMSHashGridProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExe
 UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor()
 {
 	ObservedType = FMSGridCellStartingLocationFragment::StaticStruct();
+	bRequiresGameThreadExecution = true;
 	Operation = EMassObservedOperation::Add;
 }
 

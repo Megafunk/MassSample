@@ -55,66 +55,6 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferred(
 	AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
 	const UObject* WorldContextObject)
 {
-	//	FMassExecutionContext ExecutionContext(WorldContextObject->GetWorld()->DeltaTimeSeconds);
-	FMassExecutionContext ExecutionContext;
-
-	ExecutionContext.SetDeferredCommandBuffer(MakeShareable(new FMassCommandBuffer()));
-
-
-	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
-
-	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
-		*WorldContextObject->GetWorld(), *MassEntityConfig);
-
-	FMassEntityManager& EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
-	                                                          GetMutableEntityManager();
-
-	//const FMassEntityHandle ReservedEntity = EntitySubSystem.ReserveEntity();
-
-
-	//todo: this is very slow! I am just doing this to be able to stuff configs in here for now
-	TArray<const UScriptStruct*> FragmentTypesList;
-	EntityTemplate.GetCompositionDescriptor().Fragments.ExportTypes(FragmentTypesList);
-	TArray<const UScriptStruct*> TagsTypeList;
-
-	EntityTemplate.GetCompositionDescriptor().Tags.ExportTypes(TagsTypeList);
-
-	TArray<FInstancedStruct> InstanceStructs = TArray<FInstancedStruct>(FragmentTypesList);
-
-	TConstArrayView<FInstancedStruct> InitialFragmentInstances = EntityTemplate.GetInitialFragmentValues();
-
-	// InstanceStructs need to have the InitialFragmentInstances data-filled instanced structs, all of which already exist inside of InstanceStructs
-
-	for (auto InitialFragmentInstance : InitialFragmentInstances)
-	{
-		int32 index = InstanceStructs.IndexOfByPredicate([&](const FInstancedStruct InstancedStructValue)
-		{
-			return InstancedStructValue.GetScriptStruct() == InitialFragmentInstance.GetScriptStruct();
-		});
-		if (index != INDEX_NONE)
-			InstanceStructs[index] = InitialFragmentInstance;
-	}
-
-	// ExecutionContext.Defer().PushCommand<FMassCommandAddFragments<>(
-	// 	FBuildEntityFromFragmentInstancesAndTags(ReservedEntity,
-	// 	                                         InstanceStructs,
-	// 	                                         TagsTypeList,
-	// 	                                         EntityTemplate.GetSharedFragmentValues()));
-
-
-	ExecutionContext.FlushDeferred();
-	//EntitySubSystem->FlushCommands(MakeShareable(new FMassCommandBuffer()));
-	//return FEntityHandleWrapper{ReservedEntity};
-
-
-	return FEntityHandleWrapper();
-}
-
-
-FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredBugRepro(
-	AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
-	const UObject* WorldContextObject)
-{
 	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
 
 	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
@@ -123,7 +63,6 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredBu
 	FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
 	                                                        GetMutableEntityManager();
 
-	const FMassEntityHandle ReservedEntity = EntityManager.ReserveEntity();
 
 
 	//todo: this is very slow! I am just doing this to be able to stuff configs in here for now
@@ -153,15 +92,29 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredBu
 	// Copy a new composition descriptor because it gets changed in the addcomposition call
 	FMassArchetypeCompositionDescriptor CompositionDescriptor = EntityTemplate.GetCompositionDescriptor();
 
+	// Reserve an entity
+	const FMassEntityHandle ReservedEntity = EntityManager.ReserveEntity();
+
 	// We are using a lambda here because we don't have a deferred command that can do  
 	EntityManager.Defer().PushCommand<FMassDeferredCreateCommand>([&](FMassEntityManager& System)
 	{
-		System.BuildEntity(ReservedEntity,InstanceStructs,EntityTemplate.GetSharedFragmentValues());
-		System.AddCompositionToEntity_GetDelta(ReservedEntity,CompositionDescriptor);
+		EntityManager.BuildEntity(ReservedEntity,InstanceStructs,EntityTemplate.GetSharedFragmentValues());
+		EntityManager.AddCompositionToEntity_GetDelta(ReservedEntity,CompositionDescriptor);
 	});
-
-	// Immediately flush? Doesn't seem too bad here but I imagine we could do this in a nicer way?s
+	
+	// Immediately flush? Doesn't seem too bad here but I imagine we could do this in a nicer way?
 	EntityManager.FlushCommands();
+
+	// trigger observers manually for now as I'm too lazy to use the batch add for now
+	if (EntityManager.GetObserverManager().HasObserversForBitSet(EntityTemplate.GetCompositionDescriptor().Fragments, EMassObservedOperation::Add))
+	{
+		
+		EntityManager.GetObserverManager().OnCompositionChanged(
+			FMassArchetypeEntityCollection(EntityTemplate.GetArchetype(), {ReservedEntity},FMassArchetypeEntityCollection::NoDuplicates)
+			, EntityTemplate.GetCompositionDescriptor()
+			, EMassObservedOperation::Add);
+	}
+
 
 	return FEntityHandleWrapper{ReservedEntity};
 }
