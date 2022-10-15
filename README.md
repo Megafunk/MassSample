@@ -13,7 +13,7 @@ Currently built for the Unreal Engine 5 latest version binary from the Epic Game
 This documentation will be updated often!
 
 #### **Requirements:**
-- Unreal Engine 5.0.2 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- Unreal Engine 5.1 preview 1 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - `Git` version control:
   - [Windows](https://gitforwindows.org/)
   - [Linux/Unix & macOS](https://git-scm.com/downloads)
@@ -288,6 +288,7 @@ void UMyProcessor::ConfigureQueries()
 {
 	MyQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
 	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
+	MyQuery.RegisterWithProcessor(*this);
 }
 ```
 Queries are executed by calling the `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. 
@@ -388,6 +389,7 @@ void UMyProcessor::ConfigureQueries()
 	// Entities must at least have the FHorseTag or the FSheepTag
 	MyQuery.AddTagRequirement<FHorseTag>(EMassFragmentPresence::Any);
 	MyQuery.AddTagRequirement<FSheepTag>(EMassFragmentPresence::Any);
+	MyQuery.RegisterWithProcessor(*this);
 }
 ```
 
@@ -424,6 +426,7 @@ void UMyProcessor::ConfigureQueries()
 	// Entities must at least have the FHorseFragment or the FSheepFragment
 	MyQuery.AddRequirement<FHorseFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Any);
 	MyQuery.AddRequirement<FSheepFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Any);
+	MyQuery.RegisterWithProcessor(*this);
 }
 ```
 
