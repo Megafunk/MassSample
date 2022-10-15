@@ -13,7 +13,7 @@ Currently built for the Unreal Engine 5 latest version binary from the Epic Game
 This documentation will be updated often!
 
 #### **Requirements:**
-- Unreal Engine 5.0.3 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- Unreal Engine 5.0.2 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - `Git` version control:
   - [Windows](https://gitforwindows.org/)
   - [Linux/Unix & macOS](https://git-scm.com/downloads)

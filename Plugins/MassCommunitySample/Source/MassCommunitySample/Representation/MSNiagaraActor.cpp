@@ -2,9 +2,6 @@
 
 
 #include "MSNiagaraActor.h"
-
-#include "MassEntitySubsystem.h"
-#include "MassProcessingPhase.h"
 #include "NiagaraComponent.h"
 
 

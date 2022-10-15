@@ -18,17 +18,21 @@ class MASSCOMMUNITYSAMPLE_API UMSSubsystem : public UWorldSubsystem
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	
-	UPROPERTY(Transient)
-	UMassEntitySubsystem* EntitySystem;
+	TSharedPtr<FMassEntityManager> EntityManager;
+	
 	FMassArchetypeHandle MoverArchetype;
 
+	//FMSSpatialHash SpatialHashGrid;
 	FMSHashGrid3D HashGrid = FMSHashGrid3D(100.0f,FMassEntityHandle());
-	
-	FMassExecutionContext Context;
 	
 	UPROPERTY()
 	UNavigationSystemV1* NavSystem;
 
 	UFUNCTION(BlueprintCallable)
 	int32 SpawnEntity();
+
+	virtual void Deinitialize() override
+	{
+		EntityManager.Reset();
+	};
 };

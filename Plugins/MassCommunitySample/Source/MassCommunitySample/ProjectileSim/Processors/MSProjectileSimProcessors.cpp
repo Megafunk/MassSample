@@ -7,13 +7,14 @@
 #include "MassObserverRegistry.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "MassRepresentationTypes.h"
+#include "MassSignalSubsystem.h"
 #include "Common/Fragments/MSFragments.h"
 #include "HAL/ThreadManager.h"
 
 
 void UMSProjectileSimProcessors::Initialize(UObject& Owner)
 {
-	
+	SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
 }
 
 
@@ -28,19 +29,22 @@ void UMSProjectileSimProcessors::ConfigureQueries()
 	LineTraceFromPreviousPosition.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);
 	LineTraceFromPreviousPosition.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	LineTraceFromPreviousPosition.AddTagRequirement<FProjectileTag>(EMassFragmentPresence::All);
+	LineTraceFromPreviousPosition.RegisterWithProcessor(*this);
 
 	MyQuery = LineTraceFromPreviousPosition;
 
 	MyQuery.AddRequirement<FSampleColorFragment>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
+	MyQuery.RegisterWithProcessor(*this);
 
 	//LineTraceFromPreviousPosition.AddTagRequirement<FNotMovingTag>(EMassFragmentPresence::None);
 }
 
-void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
 {
+	TArray<FMassEntityHandle> EntitiesToSignal;
 
 	
-	LineTraceFromPreviousPosition.ForEachEntityChunk(EntitySubsystem,Context,[this](FMassExecutionContext& Context)
+	LineTraceFromPreviousPosition.ForEachEntityChunk(EntitySubsystem,Context,[&](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_LineTraceFromPreviousPosition);
 
@@ -72,15 +76,19 @@ void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, 
 		
 				FMassEntityHandle Entity = Context.GetEntity(i);
 				
-				FConstStructView HitResultConstStruct = FConstStructView::Make(FHitResultFragment(HitResult));
 		
-				Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResultConstStruct));
+				Context.Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, FHitResultFragment(HitResult));
+				
+				EntitiesToSignal.Add(Entity);
 			}
 		}
 	});
 
 
-
+	if (EntitiesToSignal.Num())
+	{
+		SignalSubsystem->SignalEntities(MassSample::Signals::OnHit, EntitiesToSignal);
+	}
 
 		
 	MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)

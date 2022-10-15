@@ -16,11 +16,11 @@ void UismPerInstanceDataUpdater::ConfigureQueries()
 	EntityQuery.AddRequirement<FMassRepresentationFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FMassRepresentationLODFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddSharedRequirement<FMassRepresentationSubsystemSharedFragment>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.AddChunkRequirement<FMassVisualizationChunkFragment>(EMassFragmentAccess::ReadOnly);
-    EntityQuery.SetChunkFilter(&FMassVisualizationChunkFragment::AreAnyEntitiesVisibleInChunk);
+	EntityQuery.RegisterWithProcessor(*this);
+
 }
 
-void UismPerInstanceDataUpdater::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UismPerInstanceDataUpdater::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
 {
 	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
 	{
@@ -44,7 +44,7 @@ void UismPerInstanceDataUpdater::Execute(UMassEntitySubsystem& EntitySubsystem, 
 
 
 				// This can accept any struct that the size of n floats. It seems to be required to be called every frame we want to change it
-				ISMInfo.AddBatchedCustomData(RenderData.Data, RepresentationLOD.LODSignificance, Representation.PrevLODSignificance);
+				ISMInfo.AddBatchedCustomData(RenderData.Data, RepresentationLOD.LODSignificance);
 			}
 		}
 	});
@@ -60,8 +60,10 @@ UISMPerInstanceDataChangerExampleProcessor::UISMPerInstanceDataChangerExamplePro
 void UISMPerInstanceDataChangerExampleProcessor::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FSampleISMPerInstanceSingleFloatFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);
+
 }
-void UISMPerInstanceDataChangerExampleProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UISMPerInstanceDataChangerExampleProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
 {
 	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
 	{

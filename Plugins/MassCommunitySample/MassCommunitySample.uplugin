@@ -13,6 +13,7 @@
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": false,
+	"EnabledByDefault": true,
 	"Installed": false,
 	"Modules": [
 		{

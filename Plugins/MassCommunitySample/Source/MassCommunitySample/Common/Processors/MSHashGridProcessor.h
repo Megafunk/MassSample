@@ -28,11 +28,13 @@ protected:
 	FMassEntityQuery AddToHashGridQuery;
 	FMassEntityQuery UpdateHashGridQuery;
 	FMassEntityQuery RemoveFromGridEntityQuery;
+	
+	UPROPERTY()
 	UMSSubsystem* MassSampleSystem;
 
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
 };
 
 UCLASS()
@@ -51,6 +53,6 @@ protected:
 	
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
 
 };

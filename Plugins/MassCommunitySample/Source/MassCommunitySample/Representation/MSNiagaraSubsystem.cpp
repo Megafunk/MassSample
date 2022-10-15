@@ -9,7 +9,7 @@ void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 		
-	MassSubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	MassManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager().AsShared();
 	
 }
 
@@ -25,7 +25,7 @@ FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType
 	if(PreexistingSharedNiagaraActors.Contains(ParamsHash))
 	{
 		//if yes, just grab the one we made earlier!
-		return MassSubsystem->GetOrCreateSharedFragment<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
+		return MassManager->GetOrCreateSharedFragmentByHash<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
 	}
 
 	//if not, we need to spawn an entity+actor for it!
@@ -37,7 +37,7 @@ FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType
 
 	PreexistingSharedNiagaraActors.Add(ParamsHash,NewNiagaraActor);
 	
-	return MassSubsystem->GetOrCreateSharedFragment<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
+	return MassManager->GetOrCreateSharedFragmentByHash<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
 	
 }
 

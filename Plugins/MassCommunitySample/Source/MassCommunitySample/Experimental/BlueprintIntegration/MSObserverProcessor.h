@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MassEntitySubsystem.h"
 #include "MassObserverProcessor.h"
 #include "MassObserverRegistry.h"
 #include "Common/Misc/MSBPFunctionLibrary.h"
@@ -21,7 +22,7 @@ public:
 	UMSObserverProcessor();
 
 	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
 	UFUNCTION(BlueprintImplementableEvent, meta=(WorldContext="WorldContextObject"))
 	void BPExecute(FEntityHandleWrapper EntityHandle, const UObject* WorldContextObject);
 
@@ -54,12 +55,16 @@ UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSObserverSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
+	
 public:
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const { return false; }
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override
 	{
 		Collection.InitializeDependency<UMassEntitySubsystem>();
 
 		const auto Settings = GetDefault<UMSObserverSettings>();
+		
 
 		for (auto ObserverClass : Settings->ObserversToRegister)
 		{

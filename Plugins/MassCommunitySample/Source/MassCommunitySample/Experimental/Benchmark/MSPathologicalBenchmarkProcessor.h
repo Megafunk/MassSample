@@ -110,11 +110,11 @@ protected:
 
 public:
 
-	void CombinationsRecursive(UMassEntitySubsystem* EntitySubsystem, int32 length, int32 offset);
+	void CombinationsRecursive(FMassEntityManager& EntitySubsystem, int32 length, int32 offset);
 	virtual void Initialize(UObject& Owner) override;
 
 protected:
 
 	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
 };

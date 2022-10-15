@@ -44,17 +44,10 @@ class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLi
 	static FEntityHandleWrapper SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig, const UObject* WorldContextObject, const bool bDebug = false);
 
 
-	// todo: broken and hardcoded for testing, Don't use this yet!
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static FEntityHandleWrapper SpawnEntityFromEntityConfigDeferred(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
 															 const UObject* WorldContextObject);
-	// todo: also broken and hardcoded for testing, Don't use this yet!
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FEntityHandleWrapper SpawnEntityFromEntityConfigDeferredBugRepro(AActor* Owner,
-																	 UMassEntityConfigAsset* MassEntityConfig,
-																	 const UObject* WorldContextObject);
 
-	//todo: Lazy fragment-specific versions until we can think of something nicer
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static void SetEntityTransform(const FEntityHandleWrapper EntityHandle,const FTransform Transform, const UObject* WorldContextObject);
 	
@@ -74,10 +67,7 @@ class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLi
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
 	static void FindClosestHashGridEntityInSphere(const FVector Location,const double Radius, FEntityHandleWrapper& Entity, const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
-
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	FString GetEntityDebugString(FEntityHandleWrapper Entity, const UObject* WorldContextObject);
-
+	
 	/**
 	 * Sets an entity's fragment data or adds it if it isn't present.
 	 */

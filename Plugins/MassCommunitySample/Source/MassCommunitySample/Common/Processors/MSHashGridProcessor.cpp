@@ -10,6 +10,8 @@
 UMSHashGridProcessor::UMSHashGridProcessor()
 {
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
+	// In theory it should be thread save but I'm seeing wackiness so I'm slapping on singlethreaded for now
+	bRequiresGameThreadExecution = true;
 	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 }
 
@@ -23,9 +25,11 @@ void UMSHashGridProcessor::ConfigureQueries()
 	UpdateHashGridQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	UpdateHashGridQuery.AddRequirement<FMSGridCellStartingLocationFragment>(EMassFragmentAccess::ReadWrite);
 	UpdateHashGridQuery.AddTagRequirement<FMSInHashGridTag>(EMassFragmentPresence::All);
+	UpdateHashGridQuery.RegisterWithProcessor(*this);
+
 }
 
-void UMSHashGridProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSHashGridProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
 {
 	UpdateHashGridQuery.ForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
 	{
@@ -47,6 +51,7 @@ void UMSHashGridProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassE
 UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor()
 {
 	ObservedType = FMSGridCellStartingLocationFragment::StaticStruct();
+	bRequiresGameThreadExecution = true;
 	Operation = EMassObservedOperation::Add;
 }
 
@@ -59,9 +64,11 @@ void UMSHashGridMemberInitializationProcessor::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FMSGridCellStartingLocationFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.RegisterWithProcessor(*this);
+	
 }
 
-void UMSHashGridMemberInitializationProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
 {
 	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&](FMassExecutionContext& Context)
 	{

@@ -37,9 +37,11 @@ void UMSMovementProcessor::ConfigureQueries()
 	noticed that if I put an input matching what the UMassRandomVelocityInitializer expects
 	the velocity gets randomized. Maybe we require to create a new fragment exclusive for the trait **/
 	// FIXME: Revise fragment reusability. - document this docx.
+
+	MovementEntityQuery.RegisterWithProcessor(*this);
 }
 
-void UMSMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSMovementProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
 {
 	//The processor's work begins!
 	//Just be aware that code that affects Mass entities in here is called when we are in processing mode.

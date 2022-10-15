@@ -8,10 +8,8 @@
 #include "MassExecutor.h"
 #include "MassGameplayDebugTypes.h"
 #include "MassMovementFragments.h"
-#include "MassProcessingPhase.h"
 #include "MSDeferredCommands.h"
 #include "MSSubsystem.h"
-#include "AI/NavigationSystemBase.h"
 #include "Common/Fragments/MSFragments.h"
 #include "Experimental/MSEntityUtils.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
@@ -23,7 +21,8 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEnti
 	if (!MassEntityConfig) return FEntityHandleWrapper();
 
 
-	UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	FMassEntityManager& EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+	                                                          GetMutableEntityManager();
 
 	//todo: who should actually own an entity template? it's probably designed to have just one spawner own it?
 
@@ -56,128 +55,85 @@ FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferred(
 	AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
 	const UObject* WorldContextObject)
 {
-	//	FMassExecutionContext ExecutionContext(WorldContextObject->GetWorld()->DeltaTimeSeconds);
-	FMassExecutionContext ExecutionContext(0);
-
-	ExecutionContext.SetDeferredCommandBuffer(MakeShareable(new FMassCommandBuffer()));
-
-
 	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
 
-	if (const FMassEntityTemplate* EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
-		*Owner, *MassEntityConfig))
+	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
+		*WorldContextObject->GetWorld(), *MassEntityConfig);
+
+	FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+	                                                        GetMutableEntityManager();
+
+
+
+	//todo: this is very slow! I am just doing this to be able to stuff configs in here for now
+	TArray<const UScriptStruct*> FragmentTypesList;
+	EntityTemplate.GetCompositionDescriptor().Fragments.ExportTypes(FragmentTypesList);
+	TArray<const UScriptStruct*> TagsTypeList;
+
+	EntityTemplate.GetCompositionDescriptor().Tags.ExportTypes(TagsTypeList);
+
+	TArray<FInstancedStruct> InstanceStructs = TArray<FInstancedStruct>(FragmentTypesList);
+
+	TConstArrayView<FInstancedStruct> InitialFragmentInstances = EntityTemplate.GetInitialFragmentValues();
+
+	// InstanceStructs need to have the InitialFragmentInstances data-filled instanced structs, all of which already exist inside of InstanceStructs
+	// FIXMEKARL: do we still need to do this in 5.1???
+
+	for (auto InitialFragmentInstance : InitialFragmentInstances)
 	{
-		auto EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-		auto MassSampleSubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMSSubsystem>();;
-
-		const FMassEntityHandle ReservedEntity = EntitySubSystem->ReserveEntity();
-
-
-		//todo: this is very slow! I am just doing this to be able to stuff configs in here for now
-		TArray<const UScriptStruct*> FragmentTypesList;
-		EntityTemplate->GetCompositionDescriptor().Fragments.ExportTypes(FragmentTypesList);
-		TArray<const UScriptStruct*> TagsTypeList;
-
-		EntityTemplate->GetCompositionDescriptor().Tags.ExportTypes(TagsTypeList);
-
-		TArray<FInstancedStruct> InstanceStructs = TArray<FInstancedStruct>(FragmentTypesList);
-
-		TConstArrayView<FInstancedStruct> InitialFragmentInstances = EntityTemplate->GetInitialFragmentValues();
-
-		// InstanceStructs need to have the InitialFragmentInstances data-filled instanced structs, all of which already exist inside of InstanceStructs
-
-		for (auto InitialFragmentInstance : InitialFragmentInstances)
+		int32 index = InstanceStructs.IndexOfByPredicate([&](const FInstancedStruct InstancedStructValue)
 		{
-			int32 index = InstanceStructs.IndexOfByPredicate([&](const FInstancedStruct InstancedStructValue)
-			{
-				return InstancedStructValue.GetScriptStruct() == InitialFragmentInstance.GetScriptStruct();
-			});
-			if (index != INDEX_NONE)
-				InstanceStructs[index] = InitialFragmentInstance;
-		}
-
-		ExecutionContext.Defer().PushCommand(
-			FBuildEntityFromFragmentInstancesAndTags(ReservedEntity,
-			                                         InstanceStructs,
-			                                         TagsTypeList,
-			                                         EntityTemplate->GetSharedFragmentValues()));
-
-
-		ExecutionContext.FlushDeferred(*EntitySubSystem);
-		//EntitySubSystem->FlushCommands(MakeShareable(new FMassCommandBuffer()));
-		return FEntityHandleWrapper{ReservedEntity};
+			return InstancedStructValue.GetScriptStruct() == InitialFragmentInstance.GetScriptStruct();
+		});
+		if (index != INDEX_NONE)
+			InstanceStructs[index] = InitialFragmentInstance;
 	}
 
-	return FEntityHandleWrapper();
-}
+	// Copy a new composition descriptor because it gets changed in the addcomposition call
+	FMassArchetypeCompositionDescriptor CompositionDescriptor = EntityTemplate.GetCompositionDescriptor();
 
+	// Reserve an entity
+	const FMassEntityHandle ReservedEntity = EntityManager.ReserveEntity();
 
-FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferredBugRepro(
-	AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
-	const UObject* WorldContextObject)
-{
-	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
-
-	if (const FMassEntityTemplate* EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
-		*Owner, *MassEntityConfig))
+	// We are using a lambda here because we don't have a deferred command that can do  
+	EntityManager.Defer().PushCommand<FMassDeferredCreateCommand>([&](FMassEntityManager& System)
 	{
-		auto EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+		EntityManager.BuildEntity(ReservedEntity,InstanceStructs,EntityTemplate.GetSharedFragmentValues());
+		EntityManager.AddCompositionToEntity_GetDelta(ReservedEntity,CompositionDescriptor);
+	});
+	
+	// Immediately flush? Doesn't seem too bad here but I imagine we could do this in a nicer way?
+	EntityManager.FlushCommands();
 
-		const FMassEntityHandle ReservedEntity = EntitySubSystem->ReserveEntity();
-
-
-		//todo: this is very slow! I am just doing this to be able to stuff configs in here for now
-		TArray<const UScriptStruct*> FragmentTypesList;
-		EntityTemplate->GetCompositionDescriptor().Fragments.ExportTypes(FragmentTypesList);
-		TArray<const UScriptStruct*> TagsTypeList;
-
-		EntityTemplate->GetCompositionDescriptor().Tags.ExportTypes(TagsTypeList);
-
-		TArray<FInstancedStruct> InstanceStructs = TArray<FInstancedStruct>(FragmentTypesList);
-
-		TConstArrayView<FInstancedStruct> InitialFragmentInstances = EntityTemplate->GetInitialFragmentValues();
-
-		// InstanceStructs need to have the InitialFragmentInstances data-filled instanced structs, all of which already exist inside of InstanceStructs
-
-		for (auto InitialFragmentInstance : InitialFragmentInstances)
-		{
-			int32 index = InstanceStructs.IndexOfByPredicate([&](const FInstancedStruct InstancedStructValue)
-			{
-				return InstancedStructValue.GetScriptStruct() == InitialFragmentInstance.GetScriptStruct();
-			});
-			if (index != INDEX_NONE)
-				InstanceStructs[index] = InitialFragmentInstance;
-		}
-		// TODO: deferred BuildEntity can't seem to figure out representation? is it an initializer issue? 
-		EntitySubSystem->Defer().PushCommand(
-			FBuildEntityFromFragmentInstancesAndTags(ReservedEntity,
-			                                         InstanceStructs,
-			                                         TagsTypeList,
-			                                         EntityTemplate->GetSharedFragmentValues()));
-
-		EntitySubSystem->FlushCommands();
-		//EntitySubSystem->FlushCommands(MakeShareable(new FMassCommandBuffer()));
-		return FEntityHandleWrapper{ReservedEntity};
+	// trigger observers manually for now as I'm too lazy to use the batch add for now
+	if (EntityManager.GetObserverManager().HasObserversForBitSet(EntityTemplate.GetCompositionDescriptor().Fragments, EMassObservedOperation::Add))
+	{
+		
+		EntityManager.GetObserverManager().OnCompositionChanged(
+			FMassArchetypeEntityCollection(EntityTemplate.GetArchetype(), {ReservedEntity},FMassArchetypeEntityCollection::NoDuplicates)
+			, EntityTemplate.GetCompositionDescriptor()
+			, EMassObservedOperation::Add);
 	}
 
-	return FEntityHandleWrapper();
+
+	return FEntityHandleWrapper{ReservedEntity};
 }
 
 
 void UMSBPFunctionLibrary::SetEntityTransform(const FEntityHandleWrapper EntityHandle, const FTransform Transform,
                                               const UObject* WorldContextObject)
 {
-	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	const FMassEntityManager& EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+	                                                                GetEntityManager();
 
-	check(EntitySubSystem)
-	check(EntitySubSystem->IsEntityBuilt(EntityHandle.Entity))
+	check(EntitySubSystem.IsEntityBuilt(EntityHandle.Entity))
 
 
-	if (!EntitySubSystem->GetArchetypeComposition(EntitySubSystem->GetArchetypeForEntity(EntityHandle.Entity)).Fragments
+	if (!EntitySubSystem.GetArchetypeComposition(EntitySubSystem.GetArchetypeForEntity(EntityHandle.Entity)).Fragments
 	                    .Contains(*FTransformFragment::StaticStruct()))
 		return;
 
-	if (const auto TransformFragment = EntitySubSystem->GetFragmentDataPtr<FTransformFragment>(
+	if (const auto TransformFragment = EntitySubSystem.GetFragmentDataPtr<FTransformFragment>(
 		EntityHandle.Entity))
 	{
 		TransformFragment->SetTransform(Transform);
@@ -188,12 +144,11 @@ void UMSBPFunctionLibrary::SetEntityCollisionQueryIgnoredActors(const FEntityHan
                                                                 const TArray<AActor*> IgnoredActors,
                                                                 const UObject* WorldContextObject)
 {
-	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	const FMassEntityManager& EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+	                                                                GetEntityManager();
 
-	check(EntitySubSystem)
 
-
-	if (const auto CollisionQueryFragment = EntitySubSystem->GetFragmentDataPtr<
+	if (const auto CollisionQueryFragment = EntitySubSystem.GetFragmentDataPtr<
 		FLineTraceFragment>(EntityHandle.Entity))
 	{
 		CollisionQueryFragment->QueryParams.AddIgnoredActors(IgnoredActors);
@@ -203,13 +158,13 @@ void UMSBPFunctionLibrary::SetEntityCollisionQueryIgnoredActors(const FEntityHan
 FTransform UMSBPFunctionLibrary::GetEntityTransform(const FEntityHandleWrapper EntityHandle,
                                                     const UObject* WorldContextObject)
 {
-	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	const FMassEntityManager& EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+	                                                                GetEntityManager();
 
-	check(EntitySubSystem)
 
-	if (!EntitySubSystem->IsEntityValid(EntityHandle.Entity)) return FTransform::Identity;
+	if (!EntitySubSystem.IsEntityValid(EntityHandle.Entity)) return FTransform::Identity;
 
-	if (const auto TransformFragmentPtr = EntitySubSystem->GetFragmentDataPtr<FTransformFragment>(EntityHandle.Entity))
+	if (const auto TransformFragmentPtr = EntitySubSystem.GetFragmentDataPtr<FTransformFragment>(EntityHandle.Entity))
 	{
 		return TransformFragmentPtr->GetTransform();
 	}
@@ -220,13 +175,13 @@ FTransform UMSBPFunctionLibrary::GetEntityTransform(const FEntityHandleWrapper E
 void UMSBPFunctionLibrary::SetEntityForce(const FEntityHandleWrapper EntityHandle, const FVector Force,
                                           const UObject* WorldContextObject)
 {
-	const UMassEntitySubsystem* EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+	                                                              GetEntityManager();
 
-	check(EntitySubSystem)
-	if (!EntitySubSystem->GetArchetypeComposition(EntitySubSystem->GetArchetypeForEntity(EntityHandle.Entity)).Fragments
-	                    .Contains(*FMassForceFragment::StaticStruct()))
+	if (!EntityManager.GetArchetypeComposition(EntityManager.GetArchetypeForEntity(EntityHandle.Entity)).Fragments
+	                  .Contains(*FMassForceFragment::StaticStruct()))
 		return;
-	if (const auto MassForceFragmentPtr = EntitySubSystem->GetFragmentDataPtr<FMassForceFragment>(EntityHandle.Entity))
+	if (const auto MassForceFragmentPtr = EntityManager.GetFragmentDataPtr<FMassForceFragment>(EntityHandle.Entity))
 	{
 		MassForceFragmentPtr->Value = Force;
 	}
@@ -241,14 +196,15 @@ void UMSBPFunctionLibrary::FindHashGridEntitiesInSphere(const FVector Location, 
 
 	if (auto MassSampleSystem = WorldContextObject->GetWorld()->GetSubsystem<UMSSubsystem>())
 	{
-		auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+		const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+		                                                              GetEntityManager();
 		TArray<FMassEntityHandle> EntitiesFound;
 
 		int32 numfound = MassSampleSystem->HashGrid.FindPointsInBall(Location, Radius,
 		                                                             //todo-performance it feels bad to get random entities to query... 
 		                                                             [&,Location](const FMassEntityHandle Entity)
 		                                                             {
-			                                                             const FVector EntityLocation = EntitySystem->
+			                                                             const FVector EntityLocation = EntityManager.
 				                                                             GetFragmentDataPtr<FTransformFragment>(
 					                                                             Entity)->GetTransform().GetLocation();
 			                                                             return UE::Geometry::DistanceSquared(
@@ -272,13 +228,14 @@ void UMSBPFunctionLibrary::FindClosestHashGridEntityInSphere(const FVector Locat
 
 	if (auto MassSampleSystem = WorldContextObject->GetWorld()->GetSubsystem<UMSSubsystem>())
 	{
-		auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+		const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+		                                                              GetEntityManager();
 
 		const auto FoundEntityHashMember = MassSampleSystem->HashGrid.FindNearestInRadius(Location, Radius,
 			//todo-performance it feels bad to get random entities to query... 
 			[&,Location](const FMassEntityHandle Entity)
 			{
-				const FVector EntityLocation = EntitySystem->GetFragmentDataPtr<FTransformFragment>(Entity)->
+				const FVector EntityLocation = EntityManager.GetFragmentDataPtr<FTransformFragment>(Entity)->
 				                                             GetTransform().GetLocation();
 				return UE::Geometry::DistanceSquared(Location, EntityLocation);
 			});
@@ -296,31 +253,11 @@ void UMSBPFunctionLibrary::FindClosestHashGridEntityInSphere(const FVector Locat
 }
 
 
-FString UMSBPFunctionLibrary::GetEntityDebugString(FEntityHandleWrapper Entity, const UObject* WorldContextObject)
-{
-	auto EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-	check(EntitySystem)
-
-	if (!Entity.Entity.IsValid())
-		return FString();
-
-
-	FStringOutputDevice OutPut;
-	OutPut.SetAutoEmitLineTerminator(true);
-
-#if WITH_EDITOR
-	EntitySystem->DebugPrintEntity(Entity.Entity, OutPut);
-#endif
-
-
-	return FString{OutPut};
-}
-
 void UMSBPFunctionLibrary::SetEntityFragment(FEntityHandleWrapper Entity, FInstancedStructBPWrapper Fragment,
                                              const UObject* WorldContextObject)
 {
-	const UMassEntitySubsystem* EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-	check(EntitySystem)
+	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+	                                                              GetEntityManager();
 
 	if (!Entity.Entity.IsValid())
 	{
@@ -340,7 +277,7 @@ void UMSBPFunctionLibrary::SetEntityFragment(FEntityHandleWrapper Entity, FInsta
 		return;
 	}
 
-	FStructView structview = EntitySystem->GetFragmentDataStruct(Entity.Entity, Fragment.Struct.GetScriptStruct());
+	FStructView structview = EntityManager.GetFragmentDataStruct(Entity.Entity, Fragment.Struct.GetScriptStruct());
 
 	if (structview.IsValid())
 	{
@@ -365,8 +302,8 @@ FInstancedStructBPWrapper UMSBPFunctionLibrary::GetEntityFragmentByType(FEntityH
 {
 	ReturnBranch = EReturnSuccess::Failure;
 
-	const UMassEntitySubsystem* EntitySystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-	check(EntitySystem)
+	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+	                                                              GetEntityManager();
 
 	if (!Entity.Entity.IsValid())
 	{
@@ -386,7 +323,7 @@ FInstancedStructBPWrapper UMSBPFunctionLibrary::GetEntityFragmentByType(FEntityH
 		return FInstancedStructBPWrapper();
 	}
 
-	FStructView structview = EntitySystem->GetFragmentDataStruct(Entity.Entity, Fragment.Struct.GetScriptStruct());
+	FStructView structview = EntityManager.GetFragmentDataStruct(Entity.Entity, Fragment.Struct.GetScriptStruct());
 
 	if (structview.IsValid())
 	{

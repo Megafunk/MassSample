@@ -26,11 +26,13 @@ void UMSObserverProcessor::ConfigureQueries()
 		if(Tag.IsValid())
 		EntityQuery.AddTagRequirement(*Tag.GetScriptStruct(),EMassFragmentPresence::All);
 	}
+	EntityQuery.RegisterWithProcessor(*this);
+
 }
 
 
 
-void UMSObserverProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSObserverProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
 {
 
 	TArray<const UScriptStruct*> ReuiredAllFragmentTypes;

@@ -17,7 +17,7 @@ UMSBasicVisualizationTrait::UMSBasicVisualizationTrait()
 }
 
 
-void UMSBasicVisualizationTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+void UMSBasicVisualizationTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
 	Super::BuildTemplate(BuildContext, World);
 	

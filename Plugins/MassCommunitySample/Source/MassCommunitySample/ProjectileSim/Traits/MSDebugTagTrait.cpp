@@ -6,7 +6,7 @@
 #include "MassEntityTemplateRegistry.h"
 #include "Common/Fragments/MSFragments.h"
 
-void UMSDebugTagTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+void UMSDebugTagTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
 	BuildContext.AddTag<FMassSampleDebuggableTag>();
 	BuildContext.AddFragment<FSampleColorFragment>();

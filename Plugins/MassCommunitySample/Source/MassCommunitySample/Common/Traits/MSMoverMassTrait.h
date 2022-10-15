@@ -16,7 +16,7 @@ class MASSCOMMUNITYSAMPLE_API UMSMoverMassTrait : public UMassEntityTraitBase
 	GENERATED_BODY()
 
 protected:
-	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
+	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = "Mass")
 	FVector Force = {0,0,100.0f};

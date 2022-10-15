@@ -27,10 +27,10 @@ struct MASSCOMMUNITYSAMPLE_API FInterpLocationFragment : public FMassFragment
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	FVector TargetLocation;
+	FVector TargetLocation = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere)
-	FVector StartingLocation;
+	FVector StartingLocation = FVector::ZeroVector;
 	
 	UPROPERTY(EditAnywhere)
 	float Duration = 1.0f;
@@ -66,8 +66,12 @@ struct MASSCOMMUNITYSAMPLE_API FMassSampleDebuggableTag : public FMassTag
 };
 
 
-
-
-
+/**
+ * Signal names
+ */
+namespace MassSample::Signals
+{
+	const FName OnHit = FName(TEXT("SampleOnHit"));
+}
 
 
