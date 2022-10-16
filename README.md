@@ -363,7 +363,7 @@ void UMyProcessor::ConfigureQueries()
 }
 ```
 
-`ForEachEntityChunk`s can use the following unctions to access `ReadOnly` or `ReadWrite` data according to the access requirement:
+`ForEachEntityChunk`s can use the following functions to access `ReadOnly` or `ReadWrite` data according to the access requirement:
 
 | `EMassFragmentAccess` | Type | Function |Description |
 | ----------- | ----------- | ----------- | ----------- |
