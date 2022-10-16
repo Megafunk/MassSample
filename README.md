@@ -268,12 +268,16 @@ UMyProcessor::UMyProcessor()
 	ExecutionOrder.ExecuteAfter.Add(TEXT("MSMovementProcessor"));
 	// This executes only on Clients and Standalone
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+	// This processor should not be multithreaded
+	bRequiresGameThreadExecution = true;
 }
 ```
 
-On initialization, Mass creates a dependency graph of processors using their execution rules so they execute in order (ie: In the example above we make sure to move our entities before we call `Execute` in `UMyProcessor`).
+On initialization, Mass creates a dependency graph of processors using their execution rules so they execute in order (ie: In the example above we make sure to move our entities with `MSMovementProcessor` before we call `Execute` in `UMyProcessor`).
 
-The `ExecutionFlags` variable indicates whether this processor should be executed on StandAlone, Server or Client.
+The `ExecutionFlags` variable indicates whether this processor should be executed on `Standalone`, `Server` or `Client`.
+
+By default [all processors are multithreaded](#mass-mt), however, they can also be configured to run in a single-thread if necessary by setting `bRequiresGameThreadExecution` to `true`.
 
 **Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD processors. 
 
@@ -288,18 +292,26 @@ void UMyProcessor::ConfigureQueries()
 {
 	MyQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
 	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
+	MyQuery.AddSubsystemRequirement<UMassDebuggerSubsystem>(EMassFragmentAccess::ReadWrite);
+
+	ProcessorRequirements.AddSubsystemRequirement<UMassDebuggerSubsystem>(EMassFragmentAccess::ReadWrite);
+
 	MyQuery.RegisterWithProcessor(*this);
 }
 ```
-Queries are executed by calling the `ForEachEntityChunk` member function with a lambda, passing the related `UMassEntitySubsystem` and `FMassExecutionContext`. 
+<!-- FIXMEVORI-5.1: Make a section about AddSubsystemRequirement -->
+
+`ProcessorRequirements` is a special query part of `UMassProcessor` that serves to hold all the `UWorldSubsystem`s that get accessed in the `Execute` function outside the queries scope. In the example above, `UMassDebuggerSubsystem` gets accessed within `MyQuery`'s scope (`MyQuery.AddSubsystemRequirement`) and in the `Execution` function scope (`ProcessorRequirements.AddSubsystemRequirement`).
+
+Queries are executed by calling the `ForEachEntityChunk` member function with a lambda, passing the related `FMassEntityManager` and `FMassExecutionContext`. 
 
 Processors execute queries within their `Execute` function:
 
 ```c++
-void UMyProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	//Note that this is a lambda! If you want extra data you may need to pass it in the [] operator
-	MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+	MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
 	{
 		//Loop over every entity in the current chunk and do stuff!
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
@@ -796,9 +808,9 @@ void UMSObserverOnAdd::ConfigureQueries()
 	EntityQuery.AddRequirement<FSampleColorFragment>(EMassFragmentAccess::ReadWrite);
 }
 
-void UMSObserverOnAdd::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 	{
 		auto Colors = Context.GetMutableFragmentView<FSampleColorFragment>();
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
