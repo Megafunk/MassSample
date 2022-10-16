@@ -364,7 +364,7 @@ void UMyProcessor::ConfigureQueries()
 Find below the following two functions employed in context:
 
 ```c++
-MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
 {
 	const auto TransformList = Context.GetMutableFragmentView<FTransformFragment>();
 	const auto ForceList = Context.GetMutableFragmentView<FMassForceFragment>();
@@ -408,7 +408,7 @@ void UMyProcessor::ConfigureQueries()
 `ForEachChunk`s can use `DoesArchetypeHaveTag` to determine if the current archetype contains the the Tag:
 
 ```c++
-MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
 {
 	if(Context.DoesArchetypeHaveTag<FOptionalTag>())
 	{
@@ -445,7 +445,7 @@ void UMyProcessor::ConfigureQueries()
 `ForEachChunk`s can use the length of the `Optional`/`Any` fragment's `TArrayView` to determine if the current chunk contains the Fragment before accessing it:
 
 ```c++
-MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
 {
 	const auto OptionalFragmentList = Context.GetMutableFragmentView<FMyOptionalFragment>();
 	const auto HorseFragmentList = Context.GetMutableFragmentView<FHorseFragment>();	
@@ -480,7 +480,7 @@ Within the `ForEachEntityChunk` we have access to the current execution context.
 <!-- FIXMEVORI: Do you think this example is appropriate? Or can we find a better one? -->
 
 ```c++
-EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 {
 	auto ColorList = Context.GetFragmentView<FSampleColorFragment>();
 
