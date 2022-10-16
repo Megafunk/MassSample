@@ -366,7 +366,7 @@ void UMyProcessor::ConfigureQueries()
 `ForEachEntityChunk`s can use the following two functions to access `ReadOnly` or `ReadWrite` fragment data according to the access requirement:
 
 | `EMassFragmentAccess` | Type | Function |Description |
-| ----------- | ----------- | ----------- |
+| ----------- | ----------- | ----------- | ----------- |
 | `ReadOnly` | Fragment | `GetFragmentView` | Returns a read only `TConstArrayView` containing the data of our `ReadOnly` fragment. |
 | `ReadWrite` | Fragment | `GetMutableFragmentView` | Returns a writable `TArrayView` containing de data of our `ReadWrite` fragment. | 
 | `ReadOnly` | Shared Fragment | `GetConstSharedFragment` | Returns a constant reference to our read only shared fragment. |
