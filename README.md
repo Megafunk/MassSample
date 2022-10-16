@@ -293,15 +293,18 @@ void UMyProcessor::ConfigureQueries()
 	MyQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
 	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
 	MyQuery.AddSubsystemRequirement<UMassDebuggerSubsystem>(EMassFragmentAccess::ReadWrite);
+	MyQuery.RegisterWithProcessor(*this);
 
 	ProcessorRequirements.AddSubsystemRequirement<UMassDebuggerSubsystem>(EMassFragmentAccess::ReadWrite);
-
-	MyQuery.RegisterWithProcessor(*this);
 }
 ```
+
+To execute queries on a processor, we must register them by calling `RegisterWithProcessor` passing the processor as a parameter. `FMassEntityQuery` also offers a parameter constructor that calls `RegisterWithProcessor`, which is employed in some processors from various Mass modules (ie: `UDebugVisLocationProcessor`).
+
+
 <!-- FIXMEVORI-5.1: Make a section about AddSubsystemRequirement -->
 
-`ProcessorRequirements` is a special query part of `UMassProcessor` that serves to hold all the `UWorldSubsystem`s that get accessed in the `Execute` function outside the queries scope. In the example above, `UMassDebuggerSubsystem` gets accessed within `MyQuery`'s scope (`MyQuery.AddSubsystemRequirement`) and in the `Execution` function scope (`ProcessorRequirements.AddSubsystemRequirement`).
+`ProcessorRequirements` is a special query part of `UMassProcessor` that holds all the `UWorldSubsystem`s that get accessed in the `Execute` function outside the queries scope. In the example above, `UMassDebuggerSubsystem` gets accessed within `MyQuery`'s scope (`MyQuery.AddSubsystemRequirement`) and in the `Execution` function scope (`ProcessorRequirements.AddSubsystemRequirement`).
 
 Queries are executed by calling the `ForEachEntityChunk` member function with a lambda, passing the related `FMassEntityManager` and `FMassExecutionContext`. 
 
@@ -328,15 +331,15 @@ Be aware that the index we employ to iterate entities, in this case `EntityIndex
 <a name="mass-queries-ar"></a>
 #### 4.6.1 Access requirements
 
-Queries can define read/write access requirements for Fragments:
+Queries can define read/write access requirements for Fragments and Subsystems:
 
 | `EMassFragmentAccess` | Description |
 | ----------- | ----------- |
 | `None` | No binding required. |
-| `ReadOnly` | We want to read the data for the fragment. | 
-| `ReadWrite` | We want to read and write the data for the fragment. | 
+| `ReadOnly` | We want to read the data for the fragment/subsystem. | 
+| `ReadWrite` | We want to read and write the data for the fragment/subsystem. | 
 
-`FMassFragment`s use `AddRequirement` to add access and presence requirement to our fragments. While `FMassSharedFragment`s employ `AddSharedRequirement`. 
+`FMassFragment`s use `AddRequirement` to add access and presence requirement to our fragments. While `FMassSharedFragment`s employ `AddSharedRequirement`. Finally, `UWorldSubsystem`s use `AddSubsystemRequirement`. 
 
 Here are some basic examples in which we add access rules in two Fragments from a `FMassEntityQuery MyQuery`:
 
@@ -351,22 +354,34 @@ void UMyProcessor::ConfigureQueries()
 
 	// Entities must have a common FClockSharedFragment that can be read and written
 	MyQuery.AddSharedRequirement<FClockSharedFragment>(EMassFragmentAccess::ReadWrite);
+
+	// Entities must have a UMassDebuggerSubsystem that can be read and written
+	MyQuery.AddSubsystemRequirement<UMassDebuggerSubsystem>(EMassFragmentAccess::ReadWrite);
+
+	// Registering the query with UMyProcessor
+	MyQuery.RegisterWithProcessor(*this);
 }
 ```
 
 `ForEachEntityChunk`s can use the following two functions to access `ReadOnly` or `ReadWrite` fragment data according to the access requirement:
 
-| `EMassFragmentAccess` | Function |Description |
+| `EMassFragmentAccess` | Type | Function |Description |
 | ----------- | ----------- | ----------- |
-| `ReadOnly` | `GetFragmentView` | Returns a read only `TConstArrayView` containing the data of our `ReadOnly` fragment. |
-| `ReadWrite` | `GetMutableFragmentView` | Returns a writable `TArrayView` containing de data of our `ReadWrite` fragment. | 
+| `ReadOnly` | Fragment | `GetFragmentView` | Returns a read only `TConstArrayView` containing the data of our `ReadOnly` fragment. |
+| `ReadWrite` | Fragment | `GetMutableFragmentView` | Returns a writable `TArrayView` containing de data of our `ReadWrite` fragment. | 
+| `ReadOnly` | Shared Fragment | `GetConstSharedFragment` | Returns a constant reference to our read only shared fragment. |
+| `ReadWrite` | Shared Fragment | `GetMutableSharedFragment` | Returns a reference of our writable shared fragment. | 
+| `ReadOnly` | Subsystem | `GetSubsystemChecked` | Returns a read only constant reference to our world subsystem. |
+| `ReadWrite` | Subsystem | `GetMutableSubsystemChecked` | Returns a reference of our writable shared world subsystem. | 
 
-Find below the following two functions employed in context:
+Find below an example:
 
 ```c++
-MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
+MyQuery.ForEachEntityChunk(EntityManager, Context, [this, World = EntityManager.GetWorld()](FMassExecutionContext& Context)
 {
-	const auto TransformList = Context.GetMutableFragmentView<FTransformFragment>();
+	UMassDebuggerSubsystem& Debugger = Context.GetMutableSubsystemChecked<UMassDebuggerSubsystem>(World);
+
+	const auto TransformList = Context.GetFragmentView<FTransformFragment>();
 	const auto ForceList = Context.GetMutableFragmentView<FMassForceFragment>();
 
 	for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
@@ -374,6 +389,7 @@ MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Con
 		FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
 		const FVector DeltaForce = Context.GetDeltaTimeSeconds() * ForceList[EntityIndex].Value;
 		TransformToChange.AddToTranslation(DeltaForce);
+		Debugger.AddShape(EMassEntityDebugShape::Box, TransformToChange.GetLocation(), 10.f);
 	}
 });
 ```
