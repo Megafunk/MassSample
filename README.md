@@ -236,7 +236,7 @@ void UMyWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// ie: OnFireHandle = FExample::OnFireDelegate.AddUObject(this, &UMyWorldSubsystem::OnFire);
 }
 
-void UMassDebuggerSubsystem::Deinitialize()
+void UMyWorldSubsystem::Deinitialize()
 {
 	// In here you can unhook from delegates
 	// ie: FExample::OnFireDelegate.Remove(OnFireHandle);
