@@ -48,19 +48,20 @@ After installing the requirements from above, follow these steps:
 > 4.2 [Fragments](#mass-fragments)  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.2.1 [Shared Fragments](#mass-fragments-sf)  
 > 4.3 [Tags](#mass-tags)  
-> 4.4 [The archetype model](#mass-arch-mod)   
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.4.1 [Tags in the archetype model](#mass-arch-mod-tags)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.4.2 [Fragments in the archetype model](#mass-arch-mod-fragments)  
-> 4.5 [Processors](#mass-processors)  
-> 4.6 [Queries](#mass-queries)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.1 [Access requirements](#mass-queries-ar)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.2 [Presence requirements](#mass-queries-pr)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.3 [Iterating Queries](#mass-queries-iq)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.6.3 [Mutating entities with Defer()](#mass-queries-mq)  
-> 4.7 [Traits](#mass-traits)  
-> 4.8 [Observers](#mass-o)  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.1 [Observers limitations](#mass-o-n)                
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.8.2 [Observing multiple Fragment/Tags](#mass-o-mft)       
+> 4.4 [Subsystems](#mass-subsystems)  
+> 4.5 [The archetype model](#mass-arch-mod)   
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.1 [Tags in the archetype model](#mass-arch-mod-tags)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.5.2 [Fragments in the archetype model](#mass-arch-mod-fragments)  
+> 4.6 [Processors](#mass-processors)  
+> 4.7 [Queries](#mass-queries)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.7.1 [Access requirements](#mass-queries-ar)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.7.2 [Presence requirements](#mass-queries-pr)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.7.3 [Iterating Queries](#mass-queries-iq)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.7.3 [Mutating entities with Defer()](#mass-queries-mq)  
+> 4.8 [Traits](#mass-traits)  
+> 4.9 [Observers](#mass-o)  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.9.1 [Observers limitations](#mass-o-n)                
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4.9.2 [Observing multiple Fragment/Tags](#mass-o-mft)       
 > 4.10 [Multithreading](#mass-mt)  
 > 5. [Common Mass operations](#mass-cm)   
 > 5.1 [Spawning entities](#mass-cm-spae)  
@@ -129,11 +130,12 @@ Currently, the sample features the following:
 > 4.1 [Entities](#mass-entities)  
 > 4.2 [Fragments](#mass-fragments)  
 > 4.3 [Tags](#mass-tags)  
-> 4.4 [The archetype model](#mass-arch-mod)   
-> 4.5 [Processors](#mass-processors)  
-> 4.6 [Queries](#mass-queries)  
-> 4.7 [Traits](#mass-traits)  
-> 4.8 [Observers](#mass-o)
+> 4.4 [Subsystems](#mass-subsystems)  
+> 4.5 [The archetype model](#mass-arch-mod)   
+> 4.6 [Processors](#mass-processors)  
+> 4.7 [Queries](#mass-queries)  
+> 4.8 [Traits](#mass-traits)  
+> 4.9 [Observers](#mass-o)
 
 <a name="mass-entities"></a>
 ### 4.1 Entities
@@ -190,11 +192,103 @@ struct MASSCOMMUNITYSAMPLE_API FProjectileTag : public FMassTag
 	GENERATED_BODY()
 };
 ```
-**Note:** Tags should never contain any member properties.
+**Note:** Tags should never contain member properties.
 
+<a name="mass-tags"></a>
+### 4.4 Subsystems
+Starting in UE 5.1, Mass enhanced its API to support [`UWorldSubsystems`](https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Subsystems/UWorldSubsystem/) in our [Processors](#mass-processors). This provides a way to create encapsulated functionality to operate Entities. First, inherit from `UWorldSubsystem` and define its basic interface alongside your functions and variables:
+
+```c++
+UCLASS()
+class MASSCOMMUNITYSAMPLE_API UMyWorldSubsystem : public UWorldSubsystem
+{
+	GENERATED_BODY()
+
+public:
+	void Write(int32 InNumber);
+	int32 Read() const;
+
+protected:
+	// UWorldSubsystem begin interface
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+	// UWorldSubsystem end interface
+	
+private:
+	UE_MT_DECLARE_RW_ACCESS_DETECTOR(AccessDetector);
+	int Number = 0;
+
+	FDelegateHandle OnFireHandle;
+};
+```
+
+Following next, we present an implementation example of the provided interface above (see `MassEntityTestTypes.h`):
+
+```c++
+void UMyWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	// Initialize dependent subsystems before calling super
+	Collection.InitializeDependency(UMyOtherSubsystemOne::StaticClass());
+	Collection.InitializeDependency(UMyOtherSubsystemTwo::StaticClass());
+	Super::Initialize(Collection);
+
+	// In here you can hook to delegates!
+	// ie: OnFireHandle = FExample::OnFireDelegate.AddUObject(this, &UMyWorldSubsystem::OnFire);
+}
+
+void UMassDebuggerSubsystem::Deinitialize()
+{
+	// In here you can unhook from delegates
+	// ie: FExample::OnFireDelegate.Remove(OnFireHandle);
+	Super::Deinitialize();
+}
+
+void UMyWorldSubsystem::Write(int32 InNumber)
+{
+	UE_MT_SCOPED_WRITE_ACCESS(AccessDetector);
+	Number = InNumber;
+}
+
+int32 UMyWorldSubsystem::Read() const
+{
+	UE_MT_SCOPED_READ_ACCESS(AccessDetector);
+	return Number;
+}
+
+```
+The code above is multithread-friendly, hence the `UE_MT_X` tokens.
+
+<!-- FIXMEVORI-UE5: Maybe a section exposing the different UE_MT_X tokens? (Get informed about their full scope) -->
+
+Finally, to make this world subsystem compatible with Mass, you must define its subsystem traits, which inform Mass about its [parallel capabilities](#mass-mt). In this case, our subsystem supports parallel reads:
+
+```c++
+/**
+ * Traits describing how a given piece of code can be used by Mass. 
+ * We require author or user of a given subsystem to 
+ * define its traits. To do it add the following in an accessible location. 
+ */
+template<>
+struct TMassExternalSubsystemTraits<UMyWorldSubsystem> final
+{
+	enum
+	{
+		ThreadSafeRead = true,
+		ThreadSafeWrite = false,
+	};
+};
+/**
+* this will let Mass know it can access UMyWorldSubsystem on any thread.
+*
+* This information is being used to calculate processor and query 
+* dependencies as well as appropriate distribution of
+* calculations across threads.
+*/
+```
+If you want to use a `UWorldSubsystem` that has not had its traits defined before and you cannot modify its header explicitly, you can add the subsystem trait information in a separate header file (see `MassGameplayExternalTraits.h`).
 
 <a name="mass-arch-mod"></a>
-### 4.4 The archetype model
+### 4.5 The archetype model
 As mentioned previously, an entity is a unique combination of fragments and tags. Mass calls each of these combinations archetypes. For example, given three different combinations used by our entities, we would generate three archetypes:
 
 ![MassArchetypeDefinition](Images/arche-entity-type.png)
@@ -202,7 +296,7 @@ As mentioned previously, an entity is a unique combination of fragments and tags
 The `FMassArchetypeData` struct represents an archetype in Mass internally. 
 
 <a name="mass-arch-mod-tags"></a>
-#### 4.4.1 Tags in the archetype model
+#### 4.5.1 Tags in the archetype model
 Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<FMassTag>`) that constains the tag presence information, whereas each bit in the bitset represents whether a tag exists in the archetype or not.
 
 <!-- FIXMEVORI: "Is there a maximum amount of tags limit?" -->
@@ -211,7 +305,7 @@ Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<F
 Following the previous example, *Archetype 0* and *Archetype 2* contain the tags: *TagA*, *TagC* and *TagD*; while *Archetype 1* contains *TagC* and *TagD*. Which makes the combination of *Fragment A* and *Fragment B* to be split in two different archetypes.
 
 <a name="mass-arch-mod-fragments"></a>
-#### 4.4.2 Fragments in the archetype model
+#### 4.5.2 Fragments in the archetype model
 At the same time, each archetype holds an array of chunks (`FMassArchetypeChunk`) with fragment data.
 
 Each chunk contains a subset of the entities included in our archetype where data is organized in a pseudo-[struct-of-arrays](https://en.wikipedia.org/wiki/AoS_and_SoA#Structure_of_arrays) way:
@@ -237,7 +331,7 @@ The chunk size (`UE::MassEntity::ChunkSize`) has been conveniently set based on 
 **Note:** It is relevant to note that a cache miss would be produced every time we want to access a fragment that isn't on cache for a given entity.
 
 <a name="mass-processors"></a>
-### 4.5 Processors
+### 4.6 Processors
 Processors combine multiple user-defined [queries](#mass-queries) with functions that compute entities.
 
 Processors are automatically registered with Mass and added to the `EMassProcessingPhase::PrePhsysics` processing phase by default. Each `EMassProcessingPhase` relates to an `ETickingGroup`, meaning that, by default, processors tick every frame in their given processing phase.
@@ -282,7 +376,7 @@ By default [all processors are multithreaded](#mass-mt), however, they can also 
 **Note:** Mass ships with a series of processors that are designed to be inherited and extended with custom logic. ie: The visualization and LOD processors. 
 
 <a name="mass-queries"></a>
-### 4.6 Queries
+### 4.7 Queries
 Queries (`FMassEntityQuery`) filter and iterate entities given a series of rules based on Fragment and Tag presence.
 
 Processors can define multiple `FMassEntityQuery`s and should override the `ConfigureQueries` to add rules to the different queries defined in the processor's header:
@@ -300,9 +394,6 @@ void UMyProcessor::ConfigureQueries()
 ```
 
 To execute queries on a processor, we must register them by calling `RegisterWithProcessor` passing the processor as a parameter. `FMassEntityQuery` also offers a parameter constructor that calls `RegisterWithProcessor`, which is employed in some processors from various Mass modules (ie: `UDebugVisLocationProcessor`).
-
-
-<!-- FIXMEVORI-5.1: Make a section about AddSubsystemRequirement -->
 
 `ProcessorRequirements` is a special query part of `UMassProcessor` that holds all the `UWorldSubsystem`s that get accessed in the `Execute` function outside the queries scope. In the example above, `UMassDebuggerSubsystem` gets accessed within `MyQuery`'s scope (`MyQuery.AddSubsystemRequirement`) and in the `Execution` function scope (`ProcessorRequirements.AddSubsystemRequirement`).
 
@@ -329,7 +420,7 @@ Be aware that the index we employ to iterate entities, in this case `EntityIndex
 **Note:** Queries can also be created and iterated outside processors.
 
 <a name="mass-queries-ar"></a>
-#### 4.6.1 Access requirements
+#### 4.7.1 Access requirements
 
 Queries can define read/write access requirements for Fragments and Subsystems:
 
@@ -397,7 +488,7 @@ MyQuery.ForEachEntityChunk(EntityManager, Context, [this, World = EntityManager.
 **Note:** Tags do not have access requirements since they don't contain data.
 
 <a name="mass-queries-pr"></a>
-#### 4.6.2 Presence requirements
+#### 4.7.2 Presence requirements
 Queries can define presence requirements for Fragments and Tags:
 
 | `EMassFragmentPresence` | Description |
@@ -407,7 +498,7 @@ Queries can define presence requirements for Fragments and Tags:
 | None | None of the required fragments/tags can be present. | 
 | Optional | If fragment/tag is present we'll use it, but it does not need to be present. | 
 
-##### 4.6.2.1 Presence requirements in Tags
+##### 4.7.2.1 Presence requirements in Tags
 To add presence rules to Tags, use `AddTagRequirement`.   
 ```c++
 void UMyProcessor::ConfigureQueries()
@@ -443,7 +534,7 @@ MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Con
 });
 ```
 
-##### 4.6.2.2 Presence requirements in Fragments
+##### 4.7.2.2 Presence requirements in Fragments
 Fragments and shared fragments can define presence rules in an additional `EMassFragmentPresence` parameter through `AddRequirement` and `AddSharedRequirement`, respectively.
 
 ```c++
@@ -489,7 +580,7 @@ MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Con
 ```
 <!-- REVIEWMEVORI: Maybe move to common Mass operations!! Spawning/Destroying subsections, although I think that wouldn't hurt having this here, and then referencing it back in the common mass operation section -->
 <a name="mass-queries-mq"></a>
-#### 4.6.3 Mutating entities with `Defer()`
+#### 4.7.3 Mutating entities with `Defer()`
                                                         
 Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FIsRedTag` to any entity that has a color fragment with its `Color` property set to `Red`:
 
@@ -523,7 +614,7 @@ In order to Defer Entity mutations we require to obtain the handle (`FMassEntity
 
 The following Subsections will employ the keywords `EntityHandle` and `EntityHandleArray` when handling singular or plural operations, respectively.
 
-##### 4.6.3.1 Basic mutation operations
+##### 4.7.3.1 Basic mutation operations
 The following Listings define the native mutations that you can defer:
 
 Fragments:
@@ -544,10 +635,10 @@ Context.Defer().DestroyEntity(EntityHandle);
 Context.Defer().BatchDestroyEntities(EntityHandleArray);
 ```
 
-##### 4.6.3.2 Advanced mutation operations
+##### 4.7.3.2 Advanced mutation operations
 There is a set of `FCommandBufferEntryBase` commands that can be used to defer some more useful entity mutations. The following subsections provide an overview. 
 
-###### 4.6.3.2.1 `FMassCommandAddFragmentInstanceList`
+###### 4.7.3.2.1 `FMassCommandAddFragmentInstanceList`
 Defers a list of Fragment mutations over an entity using `FStructView`s and/or `FConstStructView`s.
 
 In the example below we mutate the `FHitResultFragment` with HitResult data, and a `FSampleColorFragment` fragment with a new color.
@@ -562,7 +653,7 @@ Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(EntityHandle,
 ```
 
 <!-- FIXMEVORI: Careful! This command might change its name in the future as its currently out of convention (FMass...)-->
-##### 4.6.3.2.2 `FCommandAddFragmentInstance` (Singular)
+##### 4.7.3.2.2 `FCommandAddFragmentInstance` (Singular)
 Identical to `FMassCommandAddFragmentInstanceList` but it takes a single Fragment as input instead of a list.
 ```c++
 FConstStructView HitResultStruct = FConstStructView::Make(FHitResultFragment(HitResult));
@@ -571,7 +662,7 @@ Context.Defer().PushCommand(FCommandAddFragmentInstance(EntityHandle, HitResultS
 ```
 
 <a name="mass-queries-FBuildEntityFromFragmentInstances"></a>
-##### 4.6.3.2.3 `FBuildEntityFromFragmentInstances`
+##### 4.7.3.2.3 `FBuildEntityFromFragmentInstances`
 Creates an Entity given a list of initialized Fragments using `FStructView`s and/or `FConstStructView`s.
 
 In the example below, we inline the `FStructView`s:
@@ -597,7 +688,7 @@ Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(EntityHandle,
 <!-- FIXMEVORI: Once this is figured out we'll arrange a bit the section so its clearer for the end user, be sure to dump the content in the next iteration (ie: add this extra parameter in FBuildEntityFromFragmentInstances) and the extra information, I'll take care of the arrangement ;) -->
 
 
-##### 4.6.3.2.4 `FBuildEntityFromFragmentInstance` (singular)
+##### 4.7.3.2.4 `FBuildEntityFromFragmentInstance` (singular)
 Identical to `FBuildEntityFromFragmentInstances` but it takes a single Fragment as input instead of a list. 
 It can take an optional `FMassArchetypeSharedFragmentValues` struct as the third function argument as well.
 ```c++
@@ -609,7 +700,7 @@ const FMassEntityHandle EntityHandle = EntitySubsystem->ReserveEntity();
 Context.Defer().PushCommand(FBuildEntityFromFragmentInstance(EntityHandle, ColorStruct));
 ```
 
-##### 4.6.3.2.5 `FCommandSwapTags`
+##### 4.7.3.2.5 `FCommandSwapTags`
 Removes the first tag (`FOffTag` in this example) and adds the second to the entity. (`FOnTag`)
 
 ```c++
@@ -619,7 +710,7 @@ Context.Defer().PushCommand(FCommandSwapTags(EntityHandle,
 	));
 ```
 
-##### 4.6.3.2.6 `FCommandRemoveComposition`
+##### 4.7.3.2.6 `FCommandRemoveComposition`
 <!--(check) FIXMEFUNK wait... we should mention this in the archetype section!! -->
 <!-- FIXMEVORI: Depends how generic this is, if these compositions are used everywhere then probably it would be worth it to add their own subsection somewhere -->
 
@@ -648,7 +739,7 @@ Context.Defer().PushCommand(FCommandRemoveComposition(EntityHandle, Composition)
 ```
 
 <!-- FIXMEVORI: This section will be re-reviewed once you make another pass -->
-##### 4.6.3.2.7 `FDeferredCommand` Lambda
+##### 4.7.3.2.7 `FDeferredCommand` Lambda
 Command dedicated to execute a captured lambda. This way, you can defer your own arbitrary code to happen when the command buffer is flushed.
 
 <!-- FIXMEVORI: Why? Add a trusted reference to thread safety and actor mutations (preferrably epic)-->
@@ -676,7 +767,7 @@ They also manually add their changes to the observed changes list by implementin
 **Note:** Since it defines `ECommandBufferOperationType::None` this deferred action does not add any entity changes to trigger observers on its own!
 
 
-##### 4.6.3.2.8 Custom mutation operations
+##### 4.7.3.2.8 Custom mutation operations
 It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
 
 ```c++
@@ -705,7 +796,7 @@ void AppendAffectedEntitiesPerType(FMassCommandsObservedTypes& ObservedTypes)
 <!-- FIXMEVORI: Provide example of custom commands and when they would be useful -->
 
 <a name="mass-traits"></a>
-### 4.7 Traits
+### 4.8 Traits
 Traits are C++ defined objects that declare a set of Fragments, Tags and data for authoring new entities in a data-driven way. 
 
 To start using traits, create a `DataAsset` that inherits from 
@@ -725,7 +816,7 @@ Between the many built-in traits offered by Mass, we can find the `Assorted Frag
 Traits are often used to add Shared Fragments in the form of settings. For example, our visualization traits save memory by sharing which mesh they are displaying, parameters etc. Configs with the same settings will share the same Shared Fragment.
 
 
-#### 4.7.1 Creating a trait
+#### 4.8.1 Creating a trait
 Traits are created by inheriting `UMassEntityTraitBase` and overriding `BuildTemplate`. Here is a very basic example:
 
 ```c++
@@ -778,7 +869,7 @@ public:
 ```
 
 
-#### 4.7.2 Validating traits
+#### 4.8.2 Validating traits
 <!-- FIXMEVORI: Clarify and provide example. I'll rewrite it once all the info is in place :) -->
 There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that can raise errors or even change the buildcontext if need be. This is called after `BuildTemplate` is called for all of the traits of the current template.
 
@@ -799,7 +890,7 @@ void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildCon
 
 
 <a name="mass-o"></a>
-### 4.8 Observers
+### 4.9 Observers
 The `UMassObserverProcessor` is a type of processor that operates on entities that have just performed a `EMassObservedOperation` over the Fragment/Tag type observed:
 
 | `EMassObservedOperation` | Description |
@@ -839,7 +930,7 @@ void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecution
 ```
 
 <a name="mass-o-n"></a>
-#### 4.8.1 Observer limitations
+#### 4.9.1 Observer limitations
 At the time of writing, Observers are only triggered explicitely during these specific Entity actions: 
 
 <!-- FIXMEVORI: Maybe this isn't the case because we are not following the recommended practices!! Should ensure not skipping the appropriate exec path-->
@@ -857,7 +948,7 @@ At the time of writing, Observers are only triggered explicitely during these sp
 
 <!-- FIXMEVORI: I'll review this the next day -->
 <a name="mass-o-mft"></a>
-#### 4.8.2 Observing multiple Fragment/Tags
+#### 4.9.2 Observing multiple Fragment/Tags
 Observers can also be used to observe multiple operations and/or types. For that, override the `Register` function in `UMassObserverProcessor`: 
 
 ```c++
