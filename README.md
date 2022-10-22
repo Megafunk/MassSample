@@ -194,7 +194,7 @@ struct MASSCOMMUNITYSAMPLE_API FProjectileTag : public FMassTag
 ```
 **Note:** Tags should never contain member properties.
 
-<a name="mass-tags"></a>
+<a name="mass-subsystems"></a>
 ### 4.4 Subsystems
 Starting in UE 5.1, Mass enhanced its API to support [`UWorldSubsystems`](https://docs.unrealengine.com/4.27/en-US/API/Runtime/Engine/Subsystems/UWorldSubsystem/) in our [Processors](#mass-processors). This provides a way to create encapsulated functionality to operate Entities. First, inherit from `UWorldSubsystem` and define its basic interface alongside your functions and variables:
 
