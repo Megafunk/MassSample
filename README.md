@@ -217,8 +217,6 @@ protected:
 private:
 	UE_MT_DECLARE_RW_ACCESS_DETECTOR(AccessDetector);
 	int Number = 0;
-
-	FDelegateHandle OnFireHandle;
 };
 ```
 
@@ -254,7 +252,6 @@ int32 UMyWorldSubsystem::Read() const
 	UE_MT_SCOPED_READ_ACCESS(AccessDetector);
 	return Number;
 }
-
 ```
 The code above is multithread-friendly, hence the `UE_MT_X` tokens.
 
