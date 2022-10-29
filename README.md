@@ -294,7 +294,7 @@ The `FMassArchetypeData` struct represents an archetype in Mass internally.
 
 <a name="mass-arch-mod-tags"></a>
 #### 4.5.1 Tags in the archetype model
-Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<FMassTag>`) that constains the tag presence information, whereas each bit in the bitset represents whether a tag exists in the archetype or not.
+Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<FMassTag>`) that contains the tag presence information, whereas each bit in the bitset represents whether a tag exists in the archetype or not.
 
 <!-- FIXMEVORI: "Is there a maximum amount of tags limit?" -->
 ![MassArchetypeTags](Images/arche-tags.png)
@@ -579,27 +579,35 @@ MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Con
 <a name="mass-queries-mq"></a>
 #### 4.7.3 Mutating entities with `Defer()`
                                                         
-Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FIsRedTag` to any entity that has a color fragment with its `Color` property set to `Red`:
-
-<!-- FIXMEVORI: Do you think this example is appropriate? Or can we find a better one? -->
+Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FDead` to any entity that has a health fragment with its `Health` variable less or equal to 0, at the same time, as we define in `ConfigureQueries`, after the `FDead` tag is added, the entity won't be considered for iteration (`EMassFragmentPresence::None`):
 
 ```c++
-EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+void UDeathProcessor::ConfigureQueries()
 {
-	auto ColorList = Context.GetFragmentView<FSampleColorFragment>();
+	// All the entities processed in this query must have the FHealthFragment fragment
+	DeclareDeathQuery.AddRequirement<FHealthFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::All);
+	// Entities processed by this queries shouldn't have the FDead tag, as this query adds the FDead tag
+	DeclareDeathQuery.AddTagRequirement<FDead>(EMassFragmentPresence::None);
+	DeclareDeathQuery.RegisterWithProcessor(*this);
+}
 
-	for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+void UDeathProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
+{
+	DeclareDeathQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 	{
+		auto HealthList = Context.GetFragmentView<FHealthFragment>();
 
-		if(ColorList[EntityIndex].Color == FColor::Red)
+		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
-			// Adding a tag to this entity after processing           
-			FMassEntityHandle EntityHandle = Context.GetEntity(EntityIndex);
-			Context.Defer().AddTag<FIsRedTag>(EntityHandle);
+			if(HealthList[EntityIndex].Health <= 0.f)
+			{
+				// Adding a tag to this entity when the deferred commands get flushed
+				FMassEntityHandle EntityHandle = Context.GetEntity(EntityIndex);
+				Context.Defer().AddTag<FDead>(EntityHandle);
+			}
 		}
-	}
-
-});
+	});
+}
 ```
 
 In order to Defer Entity mutations we require to obtain the handle (`FMassEntityHandle`) of the Entities we wish to modify. `FMassExecutionContext` holds an array with all the Entity handles. We can access it through two different methods:
@@ -629,7 +637,7 @@ Context.Defer().RemoveTag<FMyTag>(EntityHandle);
 Destroying entities:
 ```c++
 Context.Defer().DestroyEntity(EntityHandle);
-Context.Defer().BatchDestroyEntities(EntityHandleArray);
+Context.Defer().DestroyEntities(EntityHandleArray);
 ```
 
 ##### 4.7.3.2 Advanced mutation operations
