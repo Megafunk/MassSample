@@ -62,7 +62,7 @@ void UMSHashGridMemberInitializationProcessor::Initialize(UObject& Owner)
 
 void UMSHashGridMemberInitializationProcessor::ConfigureQueries()
 {
-	EntityQuery.AddRequirement<FMSGridCellStartingLocationFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddRequirement<FMSGridCellStartingLocationFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.RegisterWithProcessor(*this);
 	
