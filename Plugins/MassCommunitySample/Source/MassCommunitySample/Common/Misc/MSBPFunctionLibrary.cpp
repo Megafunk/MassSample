@@ -14,48 +14,12 @@
 #include "Experimental/MSEntityUtils.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
-FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig,
-                                                                       const UObject* WorldContextObject,
-                                                                       const bool bDebug)
-{
-	if (!MassEntityConfig) return FEntityHandleWrapper();
 
-
-	FMassEntityManager& EntitySubSystem = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
-	                                                          GetMutableEntityManager();
-
-	//todo: who should actually own an entity template? it's probably designed to have just one spawner own it?
-
-	if (FMSEntitySpawnTemplate MassEntitySpawnData = FMSEntitySpawnTemplate(
-		MassEntityConfig, WorldContextObject->GetWorld()))
-	{
-		if (bDebug)
-		{
-			MassEntitySpawnData.Template.GetMutableTags().Add<FMassSampleDebuggableTag>();
-		}
-		MassEntitySpawnData.Template.AddFragment_GetRef<FTransformFragment>().SetTransform(FTransform::Identity);
-		MassEntitySpawnData.Template.AddFragment_GetRef<FTransformFragment>().GetMutableTransform().SetTranslation(
-			FMath::VRand());
-
-		// Finalize by actually
-		// 1: creating/getting archetype
-		MassEntitySpawnData.FinalizeTemplateArchetype(EntitySubSystem);
-		// 2: spawning the entity
-		FMassEntityHandle SpawnedEntity = MassEntitySpawnData.SpawnEntity(EntitySubSystem);
-
-
-		return FEntityHandleWrapper{SpawnedEntity};
-	}
-
-	return FEntityHandleWrapper();
-}
-
-
-FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfigDeferred(
-	AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
+FEntityHandleWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(
+    UMassEntityConfigAsset* MassEntityConfig,
 	const UObject* WorldContextObject)
 {
-	if (!Owner || !MassEntityConfig) return FEntityHandleWrapper();
+	if (!MassEntityConfig) return FEntityHandleWrapper();
 
 	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
 		*WorldContextObject->GetWorld(), *MassEntityConfig);
@@ -185,6 +149,23 @@ void UMSBPFunctionLibrary::SetEntityForce(const FEntityHandleWrapper EntityHandl
 	{
 		MassForceFragmentPtr->Value = Force;
 	}
+}
+
+void UMSBPFunctionLibrary::DestroyEntity(const FEntityHandleWrapper EntityHandle, const UObject* WorldContextObject)
+{
+	FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
+																  GetMutableEntityManager();
+
+	if(EntityHandle.Entity.IsValid())
+	{
+		EntityManager.DestroyEntity(EntityHandle.Entity);
+	}
+	else
+	{
+		EntityManager.ReleaseReservedEntity(EntityHandle.Entity);
+	}
+
+
 }
 
 
