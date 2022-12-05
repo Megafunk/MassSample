@@ -25,7 +25,9 @@ public class MassCommunitySample : ModuleRules
 				"Core", 
 				"CoreUObject", 
 				"Engine", 
-				"InputCore" 
+				"InputCore" ,
+				"Chaos"
+				
 			}
 		);
 
@@ -59,11 +61,16 @@ public class MassCommunitySample : ModuleRules
 				"StateTreeModule",
 				"MassLOD",
 				"NavigationSystem",
-				//todo: maybe do thee editor only stuff on another module?
+				"Chaos",
+				"PhysicsCore",
+				"ChaosCore",
+				"ChaosSolverEngine"
 				
+
 			}
 		);
-		
+						//todo: maybe do thee editor only stuff on another module?
+
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.Add("CodeView");

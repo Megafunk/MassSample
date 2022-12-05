@@ -28,36 +28,44 @@ protected:
 
 
 	// Thanks to vblanco for this fast transform setting trick
-	// According to him the first two steps (to world and updatebounds) can be threaded but not the render dirty
-	FORCEINLINE static void SetWorldTransformFastPath(USceneComponent* InComp, FTransform InTransform)
+	// According to him the first two steps (comp to world and updatebounds) can be threaded but not the render dirty
+	FORCEINLINE static void SetWorldTransformFastPath(USceneComponent* InComp, const FTransform& InTransform)
 	{
-        
+		// directly set transform and update bounds 
 		InComp->SetComponentToWorld(InTransform);
 		InComp->UpdateBounds();
+		
+		// Evil temp physics set with static cast
+		auto bodyinstance = static_cast<UPrimitiveComponent*>(InComp)->BodyInstance;
+		FChaosEngineInterface::SetGlobalPose_AssumesLocked(bodyinstance.ActorHandle, InTransform);
+
+		// dirty the render transform 
 		InComp->MarkRenderTransformDirty();
+		
 		for (auto Component : InComp->GetAttachChildren())
 		{
 			// This * transforms from local space to world space!
-			InTransform = Component->GetRelativeTransform() * InTransform;
+			FTransform CompWorldTransform = Component->GetRelativeTransform() * InTransform;
 
 			//These are to support non-relative transforms (could probably omit as this is rare?)
-			if(InComp->IsUsingAbsoluteLocation())
-			{
-				InTransform.CopyTranslation(InTransform);
-			}
 
-			if(InComp->IsUsingAbsoluteRotation())
+			if(UNLIKELY(InComp->IsUsingAbsoluteLocation()))
 			{
-				InTransform.CopyRotation(InTransform);
+				CompWorldTransform.CopyTranslation(InTransform);
 			}
-
-			if(InComp->IsUsingAbsoluteScale())
+			
+			if(UNLIKELY(InComp->IsUsingAbsoluteRotation()))
 			{
-				InTransform.CopyScale3D(InTransform);
+				CompWorldTransform.CopyRotation(InTransform);
+			}
+			
+			if(UNLIKELY(InComp->IsUsingAbsoluteScale()))
+			{
+				CompWorldTransform.CopyScale3D(InTransform);
 			}
 
 			// Recursive!
-			SetWorldTransformFastPath(Component,InTransform);
+			SetWorldTransformFastPath(Component,CompWorldTransform);
 		}
 	};
 

@@ -12,7 +12,7 @@ UMSTransformToSceneCompTranslatorFastPath::UMSTransformToSceneCompTranslatorFast
 	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::UpdateWorldFromMass;
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
-	
+
 	RequiredTags.Add<FMSMassTransformToSceneCompFastPathTag>();
 
 	bRequiresGameThreadExecution = true;
@@ -27,13 +27,12 @@ void UMSTransformToSceneCompTranslatorFastPath::ConfigureQueries()
 }
 
 void UMSTransformToSceneCompTranslatorFastPath::Execute(FMassEntityManager& EntityManager,
-                                                                 FMassExecutionContext& Context)
+                                                        FMassExecutionContext& Context)
 {
 	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
-		const TConstArrayView<FMassSceneComponentWrapperFragment> ComponentList = Context.GetFragmentView<
-			FMassSceneComponentWrapperFragment>();
-		const TArrayView<FTransformFragment> LocationList = Context.GetMutableFragmentView<FTransformFragment>();
+		const auto ComponentList = Context.GetFragmentView<FMassSceneComponentWrapperFragment>();
+		const auto LocationList = Context.GetMutableFragmentView<FTransformFragment>();
 
 		const int32 NumEntities = Context.GetNumEntities();
 
@@ -66,8 +65,8 @@ void UMSSceneCompTransformToMassTranslator::Execute(FMassEntityManager& EntityMa
 {
 	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
-		const TConstArrayView<FMassSceneComponentWrapperFragment> ComponentList = Context.GetFragmentView<FMassSceneComponentWrapperFragment>();
-		const TArrayView<FTransformFragment> LocationList = Context.GetMutableFragmentView<FTransformFragment>();
+		const auto ComponentList = Context.GetFragmentView<FMassSceneComponentWrapperFragment>();
+		const auto LocationList = Context.GetMutableFragmentView<FTransformFragment>();
 
 		const int32 NumEntities = Context.GetNumEntities();
 		for (int32 i = 0; i < NumEntities; ++i)
