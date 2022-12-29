@@ -78,7 +78,7 @@ protected:
 	void BenchA(FMassEntityHandle Entity);
 	void BenchB(FMassEntityHandle Entity);
 
-	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 	uint32 Counter;
 

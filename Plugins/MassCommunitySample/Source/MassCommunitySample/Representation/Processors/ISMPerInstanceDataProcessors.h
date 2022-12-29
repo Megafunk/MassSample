@@ -19,7 +19,7 @@ public:
 
 protected:
 	virtual void ConfigureQueries() override;
-	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 private:
 	FMassEntityQuery EntityQuery;
 };
@@ -35,7 +35,7 @@ public:
 
 protected:
 	virtual void ConfigureQueries() override;
-	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 private:
 	FMassEntityQuery EntityQuery;
 };

@@ -22,7 +22,7 @@ public:
 	virtual void Initialize(UObject& Owner) override;
 protected:
 	virtual void ConfigureQueries() override;
-	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 	FMassEntityQuery EntityQuery;
 	class UMassSignalSubsystem* SignalSubsystem;

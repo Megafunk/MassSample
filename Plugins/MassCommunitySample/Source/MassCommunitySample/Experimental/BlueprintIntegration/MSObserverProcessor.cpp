@@ -7,14 +7,14 @@
 #include "MassObserverRegistry.h"
 #include "Common/Misc/MSBPFunctionLibrary.h"
 
-UMSObserverProcessor::UMSObserverProcessor()
+UMSObserverProcessorBP::UMSObserverProcessorBP()
 {
 	bAutoRegisterWithProcessingPhases = false;
 	bRequiresGameThreadExecution = true;
 }
 
 
-void UMSObserverProcessor::ConfigureQueries()
+void UMSObserverProcessorBP::ConfigureQueries()
 {
 	for (auto Fragment : FragmentRequirements)
 	{
@@ -32,13 +32,14 @@ void UMSObserverProcessor::ConfigureQueries()
 
 
 
-void UMSObserverProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UMSObserverProcessorBP::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 
 	TArray<const UScriptStruct*> ReuiredAllFragmentTypes;
 	EntityQuery.GetRequiredAllFragments().ExportTypes(ReuiredAllFragmentTypes);
+	auto World = GetWorld();
 
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
 		TArray<TArrayView<FMassFragment>> FragmentViews;
 		for (auto Fragment : ReuiredAllFragmentTypes )
@@ -48,13 +49,16 @@ void UMSObserverProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExe
 		
 		const int32 QueryLength = Context.GetNumEntities();
 
+		// Surely there is a less wacky way to get an archetype inside of a context? This is definitely weird.
+		FMassArchetypeHandle Archetype = EntityManager.GetArchetypeForEntityUnsafe(Context.GetEntity(0));
+
 		for (int32 i = 0; i < QueryLength; ++i)
 		{
 			for (auto FragmentView : FragmentViews)
 			{
 				
 			}
-			BPExecute(FEntityHandleWrapper{Context.GetEntity(i)}, EntitySubsystem.GetWorld());
+			BPExecute(FMSEntityViewBPWrapper(Archetype,Context.GetEntity(i)), World);
 
 		}
 	});

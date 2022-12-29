@@ -21,9 +21,9 @@ void UMSInterpMovementProcessor::ConfigureQueries()
 
 }
 
-void UMSInterpMovementProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UMSInterpMovementProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 	{
 		const int32 QueryLength = Context.GetNumEntities();
 

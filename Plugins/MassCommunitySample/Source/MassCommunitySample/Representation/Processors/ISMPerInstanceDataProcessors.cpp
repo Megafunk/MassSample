@@ -20,9 +20,9 @@ void UismPerInstanceDataUpdater::ConfigureQueries()
 
 }
 
-void UismPerInstanceDataUpdater::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UismPerInstanceDataUpdater::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		UMassRepresentationSubsystem* RepresentationSubsystem = Context.GetMutableSharedFragment<FMassRepresentationSubsystemSharedFragment>().RepresentationSubsystem;
 		check(RepresentationSubsystem);
@@ -63,9 +63,9 @@ void UISMPerInstanceDataChangerExampleProcessor::ConfigureQueries()
 	EntityQuery.RegisterWithProcessor(*this);
 
 }
-void UISMPerInstanceDataChangerExampleProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UISMPerInstanceDataChangerExampleProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		const TArrayView<FSampleISMPerInstanceSingleFloatFragment> CustomISMDataFragments = Context.GetMutableFragmentView<FSampleISMPerInstanceSingleFloatFragment>();
 		const int32 NumEntities = Context.GetNumEntities();

@@ -36,11 +36,11 @@ struct FMSEntitySpawnTemplate
 	};
 
 	
-	FMassEntityHandle SpawnEntity(FMassEntityManager& EntitySubSystem) const
+	FMassEntityHandle SpawnEntity(FMassEntityManager& EntityManager) const
 	{
 		TArray<FMassEntityHandle> SpawnedEntities;
-		EntitySubSystem.BatchCreateEntities(Template.GetArchetype(), 1, SpawnedEntities);
-		EntitySubSystem.SetEntityFragmentsValues(SpawnedEntities[0], Template.GetInitialFragmentValues());
+		EntityManager.BatchCreateEntities(Template.GetArchetype(), 1, SpawnedEntities);
+		EntityManager.SetEntityFragmentsValues(SpawnedEntities[0], Template.GetInitialFragmentValues());
 		return  SpawnedEntities[0];
 	};
 

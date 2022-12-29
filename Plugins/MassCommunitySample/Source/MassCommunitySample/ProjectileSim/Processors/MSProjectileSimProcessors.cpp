@@ -25,10 +25,12 @@ UMSProjectileSimProcessors::UMSProjectileSimProcessors()
 
 void UMSProjectileSimProcessors::ConfigureQueries()
 {
-	LineTraceFromPreviousPosition.AddRequirement<FLineTraceFragment>(EMassFragmentAccess::ReadWrite);
+	LineTraceFromPreviousPosition.AddRequirement<FMSCollisionIgnoredActorsFragment>(EMassFragmentAccess::ReadWrite);
+	LineTraceFromPreviousPosition.AddTagRequirement<FMSLineTraceTag>(EMassFragmentPresence::All);
+	LineTraceFromPreviousPosition.AddTagRequirement<FProjectileTag>(EMassFragmentPresence::All);
+
 	LineTraceFromPreviousPosition.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);
 	LineTraceFromPreviousPosition.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	LineTraceFromPreviousPosition.AddTagRequirement<FProjectileTag>(EMassFragmentPresence::All);
 	LineTraceFromPreviousPosition.RegisterWithProcessor(*this);
 
 	MyQuery = LineTraceFromPreviousPosition;
@@ -39,28 +41,33 @@ void UMSProjectileSimProcessors::ConfigureQueries()
 	//LineTraceFromPreviousPosition.AddTagRequirement<FNotMovingTag>(EMassFragmentPresence::None);
 }
 
-void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	TArray<FMassEntityHandle> EntitiesToSignal;
 
 	
-	LineTraceFromPreviousPosition.ForEachEntityChunk(EntitySubsystem,Context,[&](FMassExecutionContext& Context)
+	LineTraceFromPreviousPosition.ForEachEntityChunk(EntityManager,Context,[&](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_LineTraceFromPreviousPosition);
 
 		
-		const auto Linetraces = Context.GetMutableFragmentView<FLineTraceFragment>();
+		const auto IgnoredActorsFragments = Context.GetMutableFragmentView<FMSCollisionIgnoredActorsFragment>();
 		const auto Velocities = Context.GetFragmentView<FMassVelocityFragment>();
 		const auto Transforms = Context.GetFragmentView<FTransformFragment>();
 
 		int32 NumEntities= Context.GetNumEntities();
 
+		FCollisionQueryParams QueryParams;
 
 		for (int32 i = 0; i < NumEntities; ++i)
 		{
 			FHitResult HitResult;
 
 			FVector CurrentLocation = Transforms[i].GetTransform().GetTranslation();
+			
+			
+			QueryParams.ClearIgnoredActors();
+			QueryParams.AddIgnoredActors(IgnoredActorsFragments[i].IgnoredActors);
 			
 			//If we hit something, add a new fragment with the data!
 			if(GetWorld()->
@@ -70,7 +77,7 @@ void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntitySubsystem, FM
 					CurrentLocation - Velocities[i].Value,
 					CurrentLocation,
 					ECollisionChannel::ECC_Camera,
-					Linetraces[i].QueryParams
+					QueryParams
 				))
 			{
 		
@@ -91,7 +98,7 @@ void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntitySubsystem, FM
 	}
 
 		
-	MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+	MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
 	{
 		const TArrayView<FSampleColorFragment> OptionalFragmentList = Context.GetMutableFragmentView<FSampleColorFragment>();
 
@@ -100,9 +107,7 @@ void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntitySubsystem, FM
 			// An optional fragment array is present in our current chunk if the OptionalFragmentList isn't empty
 			if(OptionalFragmentList.Num() > 0)
 			{
-				// Now that we know it is safe to do so, we can compute
-;			UE_LOG( LogTemp, Error, TEXT("optional hit!"));
-
+				// Now that we know it is safe to do so, we can compute... something!
 			}		
 		}
 	});

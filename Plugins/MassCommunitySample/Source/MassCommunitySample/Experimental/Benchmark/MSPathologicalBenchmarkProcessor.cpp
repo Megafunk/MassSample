@@ -17,7 +17,7 @@ UMSPathologicalBenchmarkProcessor::UMSPathologicalBenchmarkProcessor()
 }
 
 //This is just to double check my math works out, we don't need it at all.
- void UMSPathologicalBenchmarkProcessor::CombinationsRecursive(FMassEntityManager& EntitySubsystem, int32 length,int32 offset = 0 )
+ void UMSPathologicalBenchmarkProcessor::CombinationsRecursive(FMassEntityManager& EntityManager, int32 length,int32 offset = 0 )
  {
  	if (length ==0)
  	{
@@ -32,14 +32,14 @@ UMSPathologicalBenchmarkProcessor::UMSPathologicalBenchmarkProcessor()
 
  		TArray<UScriptStruct*> CombinationWithPatholigicFragment = Combination;
  		CombinationWithPatholigicFragment.Add(FPathologicFragment::StaticStruct());
- 		Archetypes.Add(EntitySubsystem.CreateArchetype({CombinationWithPatholigicFragment}));
+ 		Archetypes.Add(EntityManager.CreateArchetype({CombinationWithPatholigicFragment}));
  		
  		return;
  	}
  	for(int i = offset; i<=Provinces.Num() - length; ++i)
  	{
  		Combination.Add(Provinces[i]);
- 		CombinationsRecursive(EntitySubsystem,length-1,i+1);
+ 		CombinationsRecursive(EntityManager,length-1,i+1);
  		Combination.Pop();
  	}
  }
@@ -125,13 +125,13 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
  	}
  }
 
- void UMSPathologicalBenchmarkProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+ void UMSPathologicalBenchmarkProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark9: %i entities found"),PathologicQuery9.GetNumMatchingEntities(EntitySubsystem));
-	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark3: %i entities found"),PathologicQuery3.GetNumMatchingEntities(EntitySubsystem));
+	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark9: %i entities found"),PathologicQuery9.GetNumMatchingEntities(EntityManager));
+	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark3: %i entities found"),PathologicQuery3.GetNumMatchingEntities(EntityManager));
 
 	{
-		PathologicQuery9.ForEachEntityChunk(EntitySubsystem,Context,
+		PathologicQuery9.ForEachEntityChunk(EntityManager,Context,
 		[&,this](FMassExecutionContext& Context)
 		{
 			QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9Loop);
@@ -164,7 +164,7 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
 		});
 	}
 	{
-		PathologicQuery3.ForEachEntityChunk(EntitySubsystem,Context,
+		PathologicQuery3.ForEachEntityChunk(EntityManager,Context,
 		[&,this](FMassExecutionContext& Context)
 		{
 			QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark3Loop);

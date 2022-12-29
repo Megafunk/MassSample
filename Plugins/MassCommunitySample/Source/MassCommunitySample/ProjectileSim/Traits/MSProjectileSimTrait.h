@@ -8,6 +8,7 @@
 
 /**
  * A projectile that line traces from where it was last frame (using velocity) to find hits. Other processors move it!
+ * This is just a simple example, a more complex project would probably need a more specific linetrace.
  */
 
 UCLASS(meta = (DisplayName = "Pojectile Simulation"))

@@ -10,7 +10,7 @@
 /**
  *  This will subscribe the entity to our simple 3d point hashgrid so we can query for its position.
  */
-UCLASS(meta=(DisplayName="3D Hash Grid Member"))
+UCLASS(meta=(DisplayName="Mass Sample Octree Grid Member"))
 class MASSCOMMUNITYSAMPLE_API UMSHashGridTrait : public UMassEntityTraitBase
 {
 	GENERATED_BODY()

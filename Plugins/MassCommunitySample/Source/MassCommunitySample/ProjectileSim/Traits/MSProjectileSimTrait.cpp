@@ -10,10 +10,11 @@
 
 void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
-	BuildContext.AddFragment<FLineTraceFragment>();
+	BuildContext.AddFragment<FMSCollisionIgnoredActorsFragment>();
 	BuildContext.RequireFragment<FTransformFragment>();
 	BuildContext.RequireFragment<FMassVelocityFragment>();
 	BuildContext.AddTag<FProjectileTag>();
+	BuildContext.AddTag<FMSLineTraceTag>();
 
 	if (bFiresHitEventToActors)
 	{

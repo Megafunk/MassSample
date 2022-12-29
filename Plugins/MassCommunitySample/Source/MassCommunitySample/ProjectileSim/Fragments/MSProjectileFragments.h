@@ -8,19 +8,20 @@
 /**
 * Fragments	
 **/
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FDamageFragment : public FMassFragment
 {
 	GENERATED_BODY()
 	float Damage;
 };
 
-// FIXME: Performance investigate making part of this shared? it's going to be very common besides the ignored actors etc?
-USTRUCT()
-struct MASSCOMMUNITYSAMPLE_API FLineTraceFragment : public FMassFragment
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSCollisionIgnoredActorsFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	FCollisionQueryParams QueryParams = FCollisionQueryParams();
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TArray<AActor*> IgnoredActors;
 };
 
 // TODO: Move this elsewhere? It's not entirely projectile specific
@@ -41,7 +42,7 @@ struct MASSCOMMUNITYSAMPLE_API FHitResultFragment : public FMassFragment
 };
 
 // TODO: Move this elsewhere? It's not entirely projectile specific
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FLifeTimeFragment : public FMassFragment
 {
 	GENERATED_BODY()
@@ -51,19 +52,25 @@ struct MASSCOMMUNITYSAMPLE_API FLifeTimeFragment : public FMassFragment
 /**
 * Tags	
 **/
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FStopMovementTag : public FMassTag
 {
 	GENERATED_BODY()
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FProjectileTag : public FMassTag
 {
 	GENERATED_BODY()
 };
 
-USTRUCT()
+// Might add data to this later, it's pretty generic here?
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSLineTraceTag : public FMassTag
+{
+	GENERATED_BODY()
+};
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FFireHitEventTag : public FMassTag
 {
 	GENERATED_BODY()

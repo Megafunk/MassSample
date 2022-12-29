@@ -145,7 +145,7 @@ Small unique identifiers that point to a combination of [fragments](#mass-fragme
 
 <a name="mass-fragments"></a>
 ### 4.2 Fragments
-Data-only `UScriptStructs` that entities can own and processors can query on. To create a fragment, inherit from [`FMassFragment`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassFragment/). 
+Data-only `UStructs` that entities can own and processors can query on. To create a fragment, inherit from [`FMassFragment`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassFragment/). 
 
 ```c++
 USTRUCT()
@@ -156,7 +156,7 @@ struct MASSCOMMUNITYSAMPLE_API FLifeTimeFragment : public FMassFragment
 };
 ```
 
-With `FMassFragment`s each entity gets its own fragment data, however if we wish to share data across all our entities, we have to use a [shared fragment](#mass-fragments-sf). 
+With `FMassFragment`s each entity gets its own fragment data, to share data across many entities, we can use a [shared fragment](#mass-fragments-sf). 
 
 <a name="mass-fragments-sf"></a>
 #### 4.2.1 Shared Fragments
@@ -173,7 +173,7 @@ struct MASSCOMMUNITYSAMPLE_API FClockSharedFragment : public FMassSharedFragment
 
 In the example above, all the entities containing the `FClockSharedFragment` will see the same `Clock` value. If an entity modifies the `Clock` value, the rest of the entities with this fragment will see the change, as this fragment is shared accross them.
 
-Thanks to this sharing data requirement, the Mass Entity subsystem only needs to store one Shared Fragment for the entities that use it.
+Thanks to this sharing data requirement, the Mass entity manager only needs to store one Shared Fragment for the entities that use it.
 
 <!-- FIXMEVORI: (About the commented phrase below) Probably a bit too technical? Not a performance requirement, we should simply expose API usage. -->
 <!-- REVIEWMEFUNK: Shared fragments seem designed around the hashing workflow. It seems pretty important to mention. I will check to make sure that is true... -->
@@ -488,12 +488,12 @@ MyQuery.ForEachEntityChunk(EntityManager, Context, [this, World = EntityManager.
 #### 4.7.2 Presence requirements
 Queries can define presence requirements for Fragments and Tags:
 
-| `EMassFragmentPresence` | Description |
-| ----------- | ----------- |
+| `EMassFragmentPresence` | Description                                                                       |
+| ----------- |-----------------------------------------------------------------------------------|
 | All | All of the required fragments/tags must be present. Default presence requirement. |
-| Any | At least one of the fragments/tags marked any must be present. | 
-| None | None of the required fragments/tags can be present. | 
-| Optional | If fragment/tag is present we'll use it, but it does not need to be present. | 
+| Any | At least one of the fragments/tags marked any must be present.                    | 
+| None | None of the required fragments/tags can be present.                               | 
+| Optional | If fragment/tag is present we'll use it, but it does not need to be present.      | 
 
 ##### 4.7.2.1 Presence requirements in Tags
 To add presence rules to Tags, use `AddTagRequirement`.   
@@ -616,11 +616,13 @@ In order to Defer Entity mutations we require to obtain the handle (`FMassEntity
 | ----------- | ----------- |
 | Singular | `FMassEntityHandle EntityHandle = Context.GetEntity(EntityIndex);` |
 | Plural | `auto EntityHandleArray = Context.GetEntities();` | 
-
 The following Subsections will employ the keywords `EntityHandle` and `EntityHandleArray` when handling singular or plural operations, respectively.
+
 
 ##### 4.7.3.1 Basic mutation operations
 The following Listings define the native mutations that you can defer:
+
+Deferring is commonly done from a processor's `FMassExecutionContext` with `.Defer()` but these can be done outside processing with a `EntityManager->Defer()` call. 
 
 Fragments:
 ```c++
@@ -632,6 +634,7 @@ Tags:
 ```c++
 Context.Defer().AddTag<FMyTag>(EntityHandle);
 Context.Defer().RemoveTag<FMyTag>(EntityHandle);
+Context.Defer().SwapTags<FOldTag, FNewTag>(EntityHandle);
 ```
  
 Destroying entities:
@@ -639,53 +642,39 @@ Destroying entities:
 Context.Defer().DestroyEntity(EntityHandle);
 Context.Defer().DestroyEntities(EntityHandleArray);
 ```
+These are all convenient wrappers for the internal template based deferred commands.
 
 ##### 4.7.3.2 Advanced mutation operations
 There is a set of `FCommandBufferEntryBase` commands that can be used to defer some more useful entity mutations. The following subsections provide an overview. 
 
 ###### 4.7.3.2.1 `FMassCommandAddFragmentInstanceList`
-Defers a list of Fragment mutations over an entity using `FStructView`s and/or `FConstStructView`s.
+Defers an existing entity receiving new fragment data. 
 
-In the example below we mutate the `FHitResultFragment` with HitResult data, and a `FSampleColorFragment` fragment with a new color.
+In the example below we mutate the `FHitResultFragment` with HitResult data, and a `FSampleColorFragment` fragment with a new color and add (or set if already present) them to an existing entity.
 
 ```c++
-FConstStructView HitResultStruct = FConstStructView::Make(FHitResultFragment(HitResult));
-FStructView ColorStruct = FStructView::Make(FSampleColorFragment(Color));
+FHitResultFragment HitResultFragment;
+FSampleColorFragment ColorFragment = FSampleColorFragment(Color);
 
-Context.Defer().PushCommand(FMassCommandAddFragmentInstanceList(EntityHandle, 
-	{HitResultStruct, ColorStruct}
-));
-```
+// Sets fragment data on an existing entity
+EntityManager->Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, ColorFragment, HitResultFragment);
 
-<!-- FIXMEVORI: Careful! This command might change its name in the future as its currently out of convention (FMass...)-->
-##### 4.7.3.2.2 `FCommandAddFragmentInstance` (Singular)
-Identical to `FMassCommandAddFragmentInstanceList` but it takes a single Fragment as input instead of a list.
-```c++
-FConstStructView HitResultStruct = FConstStructView::Make(FHitResultFragment(HitResult));
+// It can add single fragment instances as well, and should set data on existing fragments safely
+EntityManager->Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, SomeOtherFragment);
 
-Context.Defer().PushCommand(FCommandAddFragmentInstance(EntityHandle, HitResultStruct));
+
 ```
 
 <a name="mass-queries-FBuildEntityFromFragmentInstances"></a>
-##### 4.7.3.2.3 `FBuildEntityFromFragmentInstances`
-Creates an Entity given a list of initialized Fragments using `FStructView`s and/or `FConstStructView`s.
+###### 4.7.3.2.2 `FMassCommandBuildEntity`
+Creates an Entity given and adds a list of fragments with data to it.
 
-In the example below, we inline the `FStructView`s:
-
-**Note:** Can also take an optional `FMassArchetypeSharedFragmentValues` struct as the third function argument.
 ```c++
-FSampleColorFragment ColorFragment;
-ColorFragment.Color = FColor::Green;
+FTransformFragment MyTransformFragment;
+MyTransformFragment.SetTransform(FTransform::Identity);
 
-FTransformFragment TransformFragment;
-TransformFragment.SetTransform(SpawnTransform);
-
-//Reserve our future entity's ID!
-const FMassEntityHandle EntityHandle = EntitySubsystem->ReserveEntity();
-
-Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(EntityHandle,
-	{FStructView::Make(ColorFragment),FStructView::Make(ThingyFragment)}
-	//you can add a final FMassArchetypeSharedFragmentValues if you like!
+// We build a new entity and add data to it in one command!
+EntityManager->Defer().PushCommand<FMassCommandBuildEntity>(ReserverdEntity, MyTransformFragment, SomeOtherFragment);
 ));
 ```
 
@@ -693,110 +682,105 @@ Context.Defer().PushCommand(FBuildEntityFromFragmentInstances(EntityHandle,
 <!-- FIXMEVORI: Once this is figured out we'll arrange a bit the section so its clearer for the end user, be sure to dump the content in the next iteration (ie: add this extra parameter in FBuildEntityFromFragmentInstances) and the extra information, I'll take care of the arrangement ;) -->
 
 
-##### 4.7.3.2.4 `FBuildEntityFromFragmentInstance` (singular)
-Identical to `FBuildEntityFromFragmentInstances` but it takes a single Fragment as input instead of a list. 
-It can take an optional `FMassArchetypeSharedFragmentValues` struct as the third function argument as well.
+###### 4.7.3.2.3 `FMassCommandBuildEntityWithSharedFragments` 
+Similar to `FMassCommandBuildEntity` but it takes a `FMassArchetypeSharedFragmentValues` struct to set shared fragment values on the entity as well. This requires some extra work to find or create the shared fragment.
 ```c++
-FConstStructView ColorStruct = FConstStructView::Make(FSampleColorFragment(HitResult));
+FMassArchetypeSharedFragmentValues SharedFragmentValues;
+// This is what traits use to create their shared fragment info as well
+FConstSharedStruct& SharedFragment = EntityManager->GetOrCreateConstSharedFragment(MySharedFragment);
+SharedFragmentValues.AddConstSharedFragment(SharedFragment);
 
-//Reserve our future entity's ID!
-const FMassEntityHandle EntityHandle = EntitySubsystem->ReserveEntity();
-
-Context.Defer().PushCommand(FBuildEntityFromFragmentInstance(EntityHandle, ColorStruct));
+// MoveTemp is required here...
+EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(EntityHandle, MoveTemp(SharedFragmentValues), TransformFragment, AnotherFragmentEtc);
 ```
 
-##### 4.7.3.2.5 `FCommandSwapTags`
-Removes the first tag (`FOffTag` in this example) and adds the second to the entity. (`FOnTag`)
-
-```c++
-Context.Defer().PushCommand(FCommandSwapTags(EntityHandle, 
-	FOffTag::StaticStruct(), 
-	FOnTag::StaticStruct()
-	));
-```
-
-##### 4.7.3.2.6 `FCommandRemoveComposition`
-<!--(check) FIXMEFUNK wait... we should mention this in the archetype section!! -->
-<!-- FIXMEVORI: Depends how generic this is, if these compositions are used everywhere then probably it would be worth it to add their own subsection somewhere -->
-
-
-Removes a collection of Fragments and Tags from an Entity given a `FMassArchetypeCompositionDescriptor`.
-
-The `FMassArchetypeCompositionDescriptor` is a struct that defines a set of Fragments and Tags. It is possible to obtain it from a given archetype handle (`FMassArchetypeHandle`) or Entity template (`FMassEntityTemplate`).
-
-The following code demonstrates how to get it from an Entity template from a  `UMassEntityConfigAsset` pointer:
-
-```c++
-const FMassEntityTemplate* EntityTemplate = EntityConfig->GetConfig().GetOrCreateEntityTemplate(*Owner, *EntityConfig);
-const FMassArchetypeCompositionDescriptor& Composition = EntityTemplate->GetCompositionDescriptor();
-```
-
-The following code demonstrates how to get it from an archetype handle:
-```c++
-FMassEntityHandle EntityHandle = Context.GetEntity(EntityId);
-FMassArchetypeHandle Archetype = EntitySubsystem->GetArchetypeForEntity(EntityHandle);
-const FMassArchetypeCompositionDescriptor& Composition = EntitySubsystem->GetArchetypeComposition(Archetype);
-```
-Once `FMassArchetypeCompositionDescriptor` is obtained, we perform the command doing the following:
-
-```c++
-Context.Defer().PushCommand(FCommandRemoveComposition(EntityHandle, Composition));
-```
 
 <!-- FIXMEVORI: This section will be re-reviewed once you make another pass -->
-##### 4.7.3.2.7 `FDeferredCommand` Lambda
-Command dedicated to execute a captured lambda. This way, you can defer your own arbitrary code to happen when the command buffer is flushed.
-
+##### 4.7.3.2 Deferring your own functions in commands
+The `PushCommand<>` template can accept a C++ lambda passed into it, letting you defer any code as a command!
 <!-- FIXMEVORI: Why? Add a trusted reference to thread safety and actor mutations (preferrably epic)-->
-This is a smart way to handle Actor mutations, as those usually [need to happen on the main thread](reference_here).
+This is a smart way to handle Actor mutations, as [those usually need to happen on the main thread](https://vkguide.dev/docs/extra-chapter/multithreading/#ways-of-using-multithreading-in-game-engines). Or even just do Mass-related things the other commands don't cover.
+<!-- **Note:** The `TFunction` lambda does have a FMassDeferredSetCommand& as a function parameter you should include in every lambda using this command. -->
 
 ```c++
-// Don't forget the UMassEntitySubsystem&! It can just be (UMassEntitySubsystem&) if it's unneeded.
-Context.Defer().EmplaceCommand<FDeferredCommand>([MyAwesomePointer](const UMassEntitySubsystem& System)
-{
-		auto World = System.GetWorld();
-		MyAwesomePointer->DoStuffWithWorld(World);
-});
+// Don't forget the FMassEntityManager&! It can just be (FMassEntityManager&) if it's unneeded.
+EntityManager->Defer().PushCommand<FMassDeferredSetCommand>(
+   [&](FMassEntityManager& Manager)
+  {
+      // This runs when the deferred commands are flushed!
+      MyActor.DoGameThreadWork();
+      // Regular mass manager calls can happen in here as well! For example:
+	  EntityManager.BuildEntity(ReservedEntity, InstanceStructs, EntityTemplate.GetSharedFragmentValues());
+  });
+
+
 ```
-
-Note that the commands that mutate Entities change the value of `ECommandBufferOperationType` in their 
-declaration in order to pass their changes to the relevant observers when the commands are flushed. 
-<!-- FIXMEVORI: Who implements it, the user? Is it handle already by the command? -->
-They also manually add their changes to the observed changes list by implementing `AppendAffectedEntitiesPerType`. 
-
-<!-- FIXMEVORI: This is part of the function signature, it'll be evident-->
-<!-- **Note:** The `TFunction` lambda does have a UMassEntitySubsystem& as a function parameter you should include in every lambda using this command. -->
-
-
 <!-- FIXMEVORI: I think we should add a mandatory ECommandBufferOperationType type per command, since we already documented these... -->
-**Note:** Since it defines `ECommandBufferOperationType::None` this deferred action does not add any entity changes to trigger observers on its own!
+
+`FMassDeferredCreateCommand`,`FMassDeferredSetCommand` and the other similarly named types are each templated to set specific `EMassCommandOperationType`
+
+These are designed to organize deferred commands into different operation types. For example: we want to create entities before we change fragments on them!
+Here they are and what they do in order when commands are flushed:
+
+| Operation         |                                                |
+|-------------------|------------------------------------------------|
+| Create            | Creating new entities.                         |
+| Add               | Adding fragments/tags                          |
+| Remove            | Removing fragments/tags                        |
+| ChangeComposition | Adding and removing tags/fragments.            |
+| Set               | Changing fragment data (also adding fragments) |
+| None              | Default value, always executed last.           |
 
 
-##### 4.7.3.2.8 Custom mutation operations
-It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.
+<!-- FIXMEFUNK: I think this section is a bit overkill and might mislead people to thinking they need to make a new template to do anything. They could probably figure out how to do this on their own by just reading the source. -->
 
-```c++
-Context.Defer().EmplaceCommand<FMyCustomComand>(...)
-```
+[//]: # ()
+[//]: # (##### 4.7.3.2.7 Custom commands)
 
-The command needs to have a constructor and to override `FCommandBufferEntryBase::Execute()` but in order to correctly trigger observers two extra steps are required:
+[//]: # (It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.)
 
-1. Setting the `Type` definition to either `ECommandBufferOperationType::Remove` or `ECommandBufferOperationType::Add` in the header.
-```c++
-enum
-{
-	Type = ECommandBufferOperationType::Add
-};
-```
-2. Implementing (not overriding) `AppendAffectedEntitiesPerType` and calling functions on the passed in `FMassCommandsObservedTypes` as needed. Here we are adding a changed `Tag` and changed `Fragment`. `TargetEntity` is a member of the parent struct.
-```c++
-void AppendAffectedEntitiesPerType(FMassCommandsObservedTypes& ObservedTypes)
-{
-	ObservedTypes.TagAdded(TagType, TargetEntity);	
-	ObservedTypes.FragmentAdded(FragmentType, TargetEntity);
-}
-```
+[//]: # ()
+[//]: # (```c++)
 
+[//]: # (Context.Defer&#40;&#41;.EmplaceCommand<FMyCustomComand>&#40;...&#41;)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (The command needs to have a constructor and to override `FCommandBufferEntryBase::Execute&#40;&#41;` but in order to correctly trigger observers two extra steps are required:)
+
+[//]: # ()
+[//]: # (1. Setting the `Type` definition to either `ECommandBufferOperationType::Remove` or `ECommandBufferOperationType::Add` in the header.)
+
+[//]: # (```c++)
+
+[//]: # (enum)
+
+[//]: # ({)
+
+[//]: # (	Type = ECommandBufferOperationType::Add)
+
+[//]: # (};)
+
+[//]: # (```)
+
+[//]: # (2. Implementing &#40;not overriding&#41; `AppendAffectedEntitiesPerType` and calling functions on the passed in `FMassCommandsObservedTypes` as needed. Here we are adding a changed `Tag` and changed `Fragment`. `TargetEntity` is a member of the parent struct.)
+
+[//]: # (```c++)
+
+[//]: # (void AppendAffectedEntitiesPerType&#40;FMassCommandsObservedTypes& ObservedTypes&#41;)
+
+[//]: # ({)
+
+[//]: # (	ObservedTypes.TagAdded&#40;TagType, TargetEntity&#41;;	)
+
+[//]: # (	ObservedTypes.FragmentAdded&#40;FragmentType, TargetEntity&#41;;)
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
 
 <!-- FIXMEVORI: Provide example of custom commands and when they would be useful -->
 
@@ -842,7 +826,7 @@ public:
 		BuildContext.AddFragment_GetRef<FSampleColorFragment>().Color = UserSetColor;
 	};
 
-	// Editable in the editor
+	// Editable in the editor property list for this asset
 	UPROPERTY(EditAnywhere)
 	FColor UserSetColor;
 };
@@ -867,7 +851,7 @@ public:
 	
 	//Search the Mass Entity subsystem for an identical struct with the hash. If there are none, make a new one with the set fragment.
 	FSharedStruct MySharedFragment = 
-		EntitySubsystem->GetOrCreateSharedFragment<FMySharedSettings>(MySharedFragmentHash, MyFragment);
+		EntityManager.GetOrCreateSharedFragment<FMySharedSettings>(MySharedFragmentHash, MyFragment);
 
 	//Finally, add the shared fragment to the BuildContext!
 	BuildContext.AddSharedFragment(MySharedFragment);
@@ -876,7 +860,7 @@ public:
 
 #### 4.8.2 Validating traits
 <!-- FIXMEVORI: Clarify and provide example. I'll rewrite it once all the info is in place :) -->
-There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that can raise errors or even change the buildcontext if need be. This is called after `BuildTemplate` is called for all of the traits of the current template.
+There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that log  errors or even change the buildcontext if need be. This is called after `BuildTemplate` is called for all of the traits of the current template.
 
 
 In this snippet, we check if a field of the trait is null and print an error:
@@ -935,21 +919,34 @@ void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecution
 ```
 
 <a name="mass-o-n"></a>
-#### 4.9.1 Observer limitations
-At the time of writing, Observers are only triggered explicitely during these specific Entity actions: 
-
+#### 4.9.1 Entity Manager Observer calls
+At the time of writing, Observers are only triggered by the Mass Manager directly during these specific Entity actions. This mainly comes up due to some of the specific single-entity modifying functions like
+`addfragmenttoentity
 <!-- FIXMEVORI: Maybe this isn't the case because we are not following the recommended practices!! Should ensure not skipping the appropriate exec path-->
-<!-- This covers processors and spawners but not single Entity changes from C++. -->
+<!--  REVIEWMEVORI starting to feel pointless but I still think it's a good thing to know-->
+- Entity changes in the entity manager:
+  - `FMassEntityManager::BatchBuildEntities`
+  - `FMassEntityManager::BatchCreateEntities`
+  - `FMassEntityManager::BatchDestroyEntityChunks` 
+  - `FMassEntityManager::AddCompositionToEntity_GetDelta`
+  - `FMassEntityManager::RemoveCompositionFromEntity`
+  - `FMassEntityManager::BatchChangeTagsForEntities`
+  - `FMassEntityManager::BatchChangeFragmentCompositionForEntities`
+  - `FMassEntityManager::BatchAddFragmentInstancesForEntities`
+- The [deferred commands](#mass-queries-mq) that change entity should all call one of the above. 
 
+This covers processors and spawners but not single Entity changes from C++.
 
-- Entity changes in the Subsystem:
-  - `UMassEntitySubsystem::BatchCreateEntities`: [TODO: Add definition]
-  - `UMassEntitySubsystem::BatchDestroyEntityChunks`: [TODO: Add definition]
-  - `UMassEntitySubsystem::AddCompositionToEntity_GetDelta`: [TODO: Add definition]
-  - `UMassEntitySubsystem::RemoveCompositionFromEntity`: [TODO: Add definition]
-- Any [deferred command](#mass-queries-mq) that adds or removes Fragments/Tags to an entity. 
+If you need to, asking the observer manager to check for changes should only require calling `OnCompositionChanged()`. Here is an example from the sample's BP library:
+<!-- FIXMEFUNK: This is kind of a wacky example. I assume most people who need this might 
+```c++
 
-
+EntityManager.GetObserverManager().OnCompositionChanged(
+          FMassArchetypeEntityCollection(MyEntityArchetypeHandle, Entity,
+          FMassArchetypeEntityCollection::NoDuplicates)
+		, EntityTemplate.GetCompositionDescriptor()
+		, EMassObservedOperation::Add))
+```
 
 <!-- FIXMEVORI: I'll review this the next day -->
 <a name="mass-o-mft"></a>
@@ -1061,7 +1058,7 @@ These spawning methods can be benefitial when we require to mutate entities on s
 <!-- FIXMEVORI: Karl we need more movement in this section, I kind of repurposed it to make more sense! -->
 
 #### 5.1.2.1 Batch Spawning
-In C++, you can just call `BatchCreateEntities()` on an instance of a `UMassEntitySubSystem` by passing in a specific archetype with the number you want. This is actually how `AMassSpawner` spawns stuff internally! It calls `BatchSetEntityFragmentsValues()` afterwards to set the initial data on the returned `FEntityCreationContext`.
+In C++, you can just call `BatchCreateEntities()` on an instance of a `FMassEntityManager` by passing in a specific archetype with the number you want. This is actually how `AMassSpawner` spawns stuff internally! It calls `BatchSetEntityFragmentsValues()` afterwards to set the initial data on the returned `FEntityCreationContext`.
 
 <!--FIXMEKARL another struct to document (FEntityCreationContext) Weeeeee! It actually might be useful for our mutation merging idea. -->
 
@@ -1072,13 +1069,13 @@ Spawning a new Entity only requires asking the Mass Entity Subsystem for a new e
 <!--FIXMEFUNK: Aaaagh!! -->
 <!-- FIXMEVORI: Nopers, as I told you don't worry about replicating code and documentation, but let's expose here the best of the bestests practice -->
 
-[Check out this example with `FBuildEntityFromFragmentInstances` from the commands section:](#mass-queries-FBuildEntityFromFragmentInstances)
+[Check out this example with `FBuildEntityFromFragmentInstance` from the commands section:](#mass-queries-FBuildEntityFromFragmentInstances)
 
 We currently recommend not calling `UMassEntitySubsystem::BuildEntity` directly unless you are sure don't need observers to trigger for the entity. The shared fragments go in there as well as the third function argument!
 
 #### Entity with Fragment data and Tags
 
-Currently, my best guess is to use `FBuildEntityFromFragmentInstances` and then defer however many `Context.Defer().AddTag<FTagType>(EntityReservedEarlier);` you need.
+Currently, my best guess is to use `FMassCommandBuildEntity` and then defer however many `Context.Defer().AddTag<FTagType>(EntityReservedEarlier);` you need.
 
 <!--REVIEWMEFUNK: Added stuff in observers-->
 #### A note on observers
@@ -1088,8 +1085,23 @@ It is very important to remember that Observers are only triggered explicitely i
 
 <a name="mass-cm-dsae"></a>
 ## 5.2 Destroying entities
+- Deferred
 
-[TODO]
+The preferred way of destroying entities is to defer it (especially when processing, to stay safe.)
+```c++ 
+EntityManager->Defer().DestroyEntities(Entities);
+EntityManager->Defer().DestroyEntity(Entity);
+```
+- Directly
+
+`BatchDestroyEntityChunks` is preferred as it calls the observer manager for you. This is only truly safe to call outside of processing on the main thread, like other direct composition changes.
+`UMassSpawnerSubsystem::DestroyEntities` calls this as well.
+
+```c++
+EntityManager->BatchDestroyEntityChunks(Collection) 
+
+```
+
 
 <!-- #### Deferred -->
 
@@ -1104,24 +1116,25 @@ In this Section we are going to explore the most relevant tools Mass offers to o
 
 ## 5.2.1 `FMassEntityView`
 
-`FMassEntityView` is a struct that eases all kinds of Entity operations. It is composed by a `FMassEntityHandle` and a `UMassEntitySubsystem`. On construction, the `FMassEntityView` caches the Entity's archetype data, which will later reduce repeated work needed to retrieve information about the Entity.
+`FMassEntityView` is a struct that eases all kinds of Entity operations. One can be constructed with a `FMassEntityHandle` and a `FMassEntityManager`. On construction, the `FMassEntityView` caches the Entity's archetype data, which will later reduce repeated work needed to retrieve information about the Entity.
 
 Following next, we expose some of the relevant functions of `FMassEntityView`:
 
 <!--TODO: List of relevant functions interesting for the user:-->
-- [TODO]
-- [TODO]
-- [TODO]
 
-In the following example, we check if `NearbyEntity` is an enemy, if it is, we damage it:
+In the following contrived processor example, we check if `NearbyEntity` is an enemy, if it is, we damage it:
 ```c++
-FMassEntityView EntityView(EntitySubsystem, NearbyEntity.Entity);
+FMassEntityView EntityView(Manager, NearbyEntity.Entity);
 
-if (EntityView.HasTag<FEnemyMassTag>())
+//Check if we have a tag
+if (EntityView.HasTag<FEnemyTag>())
 {
 	if(auto DamageOnHitFragment = EntityView.GetFragmentDataPtr<FDamageOnHit>())
 	{
-		// Do damage to this entity etc...
+	    // Now we defer something to do to the other entity!
+ 	    FDamageFragment DamageFragment;
+ 	    DamageFragment.Damage = DamageOnHitFragment.Damage * AttackPower;
+        Context.Defer().PushCommand<FMassCommandAddFragmentInstances>(EntityView.GetEntity, DamageFragment);
 	}
 }
 ```
@@ -1163,15 +1176,15 @@ Basic fragments like `FTransformFragment`.
 
 <a name="mass-pm-gp-mm"></a>
 #### 6.2.2 `MassMovement`
-Features an important `UMassApplyMovementProcessor` processor that moves entities based on their velocity and force. Also includes a very basic sample.
+Features an important `UMassApplyMovementProcessor` processor that moves entities based on their velocity and force.
 
 <a name="mass-pm-gp-mr"></a>
 #### 6.2.3 `MassRepresentation`
-Processors and fragments for rendering entities in the world. They generally use an ISMC to do so.
+Processors and fragments for rendering entities in the world. They generally use an ISMC to do so, but can also swap entities out with full Unreal actors at user specified distances.
 
 <a name="mass-pm-gp-ms"></a>
 #### 6.2.4 `MassSpawner`
-A highly configurable actor type that can spawn specific entities where you want. There are two ways of choosing locations built in, one that uses an Environmental Query System asset and one that uses a ZoneGraph tag-based query. This appears to be intended for things that spawn all at once initially like NPCs,trees etc, rather than dynamicly spawned things like projectiles, for example.
+A highly configurable actor type that can spawn specific entities where you want. There are two ways of choosing locations built in, one that uses an Environmental Query System asset and one that uses a ZoneGraph tag-based query. The Mass Spawner actor appears to be intended for things that spawn all at once initially like NPCs,trees etc, rather than dynamically spawned things like projectiles, for example.
 
 <a name="mass-pm-gp-ma"></a>
 #### 6.2.5 `MassActors`
@@ -1211,12 +1224,12 @@ This section, like the rest of the document, is still work in progress.
 <a name="mass-pm-ai-zg"></a>
 #### 6.3.1 `ZoneGraph`
 <!-- FIXME: Add screenshots and examples. -->
-In-level splines and shapes that use config defined lanes to direct zonegraph pathing things around! Think sidewalks, roads etc.
+In-level splines and shapes that use config defined lanes to direct zonegraph pathing things around! Think sidewalks, roads etc. This is the main way Mass Crowd members get around.
 
 <a name="mass-pm-ai-st"></a>
 #### 6.3.2 [`StateTree`](https://docs.unrealengine.com/5.0/en-US/overview-of-state-tree-in-unreal-engine/)
 <!-- FIXME: Add screenshots and examples. -->
-A new lightweight AI statemachine that can work in conjunction with Mass Crowds. One of them is used to give movement targets to the cones in the parade in the sample.
+A new lightweight generic statemachine that can work in conjunction with Mass. One of them is used to give movement targets to the cones in the parade in the sample.
 
 
 

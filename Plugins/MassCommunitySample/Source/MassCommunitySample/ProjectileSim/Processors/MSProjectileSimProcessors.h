@@ -18,7 +18,7 @@ class MASSCOMMUNITYSAMPLE_API UMSProjectileSimProcessors : public UMassProcessor
 	
 	virtual void ConfigureQueries() override;
 
-	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 	
 	virtual void Initialize(UObject& Owner) override;
 	

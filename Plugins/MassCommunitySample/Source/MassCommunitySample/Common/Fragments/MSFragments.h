@@ -10,18 +10,25 @@
 /**
  * FMassFragments are simple structs that can hold data.
  * If you want to, it is possible to add functions as well for getter/setters and the like.
+ * USTRUCTS cannot have conventional UFunctions though
  */
+
+// A simple color fragment used in many examples
 USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FSampleColorFragment : public FMassFragment
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite,EditAnywhere)
+	FSampleColorFragment() = default;
+	
+	FSampleColorFragment(FColor Color) : Color(Color){};
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FColor Color = FColor::Red;
 };
 
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FInterpLocationFragment : public FMassFragment
 {
 	GENERATED_BODY()
@@ -31,16 +38,17 @@ struct MASSCOMMUNITYSAMPLE_API FInterpLocationFragment : public FMassFragment
 
 	UPROPERTY(EditAnywhere)
 	FVector StartingLocation = FVector::ZeroVector;
-	
+
 	UPROPERTY(EditAnywhere)
 	float Duration = 1.0f;
-	
+
 	bool bForwardDirection = true;
 
 	float Time = 0.0f;
 };
 
-USTRUCT()
+
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FOriginalTransformFragment : public FMassFragment
 {
 	GENERATED_BODY()
@@ -53,13 +61,13 @@ struct MASSCOMMUNITYSAMPLE_API FOriginalTransformFragment : public FMassFragment
  * FMassTags are structs that exist only as tags on Mass entities. They cannot have data!
  * Mostly used for filtering. They can be queried for to only include certain entities etc.
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FSampleMoverTag : public FMassTag
 {
 	GENERATED_BODY()
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMassSampleDebuggableTag : public FMassTag
 {
 	GENERATED_BODY()
@@ -75,3 +83,18 @@ namespace MassSample::Signals
 }
 
 
+
+
+
+
+// A simple shared fragment example
+// Generally these are added through traits
+
+USTRUCT()
+struct MASSCOMMUNITYSAMPLE_API FMSExampleSharedFragment : public FMassSharedFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	double SomeKindaOfData;
+};

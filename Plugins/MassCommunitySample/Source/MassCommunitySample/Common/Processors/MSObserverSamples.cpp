@@ -20,9 +20,9 @@ void UMSObserverOnAdd::ConfigureQueries()
 
 }
 
-void UMSObserverOnAdd::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 	{
 		auto OriginalTransforms = Context.GetMutableFragmentView<FOriginalTransformFragment>();
 		auto Transforms = Context.GetFragmentView<FTransformFragment>();

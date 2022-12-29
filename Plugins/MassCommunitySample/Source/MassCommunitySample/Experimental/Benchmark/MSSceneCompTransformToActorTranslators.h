@@ -35,7 +35,7 @@ protected:
 		InComp->SetComponentToWorld(InTransform);
 		InComp->UpdateBounds();
 		
-		// Evil temp physics set with static cast
+		// Evil static cast (yes this will explode instantly on non primitives) @TODO karl
 		auto bodyinstance = static_cast<UPrimitiveComponent*>(InComp)->BodyInstance;
 		FChaosEngineInterface::SetGlobalPose_AssumesLocked(bodyinstance.ActorHandle, InTransform);
 

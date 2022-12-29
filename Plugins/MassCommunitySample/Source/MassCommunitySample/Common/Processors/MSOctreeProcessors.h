@@ -6,24 +6,17 @@
 #include "MassObserverProcessor.h"
 #include "MassProcessor.h"
 #include "MSSubsystem.h"
-#include "MSHashGridProcessor.generated.h"
+#include "MSOctreeProcessors.generated.h"
 
-/**
- * We reimplement a hashgrid because the one built in is too attached to crowd avoidance.
- * If we used the built in one, avoiding enabled crowdmembers avoid everything on the hashgrid!
- * Feels dirty to have two but oh well. Perhaps it should be 3d?
- * 
- */
+
 UCLASS()
-class MASSCOMMUNITYSAMPLE_API UMSHashGridProcessor : public UMassProcessor
+class MASSCOMMUNITYSAMPLE_API UMSOctreeProcessor : public UMassProcessor
 {
 	GENERATED_BODY()
 
 public:
 	
-	UMSHashGridProcessor();
-
-protected:
+	UMSOctreeProcessor();
 	
 	FMassEntityQuery AddToHashGridQuery;
 	FMassEntityQuery UpdateHashGridQuery;
@@ -34,7 +27,7 @@ protected:
 
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
-	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 };
 
 UCLASS()
@@ -45,14 +38,14 @@ class MASSCOMMUNITYSAMPLE_API UMSHashGridMemberInitializationProcessor : public 
 public:
 	
 	UMSHashGridMemberInitializationProcessor();
-
-protected:
-
+	
 	FMassEntityQuery EntityQuery;
+
+	UPROPERTY()
 	UMSSubsystem* MassSampleSystem;
 	
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
-	virtual void Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 };

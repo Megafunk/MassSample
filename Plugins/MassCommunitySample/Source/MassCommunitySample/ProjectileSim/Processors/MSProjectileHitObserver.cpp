@@ -20,7 +20,7 @@ void UMSProjectileHitObserver::ConfigureQueries()
 
 	StopHitsQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 	StopHitsQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
-	StopHitsQuery.AddRequirement<FLineTraceFragment>(EMassFragmentAccess::ReadOnly);
+	StopHitsQuery.AddRequirement<FMSCollisionIgnoredActorsFragment>(EMassFragmentAccess::ReadOnly);
 	StopHitsQuery.AddRequirement<FHitResultFragment>(EMassFragmentAccess::ReadOnly);
 	StopHitsQuery.RegisterWithProcessor(*this);
 
@@ -31,10 +31,10 @@ void UMSProjectileHitObserver::ConfigureQueries()
 
 }
 
-void UMSProjectileHitObserver::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UMSProjectileHitObserver::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	
-			StopHitsQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+			StopHitsQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 			{
 
 				auto Transforms = Context.GetMutableFragmentView<FTransformFragment>();
@@ -51,14 +51,14 @@ void UMSProjectileHitObserver::Execute(FMassEntityManager& EntitySubsystem, FMas
 
 					//todo: should probably think of a messy goofy way to stop the projectile. Good enough for now?
 					Context.Defer().RemoveFragment<FMassVelocityFragment>(Context.GetEntity(EntityIndex));
-					Context.Defer().RemoveFragment<FLineTraceFragment>(Context.GetEntity(EntityIndex));
+					Context.Defer().RemoveFragment<FMSCollisionIgnoredActorsFragment>(Context.GetEntity(EntityIndex));
 
 					
 				}
 
 			});
 	
-			CollisionHitEventQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+			CollisionHitEventQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 			{
 
 				auto HitResults = Context.GetFragmentView<FHitResultFragment>();
@@ -67,11 +67,14 @@ void UMSProjectileHitObserver::Execute(FMassEntityManager& EntitySubsystem, FMas
 				{
 					auto Hitresult = HitResults[EntityIndex].HitResult;
 					
+					FMassArchetypeHandle Archetype = EntityManager.GetArchetypeForEntityUnsafe(Context.GetEntity(0));
+
+					
 					if(Hitresult.GetActor() && Hitresult.GetActor()->Implements<UMassProjectileHitInterface>())
 					{
 						IMassProjectileHitInterface::Execute_ProjectileHit(
 							Hitresult.GetActor(),
-							FEntityHandleWrapper{Context.GetEntity(EntityIndex)},
+							FMSEntityViewBPWrapper(Archetype,Context.GetEntity(EntityIndex)),
 							Hitresult);
 					}
 				}

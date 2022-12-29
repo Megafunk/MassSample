@@ -17,6 +17,7 @@ UMSNavMeshProcessors::UMSNavMeshProcessors()
 {
 	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
+	bRequiresGameThreadExecution = true;
 
 }
 
@@ -29,7 +30,6 @@ void UMSNavMeshProcessors::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FNavMeshAIFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
@@ -37,16 +37,15 @@ void UMSNavMeshProcessors::ConfigureQueries()
 
 }
 
-void UMSNavMeshProcessors::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UMSNavMeshProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	TArray<FMassEntityHandle> EntitiesToSignalPathDone;
 
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 	{
 		const auto NavMeshAIFragmentList = Context.GetMutableFragmentView<FNavMeshAIFragment>();
 
 		const auto TransformList = Context.GetMutableFragmentView<FTransformFragment>();
-		const auto ForceList = Context.GetMutableFragmentView<FMassForceFragment>();
 		const auto VelocityList = Context.GetMutableFragmentView<FMassVelocityFragment>();
 
 		const auto MoveTargetList = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
@@ -55,7 +54,6 @@ void UMSNavMeshProcessors::Execute(FMassEntityManager& EntitySubsystem, FMassExe
 		{
 			
 			auto& NavMeshAIFragment = NavMeshAIFragmentList[i];
-			auto& ForceFragment = ForceList[i];
 			auto& MoveTargetFragment = MoveTargetList[i];
 			auto& VelocityFragment = VelocityList[i];
 
@@ -87,6 +85,6 @@ void UMSNavMeshProcessors::Execute(FMassEntityManager& EntitySubsystem, FMassExe
 
 	if (EntitiesToSignalPathDone.Num())
 	{
-		SignalSubsystem->SignalEntities(UE::Mass::Signals::FollowPointPathDone, EntitiesToSignalPathDone);
+		SignalSubsystem->SignalEntities(UE::Mass::Signals::NewStateTreeTaskRequired, EntitiesToSignalPathDone);
 	}
 }

@@ -20,10 +20,9 @@ UMSMovementProcessor::UMSMovementProcessor()
 void UMSMovementProcessor::ConfigureQueries()
 {
 	//Only include entities that meet the following rules:
-
 	//ALL must have an FMoverTag
 	MovementEntityQuery.AddTagRequirement<FSampleMoverTag>(EMassFragmentPresence::All);
-
+	
 	//must have an FTransformFragment and we are reading and changing it
 	MovementEntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	
@@ -32,6 +31,7 @@ void UMSMovementProcessor::ConfigureQueries()
 	
 	//must have an FMassVelocityFragment and we are reading and changing it
 	MovementEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
+	
 
 	/** FIXME: Conceptual - UMassRandomVelocityInitializer might be stealing FMassVelocityFragment,
 	noticed that if I put an input matching what the UMassRandomVelocityInitializer expects
@@ -41,13 +41,13 @@ void UMSMovementProcessor::ConfigureQueries()
 	MovementEntityQuery.RegisterWithProcessor(*this);
 }
 
-void UMSMovementProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UMSMovementProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	//The processor's work begins!
 	//Just be aware that code that affects Mass entities in here is called when we are in processing mode.
 
 	//Note that this is a lambda! If you want extra data you may need to pass something into the []
-	MovementEntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+	MovementEntityQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
 	{
 		//Get the length of the entities in our current ExecutionContext
 		const int32 NumEntities = Context.GetNumEntities();
@@ -72,7 +72,6 @@ void UMSMovementProcessor::Execute(FMassEntityManager& EntitySubsystem, FMassExe
 
 			//velocity serves as an indicator of how far we have moved this frame. 
 			VelocityList[EntityIndex].Value = DeltaForce;
-			
 			TransformToChange.AddToTranslation(DeltaForce);
 		}
 	});

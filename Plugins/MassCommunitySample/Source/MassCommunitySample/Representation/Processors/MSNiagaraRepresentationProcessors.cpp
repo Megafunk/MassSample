@@ -29,12 +29,12 @@ void UMSNiagaraRepresentationProcessors::ConfigureQueries()
 }
 
 
-void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntitySubsystem, FMassExecutionContext& Context)
+void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 
 	
 		// Query mass for transform data
-		PositionToNiagaraFragmentQuery.ForEachEntityChunk(EntitySubsystem,Context,
+		PositionToNiagaraFragmentQuery.ForEachEntityChunk(EntityManager,Context,
 			[&,this](FMassExecutionContext& Context)
 			{
 				QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_PositionToNiagara);
@@ -67,7 +67,7 @@ void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntitySubsy
 			});
 
 	// with our nice new data, we push to the actual niagara components in the world!
-	EntitySubsystem.ForEachSharedFragment<FSharedNiagaraSystemFragment>([](FSharedNiagaraSystemFragment& SharedNiagaraFragment)
+	EntityManager.ForEachSharedFragment<FSharedNiagaraSystemFragment>([](FSharedNiagaraSystemFragment& SharedNiagaraFragment)
 	{
 		const AMSNiagaraActor* NiagaraActor =  SharedNiagaraFragment.NiagaraManagerActor.Get();
 
@@ -110,11 +110,11 @@ void UMSNiagaraRepresentationSpawnProcs::ConfigureQueries()
 
 }
 
-void UMSNiagaraRepresentationSpawnProcs::SignalEntities(FMassEntityManager& EntitySubsystem,
+void UMSNiagaraRepresentationSpawnProcs::SignalEntities(FMassEntityManager& EntityManager,
 	FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals)
 {
 	//query mass for transform data
-	EntityQuery.ForEachEntityChunk(EntitySubsystem,Context,
+	EntityQuery.ForEachEntityChunk(EntityManager,Context,
 		[&,this](FMassExecutionContext& Context)
 		{
 			QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_SpawnPositionToNiagara);
