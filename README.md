@@ -178,6 +178,8 @@ Thanks to this sharing data requirement, the Mass entity manager only needs to s
 <!-- FIXMEVORI: (About the commented phrase below) Probably a bit too technical? Not a performance requirement, we should simply expose API usage. -->
 <!-- REVIEWMEFUNK: Shared fragments seem designed around the hashing workflow. It seems pretty important to mention. I will check to make sure that is true... -->
 <!-- FIXMEVORI: Mhm, I get it, however this just seems implementation details that the user won't have to handle, as its part of the framework. Will this affect performance or code design? not very likely... -->
+<!-- REVIEWMEFUNK: We actually have a custom way of defining the niagara hashes, but I am probably changing that!-->
+
 <!-- Hashes of the `FMassSharedFragment`'s values are used to find existing shared fragments and to create new ones. -->
 
 
@@ -257,7 +259,7 @@ The code above is multithread-friendly, hence the `UE_MT_X` tokens.
 
 <!-- FIXMEVORI-UE5: Maybe a section exposing the different UE_MT_X tokens? (Get informed about their full scope) -->
 
-Finally, to make this world subsystem compatible with Mass, you must define its subsystem traits, which inform Mass about its [parallel capabilities](#mass-mt). In this case, our subsystem supports parallel reads:
+_Finally, to make this world subsystem compatible with Mass, you must define its subsystem traits, which inform Mass about its [parallel capabilities](#mass-mt). In this case, our subsystem supports parallel reads:
 
 ```c++
 /**
@@ -296,7 +298,6 @@ The `FMassArchetypeData` struct represents an archetype in Mass internally.
 #### 4.5.1 Tags in the archetype model
 Each archetype (`FMassArchetypeData`) holds a bitset (`TScriptStructTypeBitSet<FMassTag>`) that contains the tag presence information, whereas each bit in the bitset represents whether a tag exists in the archetype or not.
 
-<!-- FIXMEVORI: "Is there a maximum amount of tags limit?" -->
 ![MassArchetypeTags](Images/arche-tags.png)
 
 Following the previous example, *Archetype 0* and *Archetype 2* contain the tags: *TagA*, *TagC* and *TagD*; while *Archetype 1* contains *TagC* and *TagD*. Which makes the combination of *Fragment A* and *Fragment B* to be split in two different archetypes.
@@ -648,7 +649,7 @@ These are all convenient wrappers for the internal template based deferred comma
 There is a set of `FCommandBufferEntryBase` commands that can be used to defer some more useful entity mutations. The following subsections provide an overview. 
 
 ###### 4.7.3.2.1 `FMassCommandAddFragmentInstanceList`
-Defers an existing entity receiving new fragment data. 
+Defers adding new fragment data to an existing entity. 
 
 In the example below we mutate the `FHitResultFragment` with HitResult data, and a `FSampleColorFragment` fragment with a new color and add (or set if already present) them to an existing entity.
 
@@ -667,7 +668,7 @@ EntityManager->Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, Som
 
 <a name="mass-queries-FBuildEntityFromFragmentInstances"></a>
 ###### 4.7.3.2.2 `FMassCommandBuildEntity`
-Creates an Entity given and adds a list of fragments with data to it.
+Defers Creating an Entity and adds a list of fragments with data to it.
 
 ```c++
 FTransformFragment MyTransformFragment;
@@ -677,10 +678,6 @@ MyTransformFragment.SetTransform(FTransform::Identity);
 EntityManager->Defer().PushCommand<FMassCommandBuildEntity>(ReserverdEntity, MyTransformFragment, SomeOtherFragment);
 ));
 ```
-
-<!-- FIXMEFUNK: test out FMassArchetypeSharedFragmentValues and document it!!! This isn't really feedback as much as a todo...-->
-<!-- FIXMEVORI: Once this is figured out we'll arrange a bit the section so its clearer for the end user, be sure to dump the content in the next iteration (ie: add this extra parameter in FBuildEntityFromFragmentInstances) and the extra information, I'll take care of the arrangement ;) -->
-
 
 ###### 4.7.3.2.3 `FMassCommandBuildEntityWithSharedFragments` 
 Similar to `FMassCommandBuildEntity` but it takes a `FMassArchetypeSharedFragmentValues` struct to set shared fragment values on the entity as well. This requires some extra work to find or create the shared fragment.
@@ -693,9 +690,7 @@ SharedFragmentValues.AddConstSharedFragment(SharedFragment);
 // MoveTemp is required here...
 EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(EntityHandle, MoveTemp(SharedFragmentValues), TransformFragment, AnotherFragmentEtc);
 ```
-
-
-<!-- FIXMEVORI: This section will be re-reviewed once you make another pass -->
+<!-- NEW! -->
 ##### 4.7.3.2 Deferring your own functions in commands
 The `PushCommand<>` template can accept a C++ lambda passed into it, letting you defer any code as a command!
 <!-- FIXMEVORI: Why? Add a trusted reference to thread safety and actor mutations (preferrably epic)-->
@@ -715,7 +710,6 @@ EntityManager->Defer().PushCommand<FMassDeferredSetCommand>(
 
 
 ```
-<!-- FIXMEVORI: I think we should add a mandatory ECommandBufferOperationType type per command, since we already documented these... -->
 
 `FMassDeferredCreateCommand`,`FMassDeferredSetCommand` and the other similarly named types are each templated to set specific `EMassCommandOperationType`
 
@@ -732,57 +726,34 @@ Here they are and what they do in order when commands are flushed:
 | None              | Default value, always executed last.           |
 
 
-<!-- FIXMEFUNK: I think this section is a bit overkill and might mislead people to thinking they need to make a new template to do anything. They could probably figure out how to do this on their own by just reading the source. -->
+<!-- REVIEWMEFUNK: I think this section is a bit overkill and might mislead people to thinking they need to make a new template to do anything. They could probably figure out how to do this on their own by just reading the source. -->
 
 [//]: # ()
 [//]: # (##### 4.7.3.2.7 Custom commands)
-
 [//]: # (It is possible to create custom mutations by implementing your own commands derived from `FCommandBufferEntryBase`.)
-
 [//]: # ()
 [//]: # (```c++)
-
 [//]: # (Context.Defer&#40;&#41;.EmplaceCommand<FMyCustomComand>&#40;...&#41;)
-
 [//]: # (```)
-
 [//]: # ()
 [//]: # (The command needs to have a constructor and to override `FCommandBufferEntryBase::Execute&#40;&#41;` but in order to correctly trigger observers two extra steps are required:)
-
 [//]: # ()
 [//]: # (1. Setting the `Type` definition to either `ECommandBufferOperationType::Remove` or `ECommandBufferOperationType::Add` in the header.)
-
 [//]: # (```c++)
-
 [//]: # (enum)
-
 [//]: # ({)
-
 [//]: # (	Type = ECommandBufferOperationType::Add)
-
 [//]: # (};)
-
 [//]: # (```)
-
 [//]: # (2. Implementing &#40;not overriding&#41; `AppendAffectedEntitiesPerType` and calling functions on the passed in `FMassCommandsObservedTypes` as needed. Here we are adding a changed `Tag` and changed `Fragment`. `TargetEntity` is a member of the parent struct.)
-
 [//]: # (```c++)
-
 [//]: # (void AppendAffectedEntitiesPerType&#40;FMassCommandsObservedTypes& ObservedTypes&#41;)
-
 [//]: # ({)
-
 [//]: # (	ObservedTypes.TagAdded&#40;TagType, TargetEntity&#41;;	)
-
 [//]: # (	ObservedTypes.FragmentAdded&#40;FragmentType, TargetEntity&#41;;)
-
 [//]: # (})
-
 [//]: # (```)
-
 [//]: # ()
-
-<!-- FIXMEVORI: Provide example of custom commands and when they would be useful -->
 
 <a name="mass-traits"></a>
 ### 4.8 Traits
@@ -831,9 +802,6 @@ public:
 	FColor UserSetColor;
 };
 ```
-<!-- FIXMEVORI: What do you mean by bookkeeping? Maybe clarify? -->
- <!--REVIEWMEFUNK Now "fairly simple UObjects that occasionally have extra code to make sure the fragments are all valid and set correctly. "-->
-
 **Note:** We recommend looking at the many existing traits in this sample and the mass modules for a better overview. For the most part, they are fairly simple UObjects that occasionally have extra code to make sure the fragments are all valid and set correctly. 
 
 
@@ -867,7 +835,7 @@ In this snippet, we check if a field of the trait is null and print an error:
 ```c++
 void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {
-	//If our shared niagara system is null, show an error!
+	// If our shared niagara system is null, show an error!
 	if (!SharedNiagaraSystem)
 	{
 		UE_VLOG(&World, LogMass, Error, TEXT("SharedNiagaraSystem is null!"));
@@ -923,7 +891,7 @@ void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecution
 At the time of writing, Observers are only triggered by the Mass Manager directly during these specific Entity actions. This mainly comes up due to some of the specific single-entity modifying functions like
 `addfragmenttoentity
 <!-- FIXMEVORI: Maybe this isn't the case because we are not following the recommended practices!! Should ensure not skipping the appropriate exec path-->
-<!--  REVIEWMEVORI starting to feel pointless but I still think it's a good thing to know-->
+<!--  REVIEWMEFUNK starting to feel pointless but I still think it's a good thing to know-->
 - Entity changes in the entity manager:
   - `FMassEntityManager::BatchBuildEntities`
   - `FMassEntityManager::BatchCreateEntities`
@@ -1082,7 +1050,7 @@ Currently, my best guess is to use `FMassCommandBuildEntity` and then defer howe
 
 It is very important to remember that Observers are only triggered explicitely in certain functions out of the box. [Check out the list here.](#mass-o-n) 
 
-
+<!-- NEW! -->
 <a name="mass-cm-dsae"></a>
 ## 5.2 Destroying entities
 - Deferred
@@ -1121,7 +1089,7 @@ In this Section we are going to explore the most relevant tools Mass offers to o
 Following next, we expose some of the relevant functions of `FMassEntityView`:
 
 <!--TODO: List of relevant functions interesting for the user:-->
-
+<!-- REVIEWMEFUNK slighty better example... -->
 In the following contrived processor example, we check if `NearbyEntity` is an enemy, if it is, we damage it:
 ```c++
 FMassEntityView EntityView(Manager, NearbyEntity.Entity);
@@ -1138,8 +1106,6 @@ if (EntityView.HasTag<FEnemyTag>())
 	}
 }
 ```
-<!--FIXMEKARL: Show better example?-->
-<!--FORKARL: I think the damage is cool, but please, include also some simple code damaging the entity :) -->
 
 
 <a name="mass-pm"></a>
