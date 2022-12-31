@@ -87,8 +87,12 @@ class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLi
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static FTransform GetEntityTransform(FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
 
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void SetEntityForce(FMSEntityViewBPWrapper EntityHandle, FVector Force, const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "Mass")
+	static void SetEntityVelocity(FMSEntityViewBPWrapper EntityHandle, FVector Velocity);
+
+	UFUNCTION(BlueprintCallable, Category = "Mass")
+	static void SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force);
 	
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static void DestroyEntity(const FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);

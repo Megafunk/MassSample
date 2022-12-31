@@ -21,4 +21,11 @@ public:
 	// Whether to try to call the IMassProjectileHitInterface on actors we hit. This just adds a tag to the template conditionally 
 	UPROPERTY(EditAnywhere)
 	bool bFiresHitEventToActors = true;
+
+	UPROPERTY(EditAnywhere)
+	bool bRicochet = false;
+	
+	UPROPERTY(EditAnywhere)
+	bool bHasGravity = true;
+
 };

@@ -10,8 +10,10 @@
 
 void UMSMoverMassTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
-	BuildContext.AddTag<FSampleMoverTag>();
 	BuildContext.RequireFragment<FTransformFragment>();
 	BuildContext.RequireFragment<FMassVelocityFragment>();
-	BuildContext.AddFragment_GetRef<FMassForceFragment>().Value = Force;
+	BuildContext.AddFragment_GetRef<FMassForceFragment>().Value = StartingForce;
+
+	BuildContext.AddTag<FMSBasicMovement>();
+
 }

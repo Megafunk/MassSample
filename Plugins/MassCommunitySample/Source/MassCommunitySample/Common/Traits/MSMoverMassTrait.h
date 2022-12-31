@@ -10,7 +10,7 @@
 /**
  * This trait uses 2 fragments. One to set the location of the entity, and another one to feed a constant force to add.
  */
-UCLASS(meta = (DisplayName = "Sample Mover Trait"))
+UCLASS(meta = (DisplayName = "Basic Mover Trait"))
 class MASSCOMMUNITYSAMPLE_API UMSMoverMassTrait : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
@@ -19,6 +19,6 @@ protected:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = "Mass")
-	FVector Force = {0,0,100.0f};
+	FVector StartingForce = {0,0,100.0f};
 
 };

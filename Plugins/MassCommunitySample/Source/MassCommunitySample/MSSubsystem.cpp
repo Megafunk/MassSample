@@ -9,7 +9,6 @@
 #include "MassReplicationTypes.h"
 #include "Common/Fragments/MSFragments.h"
 #include "Example/MassVelocityRandomizerTrait.h"
-#include "Representation/Fragments/MSRepresentationFragments.h"
 
 
 void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -48,7 +47,7 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 
 	
 	//Afterwards you can add, remove or change fragments of the entity. Let's add a mass tag!
-	EntityManager->AddTagToEntity(NewEntity,FSampleMoverTag::StaticStruct());
+	EntityManager->AddTagToEntity(NewEntity,FMSGravityTag::StaticStruct());
 	//Make sure you use AddTag for tags and AddFragment for fragments!
 	EntityManager->AddFragmentToEntity(NewEntity,FSampleColorFragment::StaticStruct());
 	
@@ -64,16 +63,14 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 	// TransformFragment: (Transform=(Rotation=(X=0.000000,Y=0.000000,Z=0.000000,W=1.000000),Translation=(X=0.000000,Y=0.000000,Z=0.000000),Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)))
 	// MassVelocityFragment: ()
 	// SampleColorFragment: ()
-	UE_LOG( LogTemp, Warning, TEXT("Entity %i created on frame %i"),	NewEntity.Index,GFrameCounter);
-
-
-
+	UE_LOG( LogTemp, Warning, TEXT("Entity %i created on frame %llu"),	NewEntity.Index,GFrameCounter);
+	
 	// -----------------Deferement examples--------------------------------
 	// Because mass is an archetype style ECS, we generally prefer to defer
 	// I am mostly writing these here so I can copy them into the readme...
 
 
-	//We reserve an entity here, this way the system knows not to give this index out to other processors/deferred actions etc
+	// We reserve an entity here, this way the system knows not to give this index out to other processors/deferred actions etc
 	FMassEntityHandle ReserverdEntity = EntityManager->ReserveEntity();
 
 	FTransformFragment MyTransformFragment;
@@ -85,7 +82,7 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 	EntityManager->Defer().PushCommand<FMassCommandBuildEntity>(ReserverdEntity,MyColorFragment);
 
 
-	//Flush the commands so this new entity is actually around
+	// Flush the commands so this new entity is actually around
 	EntityManager->FlushCommands();
 
 	
@@ -99,14 +96,13 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 	FMSExampleSharedFragment SharedFragmentExample;
 	SharedFragmentExample.SomeKindaOfData = FMath::Rand() * 10000.0f;
 	FMassArchetypeSharedFragmentValues SharedFragmentValues;
+	
 	// This is what traits use to create their shared fragment info as well
 	FConstSharedStruct& SharedFragmentSharedStruct = EntityManager->GetOrCreateConstSharedFragment(SharedFragmentExample);
 	SharedFragmentValues.AddConstSharedFragment(SharedFragmentSharedStruct);
 
 	EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(ReserverdEntity, MoveTemp(SharedFragmentValues), MyTransformFragment, MyColorFragment);
 	
-
 	return NewEntity.Index;
-	
 }
 

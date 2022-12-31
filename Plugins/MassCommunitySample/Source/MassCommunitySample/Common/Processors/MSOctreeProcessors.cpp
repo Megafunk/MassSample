@@ -4,14 +4,14 @@
 
 #include "MassCommonFragments.h"
 #include "MassCommonTypes.h"
+#include "MassMovementFragments.h"
 #include "Common/Fragments/MSOctreeFragments.h"
 
 
 UMSOctreeProcessor::UMSOctreeProcessor()
 {
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
-	// In theory it should be thread save but I'm seeing wackiness so I'm slapping on singlethreaded for now
-	bRequiresGameThreadExecution = true;
+	bRequiresGameThreadExecution = false;
 	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 }
 
@@ -22,27 +22,28 @@ void UMSOctreeProcessor::Initialize(UObject& Owner)
 
 void UMSOctreeProcessor::ConfigureQueries()
 {
-	UpdateHashGridQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	UpdateHashGridQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
-	UpdateHashGridQuery.AddTagRequirement<FMSInOctreeGridTag>(EMassFragmentPresence::All);
-	UpdateHashGridQuery.RegisterWithProcessor(*this);
+	// Ideally we only do this for meshes that actually moved
+
+	UpdateOctreeQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	UpdateOctreeQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
+	UpdateOctreeQuery.AddTagRequirement<FMSInOctreeGridTag>(EMassFragmentPresence::All);
+	UpdateOctreeQuery.RegisterWithProcessor(*this);
 }
 
 void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	UpdateHashGridQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
+	UpdateOctreeQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
 		const int32 NumEntities = Context.GetNumEntities();
 
 		const auto LocationList = Context.GetFragmentView<FTransformFragment>();
-		const auto NavigationObstacleCellLocationList = Context.GetMutableFragmentView<FMSOctreeFragment>();
+		const auto OctreeFragments = Context.GetMutableFragmentView<FMSOctreeFragment>();
 
 		for (int32 i = 0; i < NumEntities; ++i)
 		{
 			const FVector& Location = LocationList[i].GetTransform().GetLocation();
-			auto OctreeFragment = NavigationObstacleCellLocationList[i];
-
-
+			auto OctreeFragment = OctreeFragments[i];
+			
 			FOctreeElementId2 OctreeID = *OctreeFragment.OctreeID.Get();
 			FMSOctree2& Octree = MassSampleSystem->Octree2;
 

@@ -62,10 +62,18 @@ struct MASSCOMMUNITYSAMPLE_API FOriginalTransformFragment : public FMassFragment
  * Mostly used for filtering. They can be queried for to only include certain entities etc.
  */
 USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FSampleMoverTag : public FMassTag
+struct MASSCOMMUNITYSAMPLE_API FMSGravityTag : public FMassTag
 {
 	GENERATED_BODY()
 };
+
+// Indicates we want to use the Mass Sample provided movement processor  (uses force to change velocity and transform)
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSBasicMovement : public FMassTag
+{
+	GENERATED_BODY()
+};
+
 
 USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMassSampleDebuggableTag : public FMassTag

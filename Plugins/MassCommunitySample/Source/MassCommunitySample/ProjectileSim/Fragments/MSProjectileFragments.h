@@ -52,26 +52,35 @@ struct MASSCOMMUNITYSAMPLE_API FLifeTimeFragment : public FMassFragment
 /**
 * Tags	
 **/
-USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FStopMovementTag : public FMassTag
-{
-	GENERATED_BODY()
-};
 
-USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FProjectileTag : public FMassTag
-{
-	GENERATED_BODY()
-};
+// A lot of these could use some data but for now I will just use them as flags
 
-// Might add data to this later, it's pretty generic here?
 USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSLineTraceTag : public FMassTag
 {
 	GENERATED_BODY()
 };
 USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FFireHitEventTag : public FMassTag
+struct MASSCOMMUNITYSAMPLE_API FMSProjectileFireHitEventTag : public FMassTag
 {
 	GENERATED_BODY()
 };
+
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSProjectileStopOnHitTag : public FMassTag
+{
+	GENERATED_BODY()
+};
+
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSProjectileRicochetTag : public FMassTag
+{
+	GENERATED_BODY()
+};
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSProjectileTag : public FMassTag
+{
+	GENERATED_BODY()
+};
+
+

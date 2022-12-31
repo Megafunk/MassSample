@@ -23,7 +23,9 @@ class MASSCOMMUNITYSAMPLE_API UMSProjectileSimProcessors : public UMassProcessor
 	virtual void Initialize(UObject& Owner) override;
 	
 	FMassEntityQuery LineTraceFromPreviousPosition;
-	FMassEntityQuery MyQuery;
+	FMassEntityQuery RotationFollowsVelocity;
+
+	UPROPERTY()
 	class UMassSignalSubsystem* SignalSubsystem;
 };
 

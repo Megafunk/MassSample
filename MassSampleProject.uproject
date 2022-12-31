@@ -19,12 +19,17 @@
 				"Mac",
 				"Linux"
 			]
+		},
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [
 		"Mac",
 		"Windows",
 		"Linux",
-		"LinuxArm64"
+		"LinuxArm64",
+		"HoloLens"
 	]
 }

@@ -23,7 +23,8 @@ protected:
 	
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
-	FMassEntityQuery StopHitsQuery;
+	FMassEntityQuery ResolveHitsQuery;
+	FMassEntityQuery RicochetHitsQuery;
 
 	FMassEntityQuery CollisionHitEventQuery;
 

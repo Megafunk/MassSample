@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassProcessor.h"
-#include "MSMovementProcessor.generated.h"
+#include "MSMovementProcessors.generated.h"
 
 // FIXME: This hello world is perfect as is, we just need to investigate the velocity fragment missbehav and document it.
 
@@ -13,19 +13,41 @@
  * Processors are called "Systems" in most ECS libraries. 
  */
 UCLASS()
-class MASSCOMMUNITYSAMPLE_API UMSMovementProcessor : public UMassProcessor
+class MASSCOMMUNITYSAMPLE_API UMSGravityProcessor : public UMassProcessor
 {
 	GENERATED_BODY()
 
 public:
 
-	UMSMovementProcessor();
+	UMSGravityProcessor();
 
 protected:
 
 	//Note that we declare this ourselves! You can have many queries if need be.
-	FMassEntityQuery MovementEntityQuery;
+	FMassEntityQuery GravityEntityQuery;
 
+	virtual void ConfigureQueries() override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
+
+};
+
+/**
+ * Example processor demonstrating how to move entities found in query
+ * Processors are called "Systems" in most ECS libraries. 
+ */
+UCLASS()
+class MASSCOMMUNITYSAMPLE_API UMSBasicMovementProcessor : public UMassProcessor
+{
+	GENERATED_BODY()
+
+public:
+
+	UMSBasicMovementProcessor();
+
+protected:
+
+	FMassEntityQuery MovementEntityQuery;
+	
 	virtual void ConfigureQueries() override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 

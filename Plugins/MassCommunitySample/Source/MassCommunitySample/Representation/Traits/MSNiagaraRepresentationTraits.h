@@ -21,5 +21,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Config")
 	UNiagaraSystem* SharedNiagaraSystem;
-
+	
+	UPROPERTY(EditAnywhere, Category = "Config")
+	UStaticMesh* StaticMeshOverride;
 };

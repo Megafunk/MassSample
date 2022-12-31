@@ -6,6 +6,7 @@
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
 #include "MassMovementFragments.h"
+#include "Common/Fragments/MSFragments.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
 void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
@@ -13,11 +14,23 @@ void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& Build
 	BuildContext.AddFragment<FMSCollisionIgnoredActorsFragment>();
 	BuildContext.RequireFragment<FTransformFragment>();
 	BuildContext.RequireFragment<FMassVelocityFragment>();
-	BuildContext.AddTag<FProjectileTag>();
+	BuildContext.AddTag<FMSProjectileTag>();
 	BuildContext.AddTag<FMSLineTraceTag>();
+	BuildContext.AddTag<FMSBasicMovement>();
+
+	
 
 	if (bFiresHitEventToActors)
 	{
-		BuildContext.AddTag<FFireHitEventTag>();
+		BuildContext.AddTag<FMSProjectileFireHitEventTag>();
+	}
+	if (bRicochet)
+	{
+		BuildContext.AddTag<FMSProjectileRicochetTag>();
+	}
+	if(bHasGravity)
+	{
+		BuildContext.AddTag<FMSGravityTag>();
+		
 	}
 }

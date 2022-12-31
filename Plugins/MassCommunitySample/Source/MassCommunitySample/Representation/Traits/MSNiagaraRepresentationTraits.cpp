@@ -13,8 +13,7 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 
 	BuildContext.RequireFragment<FTransformFragment>();
 
-	FSharedStruct SharedFragment = ProjectileSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(
-		SharedNiagaraSystem);
+	FSharedStruct SharedFragment = ProjectileSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem,StaticMeshOverride);
 
 	BuildContext.AddSharedFragment(SharedFragment);
 }

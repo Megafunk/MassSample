@@ -1,8 +1,5 @@
 ﻿#pragma once
-#include <ThirdParty/Vulkan/Include/vulkan/vulkan_core.h>
-
 #include "CoreMinimal.h"
-#include "MassEntitySubsystem.h"
 #include "MassRepresentationProcessor.h"
 #include "MSNiagaraActor.h"
 #include "MSNiagaraSubsystem.generated.h"
@@ -26,8 +23,10 @@ protected:
 	};
 
 public:
-	FSharedStruct GetOrCreateSharedNiagaraFragmentForSystemType(class UNiagaraSystem* NiagaraSystem);
+	// Creates/Finds a new niagara shared fragment and their manager actor. Can also set an overriden static mesh (a tad hacky though)
+	FSharedStruct GetOrCreateSharedNiagaraFragmentForSystemType(class UNiagaraSystem* NiagaraSystem, UStaticMesh* StaticMeshOverride);
 	
 
+	UPROPERTY()
 	TMap<uint32, AMSNiagaraActor*> PreexistingSharedNiagaraActors;
 };

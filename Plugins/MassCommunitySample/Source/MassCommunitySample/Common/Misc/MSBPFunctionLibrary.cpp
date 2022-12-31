@@ -147,18 +147,18 @@ FTransform UMSBPFunctionLibrary::GetEntityTransform(const FMSEntityViewBPWrapper
 	return FTransform();
 }
 
-void UMSBPFunctionLibrary::SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force, const UObject* WorldContextObject)
+void UMSBPFunctionLibrary::SetEntityVelocity(const FMSEntityViewBPWrapper EntityHandle, const FVector Velocity)
 {
-	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetEntityManager();
-
-	if (!EntityManager.GetArchetypeComposition(EntityManager.GetArchetypeForEntity(EntityHandle.EntityView.GetEntity()))
-	                  .Fragments
-	                  .Contains(*FMassForceFragment::StaticStruct()))
-		return;
-	if (const auto MassForceFragmentPtr = EntityManager.GetFragmentDataPtr<FMassForceFragment>(
-		EntityHandle.EntityView.GetEntity()))
+	if (auto MassFragmentPtr = EntityHandle.EntityView.GetFragmentDataPtr<FMassVelocityFragment>())
 	{
-		MassForceFragmentPtr->Value = Force;
+		MassFragmentPtr->Value = Velocity;
+	}
+}
+void UMSBPFunctionLibrary::SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force)
+{
+	if (auto MassFragmentPtr = EntityHandle.EntityView.GetFragmentDataPtr<FMassForceFragment>())
+	{
+		MassFragmentPtr->Value = Force;
 	}
 }
 
