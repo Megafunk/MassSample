@@ -259,7 +259,7 @@ The code above is multithread-friendly, hence the `UE_MT_X` tokens.
 
 <!-- FIXMEVORI-UE5: Maybe a section exposing the different UE_MT_X tokens? (Get informed about their full scope) -->
 
-Finally, to make this world subsystem compatible with Mass, you must define its subsystem traits, which inform Mass about its [parallel capabilities](#mass-mt). In this case, our subsystem supports parallel reads:
+_Finally, to make this world subsystem compatible with Mass, you must define its subsystem traits, which inform Mass about its [parallel capabilities](#mass-mt). In this case, our subsystem supports parallel reads:
 
 ```c++
 /**
@@ -617,6 +617,7 @@ In order to Defer Entity mutations we require to obtain the handle (`FMassEntity
 | ----------- | ----------- |
 | Singular | `FMassEntityHandle EntityHandle = Context.GetEntity(EntityIndex);` |
 | Plural | `auto EntityHandleArray = Context.GetEntities();` | 
+
 The following Subsections will employ the keywords `EntityHandle` and `EntityHandleArray` when handling singular or plural operations, respectively.
 
 
@@ -690,27 +691,25 @@ SharedFragmentValues.AddConstSharedFragment(SharedFragment);
 // MoveTemp is required here...
 EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(EntityHandle, MoveTemp(SharedFragmentValues), TransformFragment, AnotherFragmentEtc);
 ```
-<!-- NEW! -->
-##### 4.7.3.2 Deferring your own functions in commands
-The `PushCommand<>` template can accept a C++ lambda passed into it, letting you defer any code as a command!
-<!-- FIXMEVORI: Why? Add a trusted reference to thread safety and actor mutations (preferrably epic)-->
-This is a smart way to handle Actor mutations, as [those usually need to happen on the main thread](https://vkguide.dev/docs/extra-chapter/multithreading/#ways-of-using-multithreading-in-game-engines). Or even just do Mass-related things the other commands don't cover.
-<!-- **Note:** The `TFunction` lambda does have a FMassDeferredSetCommand& as a function parameter you should include in every lambda using this command. -->
+
+<!-- FIXMEVORI: For consistency, lets add as a title the name of the command, however in this one I'm not sure which ones we should include -->
+##### 4.7.3.2.4 `FMassDeferredSetCommand`
+Defers the execution of the `TFunction` lambda passed in as a parameter. This is a smart way to handle Actor mutations, as [those usually need to happen on the main thread](https://vkguide.dev/docs/extra-chapter/multithreading/#ways-of-using-multithreading-in-game-engines). It is also useful todo Mass-related operations that none of the other commands cover.
 
 ```c++
-// Don't forget the FMassEntityManager&! It can just be (FMassEntityManager&) if it's unneeded.
 EntityManager->Defer().PushCommand<FMassDeferredSetCommand>(
    [&](FMassEntityManager& Manager)
   {
-      // This runs when the deferred commands are flushed!
-      MyActor.DoGameThreadWork();
-      // Regular mass manager calls can happen in here as well! For example:
-	  EntityManager.BuildEntity(ReservedEntity, InstanceStructs, EntityTemplate.GetSharedFragmentValues());
+      	// This runs when the deferred commands are flushed
+      	MyActor.DoGameThreadWork();
+      	// Regular Mass manager calls can happen in here as well. For example:
+  	EntityManager.BuildEntity(ReservedEntity, InstanceStructs, EntityTemplate.GetSharedFragmentValues());
   });
-
-
 ```
 
+**Note:** The `TFunction` lambda does have a FMassEntityManager& as a function parameter you should include in every lambda using this command.
+
+<!-- FIXMEVORI: What is this? maybe we need a code example, since the example above doesn't cover it -->
 `FMassDeferredCreateCommand`,`FMassDeferredSetCommand` and the other similarly named types are each templated to set specific `EMassCommandOperationType`
 
 These are designed to organize deferred commands into different operation types. For example: we want to create entities before we change fragments on them!
@@ -727,6 +726,7 @@ Here they are and what they do in order when commands are flushed:
 
 
 <!-- REVIEWMEFUNK: I think this section is a bit overkill and might mislead people to thinking they need to make a new template to do anything. They could probably figure out how to do this on their own by just reading the source. -->
+<!-- No, it's okay, just need to be clear about the purpose -->
 
 [//]: # ()
 [//]: # (##### 4.7.3.2.7 Custom commands)
