@@ -259,7 +259,7 @@ The code above is multithread-friendly, hence the `UE_MT_X` tokens.
 
 <!-- FIXMEVORI-UE5: Maybe a section exposing the different UE_MT_X tokens? (Get informed about their full scope) -->
 
-_Finally, to make this world subsystem compatible with Mass, you must define its subsystem traits, which inform Mass about its [parallel capabilities](#mass-mt). In this case, our subsystem supports parallel reads:
+Finally, to make this world subsystem compatible with Mass, you must define its subsystem traits, which inform Mass about its [parallel capabilities](#mass-mt). In this case, our subsystem supports parallel reads:
 
 ```c++
 /**
