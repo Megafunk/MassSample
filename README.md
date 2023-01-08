@@ -87,7 +87,7 @@ Although I don't know if these should have their own section each one, or if we 
 
 <a name="mass"></a>
 ## 1. Mass
-Mass is Unreal's new in-house ECS framework! Technically, [Sequencer](https://docs.unrealengine.com/4.26/en-US/AnimatingObjects/Sequencer/Overview/) already used one internally but it wasn't intended for gameplay code. Mass was created by the AI team at Epic Games to facilitate massive crowd simulations, but has grown to include many other features as well. It was featured in the new [Matrix demo](https://www.unrealengine.com/en-US/blog/introducing-the-matrix-awakens-an-unreal-engine-5-experience) Epic released recently.
+Mass is Unreal's in-house ECS framework! Technically, [Sequencer](https://docs.unrealengine.com/4.26/en-US/AnimatingObjects/Sequencer/Overview/) already used one internally but it wasn't intended for gameplay code. Mass was created by the AI team at Epic Games to facilitate massive crowd simulations, but has grown to include many other features as well. It was featured in the [Matrix Awakens demo](https://www.unrealengine.com/en-US/blog/introducing-the-matrix-awakens-an-unreal-engine-5-experience) Epic released in 2021.
 
 <a name="ecs"></a>
 ## 2. Entity Component System 
@@ -100,7 +100,7 @@ In Mass, some ECS terminology differs from the norm in order to not get confused
 | Component | Fragment | 
 | System | Processor | 
 
-Typical Unreal Engine game code is expressed as actor objects that inherit from parent classes to change their data and functionality based on what they ***are***. 
+Typical Unreal Engine game code is expressed as Actor objects that inherit from parent classes to change their data and functionality based on what they ***are***. 
 In an ECS, an entity is only composed of fragments that get manipulated by processors based on which ECS components they ***have***. 
 
 An entity is really just a small unique identifier that points to some fragments. A Processor defines a query that filters only for entities that have specific fragments. For example, a basic "movement" Processor could query for entities that have a transform and velocity component to add the velocity to their current transform position. 
@@ -174,14 +174,6 @@ struct MASSCOMMUNITYSAMPLE_API FClockSharedFragment : public FMassSharedFragment
 In the example above, all the entities containing the `FClockSharedFragment` will see the same `Clock` value. If an entity modifies the `Clock` value, the rest of the entities with this fragment will see the change, as this fragment is shared accross them.
 
 Thanks to this sharing data requirement, the Mass entity manager only needs to store one Shared Fragment for the entities that use it.
-
-<!-- FIXMEVORI: (About the commented phrase below) Probably a bit too technical? Not a performance requirement, we should simply expose API usage. -->
-<!-- REVIEWMEFUNK: Shared fragments seem designed around the hashing workflow. It seems pretty important to mention. I will check to make sure that is true... -->
-<!-- FIXMEVORI: Mhm, I get it, however this just seems implementation details that the user won't have to handle, as its part of the framework. Will this affect performance or code design? not very likely... -->
-<!-- REVIEWMEFUNK: We actually have a custom way of defining the niagara hashes, but I am probably changing that!-->
-
-<!-- Hashes of the `FMassSharedFragment`'s values are used to find existing shared fragments and to create new ones. -->
-
 
 <a name="mass-tags"></a>
 ### 4.3 Tags
@@ -663,8 +655,6 @@ EntityManager->Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, Col
 
 // It can add single fragment instances as well, and should set data on existing fragments safely
 EntityManager->Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, SomeOtherFragment);
-
-
 ```
 
 <a name="mass-queries-FBuildEntityFromFragmentInstances"></a>
@@ -694,7 +684,7 @@ EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(E
 
 <!-- FIXMEVORI: For consistency, lets add as a title the name of the command, however in this one I'm not sure which ones we should include -->
 ##### 4.7.3.2.4 `FMassDeferredSetCommand`
-Defers the execution of the `TFunction` lambda passed in as a parameter. This is a smart way to handle Actor mutations, as [those usually need to happen on the main thread](https://vkguide.dev/docs/extra-chapter/multithreading/#ways-of-using-multithreading-in-game-engines). It is also useful todo Mass-related operations that none of the other commands cover.
+Defers the execution of the `TFunction` lambda passed in as a parameter. It is useful for performing Mass-related operations that none of the other commands cover. This is a smart way to handle Actor mutations, as [those usually need to happen on the main thread](https://vkguide.dev/docs/extra-chapter/multithreading/#ways-of-using-multithreading-in-game-engines).
 
 ```c++
 EntityManager->Defer().PushCommand<FMassDeferredSetCommand>(
@@ -726,7 +716,7 @@ Here they are and what they do in order when commands are flushed:
 
 
 <!-- REVIEWMEFUNK: I think this section is a bit overkill and might mislead people to thinking they need to make a new template to do anything. They could probably figure out how to do this on their own by just reading the source. -->
-<!-- No, it's okay, just need to be clear about the purpose -->
+<!-- Do you think FMassDeferredSetCommand can cover them all? Isn't it worth to mention how to create new commands? Remember that this doc is to show how to use mass, so before having the command from above it was a bit tricky -->
 
 [//]: # ()
 [//]: # (##### 4.7.3.2.7 Custom commands)
@@ -827,11 +817,9 @@ public:
 
 
 #### 4.8.2 Validating traits
-<!-- FIXMEVORI: Clarify and provide example. I'll rewrite it once all the info is in place :) -->
-There is also a `ValidateTemplate` overridable function which appears to just let you create your own validation for the trait that log  errors or even change the buildcontext if need be. This is called after `BuildTemplate` is called for all of the traits of the current template.
+Traits can override `ValidateTemplate` to provide custom validation code for the trait. Native traits use this function to log  errors and/or change the `BuildContext` if required. This function is called after `BuildTemplate` and is invoked for all of the traits of the current template.
 
-
-In this snippet, we check if a field of the trait is null and print an error:
+In the following snippet, we check if a field of the trait is `nullptr` and log an error:
 ```c++
 void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
 {
@@ -843,8 +831,6 @@ void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildCon
 	}
 }
 ```
-
-
 
 <a name="mass-o"></a>
 ### 4.9 Observers
@@ -885,7 +871,7 @@ void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecution
 	});
 }
 ```
-
+<!-- FIXMEFUNK: What happened with this section? :( -->
 <a name="mass-o-n"></a>
 #### 4.9.1 Entity Manager Observer calls
 At the time of writing, Observers are only triggered by the Mass Manager directly during these specific Entity actions. This mainly comes up due to some of the specific single-entity modifying functions like
@@ -908,7 +894,6 @@ This covers processors and spawners but not single Entity changes from C++.
 If you need to, asking the observer manager to check for changes should only require calling `OnCompositionChanged()`. Here is an example from the sample's BP library:
 <!-- FIXMEFUNK: This is kind of a wacky example. I assume most people who need this might 
 ```c++
-
 EntityManager.GetObserverManager().OnCompositionChanged(
           FMassArchetypeEntityCollection(MyEntityArchetypeHandle, Entity,
           FMassArchetypeEntityCollection::NoDuplicates)
