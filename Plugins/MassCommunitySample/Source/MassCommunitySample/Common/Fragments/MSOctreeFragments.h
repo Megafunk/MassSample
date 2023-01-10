@@ -25,7 +25,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSEntityOctreeElement
 
 struct FMSEntityOctreeSemantics
 {
-	enum { MaxElementsPerLeaf = 16 };
+	enum { MaxElementsPerLeaf = 128 };
 	enum { MinInclusiveElementsPerNode = 7 };
 	enum { MaxNodeDepth = 12 };
 

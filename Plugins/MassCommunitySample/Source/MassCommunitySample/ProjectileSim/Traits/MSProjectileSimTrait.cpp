@@ -16,7 +16,6 @@ void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& Build
 	BuildContext.RequireFragment<FMassVelocityFragment>();
 	BuildContext.AddTag<FMSProjectileTag>();
 	BuildContext.AddTag<FMSLineTraceTag>();
-	BuildContext.AddTag<FMSBasicMovement>();
 
 	
 
@@ -32,5 +31,9 @@ void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& Build
 	{
 		BuildContext.AddTag<FMSGravityTag>();
 		
+	}
+	if(bQueriesOctree)
+	{
+		BuildContext.AddTag<FMSProjectileOctreeQueryTag>();
 	}
 }

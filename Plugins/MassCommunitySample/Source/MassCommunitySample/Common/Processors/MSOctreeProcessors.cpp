@@ -11,7 +11,6 @@
 UMSOctreeProcessor::UMSOctreeProcessor()
 {
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
-	bRequiresGameThreadExecution = false;
 	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 }
 
@@ -32,6 +31,8 @@ void UMSOctreeProcessor::ConfigureQueries()
 
 void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
+	FMSOctree2& Octree = MassSampleSystem->Octree2;
+
 	UpdateOctreeQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
 		const int32 NumEntities = Context.GetNumEntities();
@@ -45,7 +46,6 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 			auto OctreeFragment = OctreeFragments[i];
 			
 			FOctreeElementId2 OctreeID = *OctreeFragment.OctreeID.Get();
-			FMSOctree2& Octree = MassSampleSystem->Octree2;
 
 			if(Octree.IsValidElementId(OctreeID))
 			{
@@ -55,12 +55,17 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 				
 				// Set the new location... I think ?
 				TempOctreeElement.Bounds.Center = FVector4(Location,0);
+
+				//DrawDebugBox(EntityManager.GetWorld(), TempOctreeElement.Bounds.Center, TempOctreeElement.Bounds.Extent, FColor::White);
+
 				
 				Octree.AddElement(TempOctreeElement);
 			}
 			
 		}
 	});
+
+	auto World = EntityManager.GetWorld();
 }
 
 UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor()
@@ -104,7 +109,7 @@ void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& Entit
 
 			
 			FMSEntityOctreeElement NewOctreeElement;
-			NewOctreeElement.Bounds = FBoxCenterAndExtent(FVector(100,100,100), FVector(10.0f));
+			NewOctreeElement.Bounds = FBoxCenterAndExtent(Location, FVector(100.0f));
 			NewOctreeElement.SharedOctreeID = MakeShared<FOctreeElementId2,ESPMode::ThreadSafe>() ;
 			NewOctreeElement.EntityHandle = Entity;
 
@@ -112,6 +117,40 @@ void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& Entit
 			
 			NavigationObstacleCellLocationList[i].OctreeID = NewOctreeElement.SharedOctreeID;
 			Context.Defer().AddTag<FMSInOctreeGridTag>(Context.GetEntity(i));
+		}
+	});
+}
+
+UMSOctreeMemberCleanupProcessor::UMSOctreeMemberCleanupProcessor()
+{
+	ObservedType = FMSOctreeFragment::StaticStruct();
+	bRequiresGameThreadExecution = true;
+	Operation = EMassObservedOperation::Remove;
+}
+
+void UMSOctreeMemberCleanupProcessor::Initialize(UObject& Owner)
+{
+	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
+}
+
+void UMSOctreeMemberCleanupProcessor::ConfigureQueries()
+{
+	EntityQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);}
+
+void UMSOctreeMemberCleanupProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
+{
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
+	{
+		const auto NavigationObstacleCellLocationList = Context.GetMutableFragmentView<FMSOctreeFragment>();
+
+		const int32 NumEntities = Context.GetNumEntities();
+
+		for (int32 i = 0; i < NumEntities; ++i)
+		{
+			auto& Octree = MassSampleSystem->Octree2;
+			auto OctreeID = NavigationObstacleCellLocationList[i].OctreeID;
+			Octree.RemoveElement(*OctreeID);
 		}
 	});
 }

@@ -18,9 +18,11 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Collection.InitializeDependency<UMassEntitySubsystem>();
 	
 	EntityManager = World->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager().AsShared();
-	
+
+
+	float OctreeSize = GetDefault<UMassSampleSettings>()->OctreeBoundsSize;
 	Octree2 =
-	FMSOctree2(FVector::Zero(),UE_LARGE_HALF_WORLD_MAX);
+	FMSOctree2(FVector::Zero(),OctreeSize);
 	NavSystem = Cast<UNavigationSystemV1>(GetWorld()->GetNavigationSystem());
 	
 }

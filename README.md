@@ -872,6 +872,8 @@ void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecution
 }
 ```
 <!-- FIXMEFUNK: What happened with this section? :( -->
+<!-- REVIEWMEVORI: Lots of source changes, since it's still not really clear when observers fire I felt the need to get extra specific here... 
+It's getting to the point where the only things that don't trigger them would be easier to list out. I really think Epic should mark the API calls that don't do this with _Internal or something -->
 <a name="mass-o-n"></a>
 #### 4.9.1 Entity Manager Observer calls
 At the time of writing, Observers are only triggered by the Mass Manager directly during these specific Entity actions. This mainly comes up due to some of the specific single-entity modifying functions like
@@ -900,7 +902,6 @@ EntityManager.GetObserverManager().OnCompositionChanged(
 		, EntityTemplate.GetCompositionDescriptor()
 		, EMassObservedOperation::Add))
 ```
-
 <!-- FIXMEVORI: I'll review this the next day -->
 <a name="mass-o-mft"></a>
 #### 4.9.2 Observing multiple Fragment/Tags

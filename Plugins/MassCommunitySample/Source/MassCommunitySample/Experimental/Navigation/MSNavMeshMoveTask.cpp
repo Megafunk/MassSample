@@ -55,7 +55,7 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 			Result = Query.NavData->FindPath(NavAgentProperties, Query);
 		}
 
-		if (Result.IsSuccessful())
+		if (Result.IsSuccessful() && Result.Path.Get()->GetPathPoints().Num() > 1)
 		{
 			const float DesiredSpeed = FMath::Min(
 				MovementParams.GenerateDesiredSpeed(InstanceData.MovementStyle, MassContext.GetEntity().Index) *
@@ -82,8 +82,8 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 			}
 
 #if WITH_EDITOR
-			Result.Path.Get()->DebugDraw(Query.NavData.Get(), FColor::MakeRandomColor(),
-			                             Context.GetWorld()->GetCanvasForRenderingToTarget(), false, 10.0f);
+			// Result.Path.Get()->DebugDraw(Query.NavData.Get(), FColor::MakeRandomColor(),
+			   //                          Context.GetWorld()->GetCanvasForRenderingToTarget(), false, 10.0f);
 #endif
 		}
 		else

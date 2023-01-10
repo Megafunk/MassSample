@@ -45,11 +45,15 @@ bool UMSBPFunctionLibrary::IsEntityValid(FMSEntityViewBPWrapper Entity, UObject*
 	return EntityManager.IsEntityValid(Entity.EntityView.GetEntity());
 }
 
-FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(
-	UMassEntityConfigAsset* MassEntityConfig,
-	const UObject* WorldContextObject)
+FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig,
+	const UObject* WorldContextObject, EReturnSuccess& ReturnBranch)
 {
-	if (!MassEntityConfig) return FMSEntityViewBPWrapper();
+	if (!MassEntityConfig)
+	{
+		ReturnBranch = EReturnSuccess::Failure;
+		return FMSEntityViewBPWrapper();
+
+	}
 
 	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
 		*WorldContextObject->GetWorld(), *MassEntityConfig);
@@ -100,6 +104,8 @@ FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(
 	//If no observers did anything, we can just assume the archetype is the same as our template
 	FMSEntityViewBPWrapper NewEntityWrapper;
 	NewEntityWrapper.EntityView = FMassEntityView(EntityTemplate.GetArchetype(), ReservedEntity);
+
+	ReturnBranch = EReturnSuccess::Success;
 
 	return NewEntityWrapper;
 
@@ -156,6 +162,7 @@ void UMSBPFunctionLibrary::SetEntityVelocity(const FMSEntityViewBPWrapper Entity
 }
 void UMSBPFunctionLibrary::SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force)
 {
+	
 	if (auto MassFragmentPtr = EntityHandle.EntityView.GetFragmentDataPtr<FMassForceFragment>())
 	{
 		MassFragmentPtr->Value = Force;
@@ -177,7 +184,7 @@ void UMSBPFunctionLibrary::DestroyEntity(const FMSEntityViewBPWrapper EntityHand
 }
 
 
-void UMSBPFunctionLibrary::FindHashGridEntitiesInBox(const FVector Center, const FVector Extents, TArray<FMSEntityViewBPWrapper>& Entities,
+void UMSBPFunctionLibrary::FindOctreeEntitiesInBox(const FVector Center, const FVector Extents, TArray<FMSEntityViewBPWrapper>& Entities,
                                                      const UObject* WorldContextObject)
 {
 	QUICK_SCOPE_CYCLE_COUNTER(FindHashGridEntitiesInSphere);

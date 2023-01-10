@@ -28,4 +28,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bHasGravity = true;
 
+	UPROPERTY(EditAnywhere)
+	bool bQueriesOctree = false;
 };

@@ -9,6 +9,8 @@
 #include "MSOctreeProcessors.generated.h"
 
 
+// Updates the sample's TOctree2 node positions every frame
+// I would say this would better serve as a way of figuring out if we are near something rather than a straight up 
 UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSOctreeProcessor : public UMassProcessor
 {
@@ -38,6 +40,27 @@ class MASSCOMMUNITYSAMPLE_API UMSHashGridMemberInitializationProcessor : public 
 public:
 	
 	UMSHashGridMemberInitializationProcessor();
+	
+	FMassEntityQuery EntityQuery;
+
+	UPROPERTY()
+	UMSSubsystem* MassSampleSystem;
+	
+	virtual void Initialize(UObject& Owner) override;
+	virtual void ConfigureQueries() override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
+
+};
+
+
+UCLASS()
+class MASSCOMMUNITYSAMPLE_API UMSOctreeMemberCleanupProcessor : public UMassObserverProcessor
+{
+	GENERATED_BODY()
+
+public:
+	
+	UMSOctreeMemberCleanupProcessor();
 	
 	FMassEntityQuery EntityQuery;
 

@@ -35,3 +35,15 @@ public:
 		EntityManager.Reset();
 	};
 };
+
+
+
+
+UCLASS(Config = Game, DefaultConfig)
+class MASSCOMMUNITYSAMPLE_API UMassSampleSettings : public UDeveloperSettings
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(config, EditAnywhere, Category = "Visible")
+	float OctreeBoundsSize = UE_LARGE_HALF_WORLD_MAX;
+};

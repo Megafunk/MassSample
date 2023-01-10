@@ -19,7 +19,7 @@
 		{
 			"Name": "MassCommunitySample",
 			"Type": "Runtime",
-			"LoadingPhase": "PreLoadingScreen"
+			"LoadingPhase": "PreDefault"
 		}
 	],
 

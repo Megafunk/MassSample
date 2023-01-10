@@ -1,22 +1,25 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MSProjectileHitObserver.h"
+#include "MSProjectileHitObservers.h"
 
 #include "MassCommonFragments.h"
 #include "MassMovementFragments.h"
+#include "MSProjectileSimProcessors.h"
+#include "Common/Fragments/MSFragments.h"
+#include "Common/Fragments/MSOctreeFragments.h"
 #include "ProjectileSim/MassProjectileHitInterface.h"
+#include "MassSignalSubsystem.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
-UMSProjectileHitObserver::UMSProjectileHitObserver()
+UMSProjectileHitObservers::UMSProjectileHitObservers()
 {
 	ObservedType = FHitResultFragment::StaticStruct();
 	Operation = EMassObservedOperation::Add;
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
-	bRequiresGameThreadExecution = true;
 }
 
-void UMSProjectileHitObserver::ConfigureQueries()
+void UMSProjectileHitObservers::ConfigureQueries()
 {
 	
 	CollisionHitEventQuery.AddTagRequirement<FMSProjectileFireHitEventTag>(EMassFragmentPresence::All);
@@ -34,7 +37,7 @@ void UMSProjectileHitObserver::ConfigureQueries()
 
 }
 
-void UMSProjectileHitObserver::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
+void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 
 
@@ -76,13 +79,13 @@ void UMSProjectileHitObserver::Execute(FMassEntityManager& EntityManager, FMassE
 
 				if(Context.DoesArchetypeHaveTag<FMSProjectileRicochetTag>())
 				{
-					for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+					for (int32 i = 0; i < Context.GetNumEntities(); ++i)
 					{
-						Context.Defer().RemoveFragment<FHitResultFragment>(Context.GetEntity(EntityIndex));
+						Context.Defer().RemoveFragment<FHitResultFragment>(Context.GetEntity(i));
 
-						const auto& HitResult = HitResults[EntityIndex].HitResult;
-						auto& Transform = Transforms[EntityIndex].GetMutableTransform();
-						auto& Velocity = Velocities[EntityIndex].Value;
+						const auto& HitResult = HitResults[i].HitResult;
+						auto& Transform = Transforms[i].GetMutableTransform();
+						auto& Velocity = Velocities[i].Value;
 
 						// TODO-karl this is almost certainly wrong, I have to tool around in something a bit to get a better math setup
 						// Also it should be recursive at least a few times for extra bounces after the fact
@@ -103,7 +106,9 @@ void UMSProjectileHitObserver::Execute(FMassEntityManager& EntityManager, FMassE
 						if(Velocity.Size() < 100.0f)
 						{
 							Transform.SetTranslation(HitResult.ImpactPoint);
-							Context.Defer().RemoveFragment<FMassVelocityFragment>(Context.GetEntity(EntityIndex));
+							Context.Defer().RemoveFragment<FMassVelocityFragment>(Context.GetEntity(i));
+							Context.Defer().DestroyEntity(Context.GetEntity(i));
+
 						}
 						else
 						{
@@ -116,22 +121,63 @@ void UMSProjectileHitObserver::Execute(FMassEntityManager& EntityManager, FMassE
 				}
 				else
 				{
-					for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+					for (int32 i = 0; i < Context.GetNumEntities(); ++i)
 					{
-						auto& HitResult = HitResults[EntityIndex].HitResult;
-						FTransform& Transform = Transforms[EntityIndex].GetMutableTransform();
+						auto& HitResult = HitResults[i].HitResult;
+						FTransform& Transform = Transforms[i].GetMutableTransform();
 						
-						Transforms[EntityIndex].GetMutableTransform().SetTranslation(HitResult.ImpactPoint);
+						Transforms[i].GetMutableTransform().SetTranslation(HitResult.ImpactPoint);
 						
 						Transform.SetTranslation(HitResult.ImpactPoint);
 
 						// todo: should probably think of a less goofy way to stop the projectile. Good enough for now?
 						
-						Context.Defer().RemoveFragment<FMassVelocityFragment>(Context.GetEntity(EntityIndex));
+						Context.Defer().RemoveFragment<FMassVelocityFragment>(Context.GetEntity(i));
+						Context.Defer().DestroyEntity(Context.GetEntity(i));
+
 					}
 				}
 				
 			});
 }
 
+
+UMSEntityWasHitSignalProcessor::UMSEntityWasHitSignalProcessor()
+{
+	ExecutionOrder.ExecuteAfter.Add(UMSProjectileSimLineTrace::StaticClass()->GetFName());
+	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Behavior;
+}
+
+void UMSEntityWasHitSignalProcessor::ConfigureQueries()
+{
+	// 
+	EntityQuery.AddTagRequirement<FMSInOctreeGridTag>(EMassFragmentPresence::All);
+	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+}
+
+void UMSEntityWasHitSignalProcessor::Initialize(UObject& Owner)
+{
+	Super::Initialize(Owner);
+	UMassSignalSubsystem* SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());;
+
+	SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnGetHit);
+
+}
+
+void UMSEntityWasHitSignalProcessor::SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals)
+{
+	
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	{
+
+		auto Transforms = Context.GetFragmentView<FTransformFragment>();
+
+		for (int32 i = 0; i < Context.GetNumEntities(); ++i)
+		{
+			auto Transform = Transforms[i].GetTransform();
+			//DrawDebugSphere(EntityManager.GetWorld(), Transform.GetLocation(), 100.0f, 16, FColor::Blue, false, 5.0f, 0, 0.4f);
+		}
+	});
+	
+}
 

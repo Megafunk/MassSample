@@ -8,7 +8,7 @@
 #include "MSHashGridTrait.generated.h"
 
 /**
- *  This will subscribe the entity to our simple 3d point hashgrid so we can query for its position.
+ *  This will subscribe the entity to our simple 3d octree so we can query for its position relatively quickly
  */
 UCLASS(meta=(DisplayName="Mass Sample Octree Grid Member"))
 class MASSCOMMUNITYSAMPLE_API UMSHashGridTrait : public UMassEntityTraitBase

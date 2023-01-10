@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTypes.h"
-#include "Evaluation/MovieScenePlayback.h"
 #include "MSFragments.generated.h"
 
 /**
@@ -82,19 +81,6 @@ struct MASSCOMMUNITYSAMPLE_API FMassSampleDebuggableTag : public FMassTag
 };
 
 
-/**
- * Signal names
- */
-namespace MassSample::Signals
-{
-	const FName OnHit = FName(TEXT("SampleOnHit"));
-}
-
-
-
-
-
-
 // A simple shared fragment example
 // Generally these are added through traits
 
@@ -104,5 +90,17 @@ struct MASSCOMMUNITYSAMPLE_API FMSExampleSharedFragment : public FMassSharedFrag
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	double SomeKindaOfData;
+	double SomeKindaOfData = 0.f;
 };
+
+
+/**
+ * Signal names
+ */
+namespace MassSample::Signals
+{
+	static const FName OnProjectileHitSomething = FName("SampleOnCollide");
+	static const FName OnGetHit = FName("SampleOnHit");
+}
+
+

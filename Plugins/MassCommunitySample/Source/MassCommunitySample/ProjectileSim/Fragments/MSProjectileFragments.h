@@ -60,6 +60,12 @@ struct MASSCOMMUNITYSAMPLE_API FMSLineTraceTag : public FMassTag
 {
 	GENERATED_BODY()
 };
+
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSProjectileOctreeQueryTag : public FMassTag
+{
+	GENERATED_BODY()
+};
 USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSProjectileFireHitEventTag : public FMassTag
 {
@@ -82,5 +88,4 @@ struct MASSCOMMUNITYSAMPLE_API FMSProjectileTag : public FMassTag
 {
 	GENERATED_BODY()
 };
-
 

@@ -31,8 +31,6 @@ void UMSNiagaraRepresentationProcessors::ConfigureQueries()
 
 void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-
-	
 		// Query mass for transform data
 		PositionToNiagaraFragmentQuery.ForEachEntityChunk(EntityManager,Context,
 			[&,this](FMassExecutionContext& Context)
@@ -53,14 +51,20 @@ void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntityManag
 				SharedNiagaraFragment.IteratorOffset += QueryLength;
 				SharedNiagaraFragment.ParticlePositions.SetNumUninitialized(ArrayResizeAmount);
 				SharedNiagaraFragment.ParticleDirections.SetNumUninitialized(ArrayResizeAmount);
-				
+
+				FVector* PositionsDataArray = SharedNiagaraFragment.ParticlePositions.GetData();
+				FVector* DirectionsDataArray = SharedNiagaraFragment.ParticleDirections.GetData();
+
 				
 				for (int32 i = 0; i < QueryLength; ++i)
 				{
 					 // this is needed because there are multiple chunks for each shared niagara system 
 					 const int32 ArrayPosition = i + SharedNiagaraFragment.IteratorOffset - QueryLength;
-					 SharedNiagaraFragment.ParticlePositions[ArrayPosition] = (Transforms[i].GetTransform().GetTranslation());
-					 SharedNiagaraFragment.ParticleDirections[ArrayPosition] = (Transforms[i].GetTransform().GetRotation().GetForwardVector());
+					auto& Transform = Transforms[i].GetTransform(); 
+					
+					
+					 PositionsDataArray[ArrayPosition] = Transform.GetTranslation();
+					 DirectionsDataArray[ArrayPosition] = Transform.GetRotation().GetForwardVector();
 					 // temp log to double check iteration order etc
 					 // UE_LOG( LogTemp, Error, TEXT("projectile manager niagara system %s iterated on! with chunk length %i "),*NiagaraActor->GetName(),QueryLength);
 				}
@@ -72,10 +76,14 @@ void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntityManag
 		const AMSNiagaraActor* NiagaraActor =  SharedNiagaraFragment.NiagaraManagerActor.Get();
 
 		// UE_LOG( LogTemp, Error, TEXT("Niagara array length for %s is %i"),*NiagaraActor->GetName(),SharedNiagaraFragment.NiagaraManagerActor->ParticlePositions.Num());
-		
 		if(UNiagaraComponent* NiagaraComponent = NiagaraActor->GetNiagaraComponent())
 		{
-			
+			// If the offset is 0, we didn't iterate anything and should reset our arrays (could do an evil setnumunsafe?)
+			if(SharedNiagaraFragment.IteratorOffset == 0)
+			{
+				SharedNiagaraFragment.ParticlePositions.Reset();
+				SharedNiagaraFragment.ParticleDirections.Reset();
+			}
 			// congratulations to me (karl) for making SetNiagaraArrayVector public in an engine PR (he's so cool) (wow)
 			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent,"MassParticlePositions",SharedNiagaraFragment.ParticlePositions);
 			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent,"MassParticleDirectionVectors",SharedNiagaraFragment.ParticleDirections);
@@ -151,5 +159,5 @@ void UMSNiagaraRepresentationSpawnProcs::Initialize(UObject& Owner)
 	Super::Initialize(Owner);
 	UMassSignalSubsystem* SignalSubsystem = GetWorld()->GetSubsystem<UMassSignalSubsystem>();
 
-	SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnHit);
+	SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnProjectileHitSomething);
 }
