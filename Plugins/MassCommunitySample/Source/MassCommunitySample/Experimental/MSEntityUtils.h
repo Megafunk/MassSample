@@ -24,7 +24,7 @@ struct FMSEntitySpawnTemplate
 
 	FMSEntitySpawnTemplate(const UMassEntityConfigAsset* MassEntityConfig, const UWorld* World)
 	{
-		Template = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*World, *MassEntityConfig);
+		Template = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*World,*World);
 	};
 
 	FMassArchetypeHandle FinalizeTemplateArchetype(FMassEntityManager& EntityManager)

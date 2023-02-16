@@ -3,13 +3,15 @@
 
 #include "MSBPFunctionLibrary.h"
 
+#include "MassAgentComponent.h"
 #include "MassCommonFragments.h"
 #include "MassEntityConfigAsset.h"
 #include "MassExecutor.h"
 #include "MassMovementFragments.h"
-#include "MSDeferredCommands.h"
+#include "MassSpawnerSubsystem.h"
 #include "MSSubsystem.h"
 #include "VectorTypes.h"
+#include "CADKernel/Core/Entity.h"
 #include "Common/Fragments/MSOctreeFragments.h"
 #include "Experimental/MSEntityUtils.h"
 
@@ -59,58 +61,18 @@ FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEn
 		*WorldContextObject->GetWorld(), *MassEntityConfig);
 
 	FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
+	auto SpawnerSubsystem = WorldContextObject->GetWorld()->GetSubsystem<UMassSpawnerSubsystem>();
 
-
-	//todo: this is very slow! I am just doing this to be able to stuff configs in here for now
-	TArray<const UScriptStruct*> FragmentTypesList;
-	EntityTemplate.GetCompositionDescriptor().Fragments.ExportTypes(FragmentTypesList);
-	TArray<const UScriptStruct*> TagsTypeList;
-
-	EntityTemplate.GetCompositionDescriptor().Tags.ExportTypes(TagsTypeList);
-
-	TArray<FInstancedStruct> InstanceStructs = TArray<FInstancedStruct>(FragmentTypesList);
-
-
-	// Copy a new composition descriptor because it gets changed in the addcomposition call
-	FMassArchetypeCompositionDescriptor CompositionDescriptor = EntityTemplate.GetCompositionDescriptor();
-
-	// Reserve an entity from the manager
-	const FMassEntityHandle ReservedEntity = EntityManager.ReserveEntity();
-
-	// We are using a lambda here because we don't have a deferred command that can do 
-	EntityManager.Defer().PushCommand<FMassDeferredCreateCommand>([&](FMassEntityManager& System)
-	{
-		EntityManager.BuildEntity(ReservedEntity, InstanceStructs, EntityTemplate.GetSharedFragmentValues());
-		// get the leftover chunk fragments and tags not done in BuildEntity..
-		EntityManager.AddCompositionToEntity_GetDelta(ReservedEntity, CompositionDescriptor);
-	});
-
-	// Immediately flush? Doesn't seem too bad here but I imagine we could do this in a nicer way?
-	// Could maybe have an optional defer bool or something?
-	EntityManager.FlushCommands();
-
-	// trigger observers manually for now as using the batch add feels off? Might be different now as of 5.1?
-	if (EntityManager.GetObserverManager().OnCompositionChanged(
-										FMassArchetypeEntityCollection(EntityTemplate.GetArchetype(), {ReservedEntity},
-										FMassArchetypeEntityCollection::NoDuplicates)
-		, EntityTemplate.GetCompositionDescriptor()
-		, EMassObservedOperation::Add))
-	{
-		// If this is true, observers might have changed the archetype of our new entity
-		// so we ask the manager for the archetype again (constructing a new entity view)
-		return FMSEntityViewBPWrapper(EntityManager, ReservedEntity);
-	}
-
+	TArray<FMassEntityHandle> Entities;
+	SpawnerSubsystem->SpawnEntities(EntityTemplate.GetTemplateID(),1,FStructView(),TSubclassOf<UMassProcessor>(), Entities);
+	
 	//If no observers did anything, we can just assume the archetype is the same as our template
 	FMSEntityViewBPWrapper NewEntityWrapper;
-	NewEntityWrapper.EntityView = FMassEntityView(EntityTemplate.GetArchetype(), ReservedEntity);
+	NewEntityWrapper.EntityView = FMassEntityView(EntityManager, Entities[0]);
 
 	ReturnBranch = EReturnSuccess::Success;
 
 	return NewEntityWrapper;
-
-
-	// Even though we are pretty certain what the composition here the possibility of 
 }
 
 
@@ -183,9 +145,22 @@ void UMSBPFunctionLibrary::DestroyEntity(const FMSEntityViewBPWrapper EntityHand
 	}
 }
 
+bool UMSBPFunctionLibrary::GetMassAgentEntity(FMSEntityViewBPWrapper& OutEntity, UMassAgentComponent* Agent, const UObject* WorldContextObject)
+{
+	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetEntityManager();
+	
+	if (!Agent->IsEntityPendingCreation())
+	{
+		FMassEntityHandle EntityHandle = Agent->GetEntityHandle();
+		OutEntity = FMSEntityViewBPWrapper(EntityManager,EntityHandle);
+		return true;
+	}
+	return false;
+	
+}
 
 void UMSBPFunctionLibrary::FindOctreeEntitiesInBox(const FVector Center, const FVector Extents, TArray<FMSEntityViewBPWrapper>& Entities,
-                                                     const UObject* WorldContextObject)
+                                                   const UObject* WorldContextObject)
 {
 	QUICK_SCOPE_CYCLE_COUNTER(FindHashGridEntitiesInSphere);
 
@@ -314,7 +289,7 @@ FInstancedStruct UMSBPFunctionLibrary::GetEntityFragmentByType(FMSEntityViewBPWr
 	if (structview.IsValid())
 	{
 		ReturnBranch = EReturnSuccess::Success;
-		return structview;
+		return FInstancedStruct(structview);
 	}
 
 	return FInstancedStruct();

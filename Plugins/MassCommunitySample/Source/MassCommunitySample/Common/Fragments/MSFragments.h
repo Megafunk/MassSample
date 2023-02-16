@@ -65,7 +65,12 @@ struct MASSCOMMUNITYSAMPLE_API FMSGravityTag : public FMassTag
 {
 	GENERATED_BODY()
 };
-
+// This one is used in UMSBasicMovementProcessor for the RotationFollowsVelocity query
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSRotationFollowsVelocityTag : public FMassTag
+{
+	GENERATED_BODY()
+};
 // Indicates we want to use the Mass Sample provided movement processor  (uses force to change velocity and transform)
 USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSBasicMovement : public FMassTag
@@ -93,6 +98,26 @@ struct MASSCOMMUNITYSAMPLE_API FMSExampleSharedFragment : public FMassSharedFrag
 	double SomeKindaOfData = 0.f;
 };
 
+
+
+
+
+
+
+
+USTRUCT()
+struct MASSCOMMUNITYSAMPLE_API FMSAngularForce : public FMassFragment
+{
+	GENERATED_BODY()
+	FVector Value = FVector::ZeroVector;
+};
+
+USTRUCT()
+struct MASSCOMMUNITYSAMPLE_API FMSAngularVelocity : public FMassFragment
+{
+	GENERATED_BODY()
+	FVector Value = FVector::ZeroVector;
+};
 
 /**
  * Signal names

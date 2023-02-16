@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "MSProjectileSimTrait.generated.h"
 
 /**
@@ -30,4 +31,11 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	bool bQueriesOctree = false;
+
+	UPROPERTY(EditAnywhere)
+	bool bRotationFollowsVelocity = true;
+
+	UPROPERTY(EditAnywhere,meta=(ShowOnlyInnerProperties))
+	FMSCollisionChannelFragment CollisionChannelFragment;
+	
 };

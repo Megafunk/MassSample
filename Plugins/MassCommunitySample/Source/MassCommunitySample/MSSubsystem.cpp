@@ -21,8 +21,7 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 
 	float OctreeSize = GetDefault<UMassSampleSettings>()->OctreeBoundsSize;
-	Octree2 =
-	FMSOctree2(FVector::Zero(),OctreeSize);
+	Octree2 = FMSOctree2(FVector::Zero(),OctreeSize);
 	NavSystem = Cast<UNavigationSystemV1>(GetWorld()->GetNavigationSystem());
 	
 }

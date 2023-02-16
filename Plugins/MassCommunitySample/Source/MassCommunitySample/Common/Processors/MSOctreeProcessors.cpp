@@ -4,10 +4,14 @@
 
 #include "MassCommonFragments.h"
 #include "MassCommonTypes.h"
-#include "MassMovementFragments.h"
+#include "MassExecutionContext.h"
 #include "Common/Fragments/MSOctreeFragments.h"
 
-
+static TAutoConsoleVariable<bool> CVarMSDrawOctree(
+	TEXT("masssample.debugoctree"),
+	false,
+	TEXT("Enables debug drawing for the Mass Sample octree example")
+);
 UMSOctreeProcessor::UMSOctreeProcessor()
 {
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
@@ -23,40 +27,57 @@ void UMSOctreeProcessor::ConfigureQueries()
 {
 	// Ideally we only do this for meshes that actually moved
 
-	UpdateOctreeQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	UpdateOctreeQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
-	UpdateOctreeQuery.AddTagRequirement<FMSInOctreeGridTag>(EMassFragmentPresence::All);
-	UpdateOctreeQuery.RegisterWithProcessor(*this);
+	UpdateOctreeElementsQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	UpdateOctreeElementsQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
+	UpdateOctreeElementsQuery.AddTagRequirement<FMSInOctreeGridTag>(EMassFragmentPresence::All);
+	UpdateOctreeElementsQuery.AddConstSharedRequirement<FMSSharedBaseBounds>(EMassFragmentPresence::Optional);
+
+	UpdateOctreeElementsQuery.RegisterWithProcessor(*this);
 }
 
 void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	FMSOctree2& Octree = MassSampleSystem->Octree2;
 
-	UpdateOctreeQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
+	
+	UpdateOctreeElementsQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_UMSOctreeUpdate)
+
 		const int32 NumEntities = Context.GetNumEntities();
 
 		const auto LocationList = Context.GetFragmentView<FTransformFragment>();
 		const auto OctreeFragments = Context.GetMutableFragmentView<FMSOctreeFragment>();
+		const auto SharedBaseBounds = Context.GetConstSharedFragmentPtr<FMSSharedBaseBounds>();
 
 		for (int32 i = 0; i < NumEntities; ++i)
 		{
-			const FVector& Location = LocationList[i].GetTransform().GetLocation();
+			const auto& Transform = LocationList[i].GetTransform();
 			auto OctreeFragment = OctreeFragments[i];
 			
-			FOctreeElementId2 OctreeID = *OctreeFragment.OctreeID.Get();
 
-			if(Octree.IsValidElementId(OctreeID))
+			if(FOctreeElementId2* OctreeID = OctreeFragment.OctreeID.Get(); Octree.IsValidElementId(*OctreeID))
 			{
-				FMSEntityOctreeElement TempOctreeElement = Octree.GetElementById(OctreeID);
-				
-				Octree.RemoveElement(OctreeID);
-				
-				// Set the new location... I think ?
-				TempOctreeElement.Bounds.Center = FVector4(Location,0);
 
-				//DrawDebugBox(EntityManager.GetWorld(), TempOctreeElement.Bounds.Center, TempOctreeElement.Bounds.Extent, FColor::White);
+				FMSEntityOctreeElement TempOctreeElement = Octree.GetElementById(*OctreeID);
+
+				Octree.RemoveElement(*OctreeID);
+				
+				// expects a 0 W component
+
+
+				if(SharedBaseBounds)
+				{
+					TempOctreeElement.Bounds = FBoxCenterAndExtent(SharedBaseBounds->BoxSphereBounds.TransformBy(Transform));
+					
+				}
+				else
+				{
+					FVector Location = Transform.GetLocation();
+					TempOctreeElement.Bounds.Center = FVector4(Location,0);
+					//DrawDebugBox(EntityManager.GetWorld(), TempOctreeElement.Bounds.Center, TempOctreeElement.Bounds.Extent, FColor::Green);
+
+				}
 
 				
 				Octree.AddElement(TempOctreeElement);
@@ -65,7 +86,23 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 		}
 	});
 
-	auto World = EntityManager.GetWorld();
+#if !UE_BUILD_SHIPPING
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_UMSOctreeDebugDraw)
+	if (CVarMSDrawOctree.GetValueOnAnyThread())
+	{
+		Octree.FindAllElements([&](const FMSEntityOctreeElement& Element)
+		{
+
+			DrawDebugBox(EntityManager.GetWorld(), Element.Bounds.Center, Element.Bounds.Extent, FColor::White);
+			DrawDebugString(EntityManager.GetWorld(),
+				Element.Bounds.Center + FVector(0,0,(Element.Bounds.Extent.Z*2)), FString::FromInt(Element.EntityHandle.Index), nullptr,
+				FColor::MakeRandomSeededColor(Element.EntityHandle.Index),0,true,2);
+		
+		});
+	}
+#endif
+	
+
 }
 
 UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor()
@@ -84,6 +121,10 @@ void UMSHashGridMemberInitializationProcessor::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddRequirement<FAgentRadiusFragment>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
+	
+	EntityQuery.AddConstSharedRequirement<FMSSharedBaseBounds>(EMassFragmentPresence::Optional);
+
 	EntityQuery.RegisterWithProcessor(*this);
 }
 
@@ -92,16 +133,19 @@ void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& Entit
 {
 	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
-		const auto LocationList = Context.GetFragmentView<FTransformFragment>();
-		const auto NavigationObstacleCellLocationList = Context.GetMutableFragmentView<FMSOctreeFragment>();
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_MSHashGridMemberInitialization)
+		const auto TransformList = Context.GetFragmentView<FTransformFragment>();
+		const auto OctreeList = Context.GetMutableFragmentView<FMSOctreeFragment>();
+		const auto RadiusList = Context.GetMutableFragmentView<FAgentRadiusFragment>();
+		const auto SharedBaseBounds = Context.GetConstSharedFragmentPtr<FMSSharedBaseBounds>();
 
 		const int32 NumEntities = Context.GetNumEntities();
 
 		for (int32 i = 0; i < NumEntities; ++i)
 		{
-			const FVector& Location = LocationList[i].GetTransform().GetLocation();
+			const auto& Transform = TransformList[i].GetTransform();
 
-			auto& Octree = MassSampleSystem->Octree2;
+			FMSOctree2& Octree = MassSampleSystem->Octree2;
 
 
 			
@@ -109,13 +153,32 @@ void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& Entit
 
 			
 			FMSEntityOctreeElement NewOctreeElement;
-			NewOctreeElement.Bounds = FBoxCenterAndExtent(Location, FVector(100.0f));
+
+
+			
+			if(SharedBaseBounds)
+			{
+				NewOctreeElement.Bounds = FBoxCenterAndExtent(SharedBaseBounds->BoxSphereBounds.TransformBy(Transform));
+			}
+			else
+			{
+				if(RadiusList.Num() > 0)
+				{
+					NewOctreeElement.Bounds = FBoxCenterAndExtent(
+						Transform.GetLocation(),
+						FVector(RadiusList[i].Radius*2.0f));
+				}
+				NewOctreeElement.Bounds = FBoxCenterAndExtent(
+					Transform.GetLocation(),
+					FVector(50.0f));
+			}
+
 			NewOctreeElement.SharedOctreeID = MakeShared<FOctreeElementId2,ESPMode::ThreadSafe>() ;
 			NewOctreeElement.EntityHandle = Entity;
 
 			Octree.AddElement(NewOctreeElement);
 			
-			NavigationObstacleCellLocationList[i].OctreeID = NewOctreeElement.SharedOctreeID;
+			OctreeList[i].OctreeID = NewOctreeElement.SharedOctreeID;
 			Context.Defer().AddTag<FMSInOctreeGridTag>(Context.GetEntity(i));
 		}
 	});
@@ -140,6 +203,8 @@ void UMSOctreeMemberCleanupProcessor::ConfigureQueries()
 
 void UMSOctreeMemberCleanupProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
+	auto& Octree = MassSampleSystem->Octree2;
+
 	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
 		const auto NavigationObstacleCellLocationList = Context.GetMutableFragmentView<FMSOctreeFragment>();
@@ -148,8 +213,7 @@ void UMSOctreeMemberCleanupProcessor::Execute(FMassEntityManager& EntityManager,
 
 		for (int32 i = 0; i < NumEntities; ++i)
 		{
-			auto& Octree = MassSampleSystem->Octree2;
-			auto OctreeID = NavigationObstacleCellLocationList[i].OctreeID;
+			if(auto OctreeID = NavigationObstacleCellLocationList[i].OctreeID)
 			Octree.RemoveElement(*OctreeID);
 		}
 	});

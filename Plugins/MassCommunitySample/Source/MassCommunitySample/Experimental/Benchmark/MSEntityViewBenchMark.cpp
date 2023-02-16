@@ -32,7 +32,7 @@ void UMSEntityViewBenchMark::Initialize(UObject& Owner)
 		// Add either tag 1 or tag 2
 
 		const int randomint = FMath::RandRange(1,4);
-		const auto entityHandle = EntityManager.CreateEntity({FStructView::Make(Fragment)});
+		const auto entityHandle = EntityManager.CreateEntity({FInstancedStruct::Make(Fragment)});
 
 		switch (randomint)
 		{

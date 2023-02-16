@@ -99,6 +99,10 @@ class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLi
 	static void DestroyEntity(const FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
 
 
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandBoolAsExecs = "ReturnValue"))
+	static bool GetMassAgentEntity(FMSEntityViewBPWrapper& OutEntity, UMassAgentComponent* Agent, const UObject* WorldContextObject);
+
+	
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static void FindOctreeEntitiesInBox(const FVector Center,const FVector Extents, TArray<FMSEntityViewBPWrapper>& Entities ,const UObject* WorldContextObject);
 
@@ -119,5 +123,12 @@ class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLi
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta=(WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
 	static FInstancedStruct GetEntityFragmentByType(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment,const UObject* WorldContextObject, EReturnSuccess& ReturnBranch);
+
+	UFUNCTION(BlueprintPure)
+	static void BreakIndexToInt(const FMSEntityViewBPWrapper& InValue, int32& Index)
+	{
+		Index = InValue.EntityView.GetEntity().Index;
+	};
+
 	
 };

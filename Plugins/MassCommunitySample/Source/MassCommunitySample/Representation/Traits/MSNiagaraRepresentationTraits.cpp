@@ -9,11 +9,11 @@
 
 void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
-	UMSNiagaraSubsystem* ProjectileSubsystem = UWorld::GetSubsystem<UMSNiagaraSubsystem>(&World);
+	UMSNiagaraSubsystem* NiagaraSubsystem = UWorld::GetSubsystem<UMSNiagaraSubsystem>(&World);
 
 	BuildContext.RequireFragment<FTransformFragment>();
 
-	FSharedStruct SharedFragment = ProjectileSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem,StaticMeshOverride);
+	FSharedStruct SharedFragment = NiagaraSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem,StaticMesh);
 
 	BuildContext.AddSharedFragment(SharedFragment);
 }

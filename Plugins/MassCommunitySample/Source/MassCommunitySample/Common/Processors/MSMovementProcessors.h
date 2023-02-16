@@ -35,6 +35,7 @@ protected:
  * Example processor demonstrating how to move entities found in query
  * Processors are called "Systems" in most ECS libraries. 
  */
+
 UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSBasicMovementProcessor : public UMassProcessor
 {
@@ -44,9 +45,10 @@ public:
 
 	UMSBasicMovementProcessor();
 
-protected:
 
 	FMassEntityQuery MovementEntityQuery;
+	
+	FMassEntityQuery RotationFollowsVelocity;
 	
 	virtual void ConfigureQueries() override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;

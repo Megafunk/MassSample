@@ -23,5 +23,5 @@ public:
 	UNiagaraSystem* SharedNiagaraSystem;
 	
 	UPROPERTY(EditAnywhere, Category = "Config")
-	UStaticMesh* StaticMeshOverride;
+	UStaticMesh* StaticMesh;
 };

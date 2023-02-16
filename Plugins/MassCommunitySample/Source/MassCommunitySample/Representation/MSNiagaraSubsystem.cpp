@@ -3,6 +3,7 @@
 #include "MassEntitySubsystem.h"
 #include "MSNiagaraActor.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 #include "Fragments/MSRepresentationFragments.h"
 
 
@@ -43,11 +44,14 @@ FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType
 	//if not, we need to spawn an entity+actor for it!
 	AMSNiagaraActor* NewNiagaraActor = GetWorld()->SpawnActor<AMSNiagaraActor>(SpawnParameters);
 
+	// We need this to tick last so that it receives the new gameplay state we create in the mass manager (stuff moving etc) for the next frame.
+	NewNiagaraActor->GetNiagaraComponent()->SetTickBehavior(ENiagaraTickBehavior::ForceTickLast);
 	NewNiagaraActor->GetNiagaraComponent()->SetAsset(NiagaraSystem);
 
 	if(StaticMeshOverride)
 	{
 		NewNiagaraActor->GetNiagaraComponent()->SetVariableStaticMesh("StaticMeshToRender", StaticMeshOverride);
+		NewNiagaraActor->GetNiagaraComponent()->SetVariableMaterial("StaticMeshMaterial", StaticMeshOverride->GetMaterial(0));
 	}
 	SharedStructToReturn.NiagaraManagerActor = NewNiagaraActor;
 

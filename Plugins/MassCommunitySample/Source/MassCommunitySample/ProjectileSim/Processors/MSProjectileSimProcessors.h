@@ -3,40 +3,47 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MassMovementFragments.h"
 #include "MassProcessor.h"
 #include "MSProjectileSimProcessors.generated.h"
 /**
  * 
  */
 UCLASS()
-class MASSCOMMUNITYSAMPLE_API UMSProjectileSimLineTrace : public UMassProcessor
+class MASSCOMMUNITYSAMPLE_API UMSProjectileSimProcessors : public UMassProcessor
 {
 	GENERATED_BODY()
 
-	UMSProjectileSimLineTrace();
+	UMSProjectileSimProcessors();
 	
 	virtual void ConfigureQueries() override;
 
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 	
-	FMassEntityQuery ProjectileOctreeQuery;
+	virtual void Initialize(UObject& Owner) override;
+	
+
 	FMassEntityQuery LineTraceFromPreviousPosition;
-	FMassEntityQuery RotationFollowsVelocity;
 
 };
 
 
 UCLASS()
-class MASSCOMMUNITYSAMPLE_API UMSProjectileSimOctreeQueryProcessor : public UMassProcessor
+class MASSCOMMUNITYSAMPLE_API UMSProjectileOctreeQueryProcessors : public UMassProcessor
 {
 	GENERATED_BODY()
 
-	UMSProjectileSimOctreeQueryProcessor();
+	UMSProjectileOctreeQueryProcessors();
 	
 	virtual void ConfigureQueries() override;
 
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 	
+	virtual void Initialize(UObject& Owner) override;
+	
 	FMassEntityQuery ProjectileOctreeQuery;
+
+	UPROPERTY()
+	class UMSSubsystem* MSSubsystem;;
 };
+
+

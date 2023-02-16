@@ -64,9 +64,8 @@ public class MassCommunitySample : ModuleRules
 				"Chaos",
 				"PhysicsCore",
 				"ChaosCore",
-				"ChaosSolverEngine"
-				
-
+				"ChaosSolverEngine", "CADKernel",
+				"RHI"
 			}
 		);
 						//todo: maybe do thee editor only stuff on another module?

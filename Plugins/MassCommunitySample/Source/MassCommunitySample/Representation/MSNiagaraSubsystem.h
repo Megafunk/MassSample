@@ -5,7 +5,7 @@
 #include "MSNiagaraSubsystem.generated.h"
 
 UCLASS()
-class UMSNiagaraSubsystem : public UWorldSubsystem
+class MASSCOMMUNITYSAMPLE_API UMSNiagaraSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 protected:

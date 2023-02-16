@@ -13,7 +13,7 @@ struct MASSCOMMUNITYSAMPLE_API FSharedNiagaraSystemFragment : public FMassShared
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	TWeakObjectPtr<class AMSNiagaraActor> NiagaraManagerActor;
+	TWeakObjectPtr<AMSNiagaraActor> NiagaraManagerActor;
 
 	//This is used to make sure we insert to the right space in the niagara array after iterating a chunk and so on
 	int32 IteratorOffset = 0;
@@ -25,12 +25,13 @@ struct MASSCOMMUNITYSAMPLE_API FSharedNiagaraSystemFragment : public FMassShared
 	TArray<FVector> ParticlePositions;
 	
 	UPROPERTY(EditAnywhere)
-	FName ParticleDirectionsParameterName = "MassParticleDirectionVectors";
+	FName ParticleOrientationsParameterName = "MassParticleOrientations";
 
 	UPROPERTY()
-	TArray<FVector> ParticleDirections;
+	TArray<FQuat4f> ParticleOrientations;
 
 };
+
 
 // This one is for responding to one-off events like a hit effect.
 // I would argue it should be mapped based off of the physmat or something but oh well! 
@@ -40,7 +41,7 @@ struct MASSCOMMUNITYSAMPLE_API FSharedNiagaraSystemSpawnFragment : public FMassS
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	TWeakObjectPtr<class AMSNiagaraActor> NiagaraManagerActor;
+	TWeakObjectPtr<AMSNiagaraActor> NiagaraManagerActor;
 
 	//This is used to make sure we insert to the right space in the niagara array after iterating a chunk and so on
 	UPROPERTY()

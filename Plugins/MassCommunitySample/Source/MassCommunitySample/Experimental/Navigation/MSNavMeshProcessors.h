@@ -19,12 +19,10 @@ class MASSCOMMUNITYSAMPLE_API UMSNavMeshProcessors : public UMassProcessor
 public:
 	UMSNavMeshProcessors();
 
-	virtual void Initialize(UObject& Owner) override;
 protected:
 	virtual void ConfigureQueries() override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 	FMassEntityQuery EntityQuery;
-	class UMassSignalSubsystem* SignalSubsystem;
 public:
 };

@@ -8,6 +8,7 @@
 #include "MassGameplayDebugTypes.h"
 #include "MSSceneCompTransformToActorTranslators.h"
 #include "Translators/MassSceneComponentLocationTranslator.h"
+#include "VisualLogger/VisualLogger.h"
 #include "MSSceneCompTransformToActorTraits.generated.h"
 
 /**

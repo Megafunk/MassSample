@@ -7,7 +7,6 @@
 #include "MassEntityTemplateRegistry.h"
 #include "MassMovementFragments.h"
 #include "Common/Fragments/MSFragments.h"
-#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
 void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
@@ -16,6 +15,8 @@ void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& Build
 	BuildContext.RequireFragment<FMassVelocityFragment>();
 	BuildContext.AddTag<FMSProjectileTag>();
 	BuildContext.AddTag<FMSLineTraceTag>();
+
+	BuildContext.AddFragment(FConstStructView::Make(CollisionChannelFragment));
 
 	
 
@@ -35,5 +36,10 @@ void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& Build
 	if(bQueriesOctree)
 	{
 		BuildContext.AddTag<FMSProjectileOctreeQueryTag>();
+	}
+
+	if(bRotationFollowsVelocity)
+	{
+		BuildContext.AddTag<FMSRotationFollowsVelocityTag>();
 	}
 }

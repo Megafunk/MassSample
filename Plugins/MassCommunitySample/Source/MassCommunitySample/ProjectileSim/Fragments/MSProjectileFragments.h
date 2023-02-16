@@ -2,7 +2,6 @@
 #include "CoreMinimal.h"
 #include "CollisionQueryParams.h"
 #include "MassEntityTypes.h"
-#include "GameplayEffect.h"
 #include  "MSProjectileFragments.generated.h"
  
 /**
@@ -19,34 +18,34 @@ USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSCollisionIgnoredActorsFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	TArray<AActor*> IgnoredActors;
+
+	TArray<AActor*,TInlineAllocator<2>> IgnoredActors;
 };
 
 // TODO: Move this elsewhere? It's not entirely projectile specific
 USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FHitResultFragment : public FMassFragment
+struct MASSCOMMUNITYSAMPLE_API FMSHitResultFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	FHitResultFragment() = default;
+	FMSHitResultFragment() = default;
 
-	explicit FHitResultFragment(const FHitResult& HitResult)
+	explicit FMSHitResultFragment(const FHitResult& HitResult)
 		: HitResult(HitResult)
 	{
 	}
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FHitResult HitResult;
-
 };
 
-// TODO: Move this elsewhere? It's not entirely projectile specific
+// This would arguably make more sense as a shared thing but it's only a byte...
 USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FLifeTimeFragment : public FMassFragment
+struct MASSCOMMUNITYSAMPLE_API FMSCollisionChannelFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	float Time;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TEnumAsByte<ECollisionChannel> Channel = ECC_Camera;
 };
 
 /**
@@ -88,4 +87,5 @@ struct MASSCOMMUNITYSAMPLE_API FMSProjectileTag : public FMassTag
 {
 	GENERATED_BODY()
 };
+
 

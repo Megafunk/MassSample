@@ -21,7 +21,7 @@ public:
 	UMSOctreeProcessor();
 	
 	FMassEntityQuery AddToHashGridQuery;
-	FMassEntityQuery UpdateOctreeQuery;
+	FMassEntityQuery UpdateOctreeElementsQuery;
 	FMassEntityQuery RemoveFromGridEntityQuery;
 	
 	UPROPERTY()

@@ -2,6 +2,8 @@
 
 
 #include "MSMovementProcessors.h"
+
+#include "MassExecutionContext.h"
 #include "MassCommon/Public/MassCommonFragments.h"
 #include "MassMovement/Public/MassMovementFragments.h"
 #include "Common/Fragments/MSFragments.h"
@@ -60,8 +62,6 @@ void UMSGravityProcessor::Execute(FMassEntityManager& EntityManager, FMassExecut
 }
 
 
-
-
 UMSBasicMovementProcessor::UMSBasicMovementProcessor()
 {
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
@@ -71,19 +71,25 @@ UMSBasicMovementProcessor::UMSBasicMovementProcessor()
 void UMSBasicMovementProcessor::ConfigureQueries()
 {
 	MovementEntityQuery.AddTagRequirement<FMSBasicMovement>(EMassFragmentPresence::All);
-	
 	MovementEntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
-	
 	//must have an FMassForceFragment and we are only reading it
 	MovementEntityQuery.AddRequirement<FMassForceFragment>(EMassFragmentAccess::ReadOnly);
 	MovementEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 	MovementEntityQuery.RegisterWithProcessor(*this);
+
+	// A simple query that forces the transform to rotate in the direction of velocity 
+	RotationFollowsVelocity.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);
+	RotationFollowsVelocity.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
+	RotationFollowsVelocity.AddTagRequirement<FMSRotationFollowsVelocityTag>(EMassFragmentPresence::All);
+	RotationFollowsVelocity.RegisterWithProcessor(*this);
 }
 
 void UMSBasicMovementProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	MovementEntityQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
 	{
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_MovementEntityQuery);
+
 		const int32 NumEntities = Context.GetNumEntities();
 		
 		const TArrayView<FTransformFragment> TransformList = Context.GetMutableFragmentView<FTransformFragment>();
@@ -100,7 +106,7 @@ void UMSBasicMovementProcessor::Execute(FMassEntityManager& EntityManager, FMass
 		{
 			FTransform& TransformToChange = TransformList[EntityIndex].GetMutableTransform();
 
-			FVector Force = ForceList[EntityIndex].Value;
+			const FVector& Force = ForceList[EntityIndex].Value;
 
 			
 			FVector& Velocity = VelocityList[EntityIndex].Value;
@@ -112,4 +118,25 @@ void UMSBasicMovementProcessor::Execute(FMassEntityManager& EntityManager, FMass
 			TransformToChange.AddToTranslation(Velocity * DeltaTime);
 		}
 	});
+
+	// This is a second query that is ran right after the first
+	RotationFollowsVelocity.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& ExecContext)
+	{
+		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_RotationFollowsVelocity);
+
+		const auto Velocities = ExecContext.GetFragmentView<FMassVelocityFragment>();
+		auto Transforms = ExecContext.GetMutableFragmentView<FTransformFragment>();
+
+		int32 NumEntities = ExecContext.GetNumEntities();
+
+		FCollisionQueryParams QueryParams;
+
+		for (int32 i = 0; i < NumEntities; ++i)
+		{
+			auto& Transform = Transforms[i].GetMutableTransform();
+
+			Transform.SetRotation(Velocities[i].Value.ToOrientationQuat());
+		}
+	});
+	
 }

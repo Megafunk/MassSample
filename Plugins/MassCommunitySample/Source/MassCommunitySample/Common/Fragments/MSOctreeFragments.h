@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTypes.h"
+#include "Chaos/Framework/UncheckedArray.h"
 #include "Math/GenericOctree.h"
 #include "MSOctreeFragments.generated.h"
 
@@ -23,7 +24,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSEntityOctreeElement
 	TSharedPtr<FOctreeElementId2> SharedOctreeID;
 };
 
-struct FMSEntityOctreeSemantics
+struct FMSEntityOctreeSemantics 
 {
 	enum { MaxElementsPerLeaf = 128 };
 	enum { MinInclusiveElementsPerNode = 7 };
@@ -62,8 +63,32 @@ struct MASSCOMMUNITYSAMPLE_API FMSOctreeFragment : public FMassFragment
 };
 
 // To indicate the entity is in the hashgrid
-USTRUCT()
+USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSInOctreeGridTag : public FMassTag
 {
 	GENERATED_BODY()
+};
+
+// experimental, using it to set pivot offsets to the octree for now
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSSharedBaseBounds : public FMassSharedFragment
+{
+	GENERATED_BODY()
+	// This must hash unique or this will hash collide? I need to figure that out..
+	UPROPERTY()
+	FBoxSphereBounds BoxSphereBounds;
+};
+
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSSharedStaticMesh : public FMassSharedFragment
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	TSoftObjectPtr<UStaticMesh> StaticMesh;
+	// These can't be obtained from the default body settings afaik? Oh well.
+	// todo-makenumbergoup store these suckers inline for realsies?
+	
+	TArray<Chaos::FImplicitObject*, TInlineAllocator<32>> GeoPointers;
+
 };
