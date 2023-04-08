@@ -3,9 +3,10 @@
 
 #include "MSMovementProcessors.h"
 
+#include "MassCommonFragments.h"
+#include "MassCommonTypes.h"
 #include "MassExecutionContext.h"
-#include "MassCommon/Public/MassCommonFragments.h"
-#include "MassMovement/Public/MassMovementFragments.h"
+#include "MassMovementFragments.h"
 #include "Common/Fragments/MSFragments.h"
 
 

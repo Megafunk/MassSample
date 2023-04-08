@@ -15,7 +15,9 @@ UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
 	//We don't care about rendering on the dedicated server!
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
 	//join the other representation processors in their existing group
-	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Representation);
+	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Representation;
+	// but EndPhysics as that seems more reasonable to deal with real rendering state?
+	ProcessingPhase = EMassProcessingPhase::PostPhysics;
 }
 
 void UMSNiagaraRepresentationProcessors::ConfigureQueries()

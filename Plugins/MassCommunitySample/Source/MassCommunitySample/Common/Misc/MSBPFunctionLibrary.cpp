@@ -2,18 +2,15 @@
 
 
 #include "MSBPFunctionLibrary.h"
-
+#include "CoreMinimal.h"
 #include "MassAgentComponent.h"
 #include "MassCommonFragments.h"
 #include "MassEntityConfigAsset.h"
-#include "MassExecutor.h"
 #include "MassMovementFragments.h"
 #include "MassSpawnerSubsystem.h"
 #include "MSSubsystem.h"
 #include "VectorTypes.h"
-#include "CADKernel/Core/Entity.h"
 #include "Common/Fragments/MSOctreeFragments.h"
-#include "Experimental/MSEntityUtils.h"
 
 
 bool UMSBPFunctionLibrary::EntityHasFragment(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment)
@@ -57,8 +54,7 @@ FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEn
 
 	}
 
-	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(
-		*WorldContextObject->GetWorld(), *MassEntityConfig);
+	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*WorldContextObject->GetWorld());
 
 	FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
 	auto SpawnerSubsystem = WorldContextObject->GetWorld()->GetSubsystem<UMassSpawnerSubsystem>();
@@ -82,7 +78,7 @@ void UMSBPFunctionLibrary::SetEntityTransform(const FMSEntityViewBPWrapper Entit
 
 	if (!EntityManager.IsEntityValid(EntityHandle.EntityView.GetEntity()))
 	{
-		UE_LOG(LogBlueprintUserMessages, Error, TEXT("Passed in an invalid Entity"));
+		UE_LOG(LogTemp, Error, TEXT("Passed in an invalid Entity"));
 		return;
 	}
 

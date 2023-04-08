@@ -54,6 +54,11 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 		{
 			const auto& Transform = LocationList[i].GetTransform();
 			auto OctreeFragment = OctreeFragments[i];
+
+			if(!OctreeFragment.OctreeID)
+			{
+				continue;
+			}
 			
 
 			if(FOctreeElementId2* OctreeID = OctreeFragment.OctreeID.Get(); Octree.IsValidElementId(*OctreeID))

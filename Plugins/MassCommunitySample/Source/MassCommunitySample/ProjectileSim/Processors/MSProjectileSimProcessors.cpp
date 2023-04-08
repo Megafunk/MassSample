@@ -168,7 +168,7 @@ UMSProjectileOctreeQueryProcessors::UMSProjectileOctreeQueryProcessors()
 {
 	ExecutionOrder.ExecuteAfter.Add(UMSOctreeProcessor::StaticClass()->GetFName());
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
-	bRequiresGameThreadExecution = true;
+	bRequiresGameThreadExecution = false;
 }
 
 
@@ -212,7 +212,7 @@ void UMSProjectileOctreeQueryProcessors::Execute(FMassEntityManager& EntityManag
 		int32 NumEntities = Context.GetNumEntities();
 
 
-		for (int i = 0; i < NumEntities; ++i)
+		for (int32 i = 0; i < NumEntities; ++i)
 		{
 			auto Velocity = Velocities[i].Value;
 			auto CurrentLocation = Transforms[i].GetTransform().GetLocation();

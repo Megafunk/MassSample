@@ -10,7 +10,7 @@
 
 
 // Updates the sample's TOctree2 node positions every frame
-// I would say this would better serve as a way of figuring out if we are near something rather than a straight up 
+// I would say this would better serve as a way of figuring out if we are near something rather than a straight up physics system
 UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSOctreeProcessor : public UMassProcessor
 {
