@@ -4,6 +4,7 @@
 #include "MSProjectileSimProcessors.h"
 
 #include "MassCommonFragments.h"
+#include "MassCommonUtils.h"
 #include "MassEntityView.h"
 #include "MassExecutionContext.h"
 #include "MassMovementFragments.h"
@@ -33,7 +34,6 @@ bool DoMassCollision(FMassEntityView& View, FMassExecutionContext& Context, FVec
 		FVector LocalStart = WorldTransform.InverseTransformPositionNoScale(PrevLocation);
 		FVector LocalDelta = WorldTransform.InverseTransformVectorNoScale(Delta);
 
-		auto ThisHitColor = FColor::MakeRandomColor();
 
 		ChaosInterface::FRaycastHit BestHit;
 		BestHit.Distance = FLT_MAX;
@@ -196,7 +196,8 @@ void UMSProjectileOctreeQueryProcessors::Execute(FMassEntityManager& EntityManag
 {
 	FMSOctree2& MSOctree2 = MSSubsystem->Octree2;
 
-	TArray<FMassEntityHandle> EntitiesThatWereHit;
+	TQueue<FMassEntityHandle,EQueueMode::Mpsc> EntitiesThatWereHit;
+	std::atomic<int32> EntitiesThatWereHitNum;
 
 	auto World = EntityManager.GetWorld();
 
@@ -239,7 +240,11 @@ void UMSProjectileOctreeQueryProcessors::Execute(FMassEntityManager& EntityManag
 
 
 			// todo: probably want an actual event here. Adding a hit result fragment is not exactly expensive but still feels wrong
-			EntitiesThatWereHit.Append(EntitiesFound);
+			if(EntitiesFound.Num() > 0)
+			{
+				EntitiesThatWereHit.Enqueue(EntitiesFound[0]);
+				++EntitiesThatWereHitNum;
+			}
 
 			FMSHitResultFragment HitResultFragment;
 
@@ -254,8 +259,12 @@ void UMSProjectileOctreeQueryProcessors::Execute(FMassEntityManager& EntityManag
 			}
 		}
 	});
-	if (EntitiesThatWereHit.Num() > 0)
+
+	QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_ProjectileOctreeQueryResults);
+
+	if (!EntitiesThatWereHit.IsEmpty())
 	{
-		Context.GetMutableSubsystem<UMassSignalSubsystem>(EntityManager.GetWorld())->SignalEntities(MassSample::Signals::OnGetHit, EntitiesThatWereHit);
+		auto Entities = UE::Mass::Utils::EntityQueueToArray(EntitiesThatWereHit,EntitiesThatWereHitNum);
+		Context.GetMutableSubsystem<UMassSignalSubsystem>(EntityManager.GetWorld())->SignalEntities(MassSample::Signals::OnGetHit, Entities);
 	}
 }
