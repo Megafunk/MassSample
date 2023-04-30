@@ -164,14 +164,18 @@ A Shared Fragment is a type of Fragment that multiple entities can point to. Thi
 
 ```c++
 USTRUCT()
-struct MASSCOMMUNITYSAMPLE_API FClockSharedFragment : public FMassSharedFragment
+struct MASSCOMMUNITYSAMPLE_API FVisibilityDistanceSharedFragment : public FMassSharedFragment
 {
 	GENERATED_BODY()
-	float Clock;
+	
+	UPROPERTY()
+	float Distance;
 };
 ```
 
-In the example above, all the entities containing the `FClockSharedFragment` will see the same `Clock` value. If an entity modifies the `Clock` value, the rest of the entities with this fragment will see the change, as this fragment is shared accross them.
+In the example above, all the entities containing the `FVisibilityDistanceSharedFragment` will see the same `Distance` value. If an entity modifies the `Distance` value, the rest of the entities with this fragment will see the change as they share it through the archetype. Shared fragments are generally added from Mass Traits. 
+
+Make sure your shared fragments are Crc hashable or else you may not actually create a new instance when you call `GetOrCreateSharedFragmentByHash`. You can actually pass in your own hash with `GetOrCreateSharedFragmentByHash`, which can help if you prefer to control what makes each one unique.
 
 Thanks to this sharing data requirement, the Mass entity manager only needs to store one Shared Fragment for the entities that use it.
 
