@@ -62,7 +62,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSOctreeFragment : public FMassFragment
 	TSharedPtr<FOctreeElementId2> OctreeID;
 };
 
-// To indicate the entity is in the hashgrid
+// To indicate the entity is in the octree, it should be added internally by an observer  
 USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSInOctreeGridTag : public FMassTag
 {

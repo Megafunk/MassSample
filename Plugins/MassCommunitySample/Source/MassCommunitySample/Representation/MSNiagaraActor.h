@@ -11,17 +11,5 @@ UCLASS()
 class MASSCOMMUNITYSAMPLE_API AMSNiagaraActor : public ANiagaraActor
 {
 	GENERATED_BODY()
-
-public:
-	//todo: do we really need ObjectInitializer because the parent class doesn't have another ctr? maybe?
-	AMSNiagaraActor(const FObjectInitializer& ObjectInitializer);
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 	virtual void PostRegisterAllComponents() override;
 };
