@@ -8,8 +8,5 @@
 
 void UMSHashGridTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
-
 	BuildContext.AddFragment<FMSOctreeFragment>();
-	BuildContext.AddTag<FMSInOctreeGridTag>();
-
 }
