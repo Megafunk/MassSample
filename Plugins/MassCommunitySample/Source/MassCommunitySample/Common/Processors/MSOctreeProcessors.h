@@ -30,6 +30,7 @@ public:
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
+	virtual void BeginDestroy() override;
 };
 
 UCLASS()

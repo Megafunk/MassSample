@@ -5,12 +5,13 @@
 #include "MassCommonFragments.h"
 #include "MassCommonTypes.h"
 #include "MassExecutionContext.h"
+#include "Chaos/DebugDrawQueue.h"
 #include "Common/Fragments/MSOctreeFragments.h"
 
 static TAutoConsoleVariable<bool> CVarMSDrawOctree(
 	TEXT("masssample.debugoctree"),
 	false,
-	TEXT("Enables debug drawing for the Mass Sample octree example")
+	TEXT("Enables debug drawing for the Mass Sample octree example. Uses Chaos debug draw so it can called from other threads so remember to call p.Chaos.DebugDraw.Enabled 1")
 );
 UMSOctreeProcessor::UMSOctreeProcessor()
 {
@@ -21,6 +22,8 @@ UMSOctreeProcessor::UMSOctreeProcessor()
 void UMSOctreeProcessor::Initialize(UObject& Owner)
 {
 	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
+
+	Chaos::FDebugDrawQueue::GetInstance().SetConsumerActive(this, true);
 }
 
 void UMSOctreeProcessor::ConfigureQueries()
@@ -97,17 +100,21 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 	{
 		Octree.FindAllElements([&](const FMSEntityOctreeElement& Element)
 		{
-
-			DrawDebugBox(EntityManager.GetWorld(), Element.Bounds.Center, Element.Bounds.Extent, FColor::White);
-			DrawDebugString(EntityManager.GetWorld(),
-				Element.Bounds.Center + FVector(0,0,(Element.Bounds.Extent.Z*2)), FString::FromInt(Element.EntityHandle.Index), nullptr,
-				FColor::MakeRandomSeededColor(Element.EntityHandle.Index),0,true,2);
+			Chaos::FDebugDrawQueue::GetInstance().DrawDebugBox(Element.Bounds.Center, Element.Bounds.Extent,FQuat::Identity, FColor::White,false,0,0,1.0f);
+			Chaos::FDebugDrawQueue::GetInstance().DrawDebugString(Element.Bounds.Center + FVector(0,0,(Element.Bounds.Extent.Z*2)), FString::FromInt(Element.EntityHandle.Index), nullptr,
+			                                                                   FColor::MakeRandomSeededColor(Element.EntityHandle.Index),0,true,2);
 		
 		});
 	}
 #endif
 	
 
+}
+
+void UMSOctreeProcessor::BeginDestroy()
+{
+	Chaos::FDebugDrawQueue::GetInstance().SetConsumerActive(this, false);
+	Super::BeginDestroy();
 }
 
 UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor()
