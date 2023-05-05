@@ -35,10 +35,13 @@ protected:
 		InComp->SetComponentToWorld(InTransform);
 		InComp->UpdateBounds();
 		
-		// Evil static cast (yes this will explode instantly on non primitives) @TODO karl
+		// Evil static cast (yes this will explode instantly on non primitives) 
 		auto bodyinstance = static_cast<UPrimitiveComponent*>(InComp)->BodyInstance;
-		FChaosEngineInterface::SetGlobalPose_AssumesLocked(bodyinstance.ActorHandle, InTransform);
-
+		// thanks to Intax/BlueMan for the advice
+		FPhysicsCommand::ExecuteWrite(bodyinstance.ActorHandle, [&](const FPhysicsActorHandle& Actor)
+		{
+		   FPhysicsInterface::SetGlobalPose_AssumesLocked(bodyinstance.ActorHandle, InTransform);
+		});
 		// dirty the render transform 
 		InComp->MarkRenderTransformDirty();
 		
