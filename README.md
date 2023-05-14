@@ -881,7 +881,7 @@ It's getting to the point where the only things that don't trigger them would be
 <a name="mass-o-n"></a>
 #### 4.9.1 Entity Manager Observer calls
 At the time of writing, Observers are only triggered by the Mass Manager directly during these specific Entity actions. This mainly comes up due to some of the specific single-entity modifying functions like
-`addfragmenttoentity
+`addfragmenttoentity`
 <!-- FIXMEVORI: Maybe this isn't the case because we are not following the recommended practices!! Should ensure not skipping the appropriate exec path-->
 <!--  REVIEWMEFUNK starting to feel pointless but I still think it's a good thing to know-->
 - Entity changes in the entity manager:
@@ -897,7 +897,7 @@ At the time of writing, Observers are only triggered by the Mass Manager directl
 
 This covers processors and spawners but not single Entity changes from C++.
 
-If you need to, asking the observer manager to check for changes should only require calling `OnCompositionChanged()`. Here is an example from the sample's BP library:
+If you need to, asking the observer manager to check for changes should only require calling `OnCompositionChanged()` with the delta of newly added or removed components:
 <!-- FIXMEFUNK: This is kind of a wacky example. I assume most people who need this might 
 ```c++
 EntityManager.GetObserverManager().OnCompositionChanged(
