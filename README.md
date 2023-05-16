@@ -897,7 +897,7 @@ At the time of writing, Observers are only triggered by the Mass Manager directl
 
 This covers processors and spawners but not single Entity changes from C++.
 
-If you need to, asking the observer manager to check for changes should only require calling `OnCompositionChanged()` with the delta of newly added or removed components:
+If you need to, asking the observer manager to check for changes should only require calling `OnCompositionChanged()` with the delta of newly added or removed components.
 <!-- FIXMEFUNK: This is kind of a wacky example. I assume most people who need this might 
 ```c++
 EntityManager.GetObserverManager().OnCompositionChanged(
