@@ -11,9 +11,12 @@ We are totally open to contributions, If something is wrong or you think it coul
 
 Currently built for the Unreal Engine 5 latest version binary from the Epic Games launcher. 
 This documentation will be updated often!
+# ⚠ 5.2 Bugfix ⚠
+There is a bug in 5.2 for setting Execution Flags for the world and Mass processors that can be resolved either in the Mass config or engine changes 
+[here!](https://dev.epicgames.com/community/learning/tutorials/JXMl/unreal-engine-your-first-60-minutes-with-mass#**massprocessorbugin5.2)
 
 #### **Requirements:**
-- Unreal Engine 5.1 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- Unreal Engine 5.2 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - `Git` version control:
   - [Windows](https://gitforwindows.org/)
   - [Linux/Unix & macOS](https://git-scm.com/downloads)
