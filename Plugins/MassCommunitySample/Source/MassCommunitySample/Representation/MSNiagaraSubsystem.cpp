@@ -9,9 +9,9 @@
 
 void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	Super::Initialize(Collection);
-		
-	MassManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager().AsShared();
+	auto MassSubsystem = Collection.InitializeDependency<UMassEntitySubsystem>();
+	
+	MassManager = MassSubsystem->GetMutableEntityManager().AsShared();
 	
 }
 

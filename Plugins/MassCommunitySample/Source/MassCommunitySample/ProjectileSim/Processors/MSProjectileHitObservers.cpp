@@ -11,6 +11,8 @@
 #include "Common/Fragments/MSOctreeFragments.h"
 #include "ProjectileSim/MassProjectileHitInterface.h"
 #include "MassSignalSubsystem.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "VisualLogger/VisualLogger.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
 UMSProjectileHitObservers::UMSProjectileHitObservers()
