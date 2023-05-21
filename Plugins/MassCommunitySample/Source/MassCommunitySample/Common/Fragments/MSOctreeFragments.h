@@ -76,7 +76,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSSharedBaseBounds : public FMassSharedFragment
 	GENERATED_BODY()
 	// This must hash unique or this will hash collide? I need to figure that out..
 	UPROPERTY()
-	FBoxSphereBounds BoxSphereBounds;
+	FBoxSphereBounds BoxSphereBounds{ForceInit};
 };
 
 USTRUCT(BlueprintType)

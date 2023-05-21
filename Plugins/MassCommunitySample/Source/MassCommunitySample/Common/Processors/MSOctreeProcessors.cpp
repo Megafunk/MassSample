@@ -22,8 +22,9 @@ UMSOctreeProcessor::UMSOctreeProcessor()
 void UMSOctreeProcessor::Initialize(UObject& Owner)
 {
 	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
-
+#if CHAOS_DEBUG_DRAW
 	Chaos::FDebugDrawQueue::GetInstance().SetConsumerActive(this, true);
+#endif
 }
 
 void UMSOctreeProcessor::ConfigureQueries()
@@ -94,7 +95,7 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 		}
 	});
 
-#if !UE_BUILD_SHIPPING
+#if CHAOS_DEBUG_DRAW
 	QUICK_SCOPE_CYCLE_COUNTER(STAT_UMSOctreeDebugDraw)
 	if (CVarMSDrawOctree.GetValueOnAnyThread())
 	{
@@ -113,7 +114,9 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 
 void UMSOctreeProcessor::BeginDestroy()
 {
+#if CHAOS_DEBUG_DRAW
 	Chaos::FDebugDrawQueue::GetInstance().SetConsumerActive(this, false);
+#endif
 	Super::BeginDestroy();
 }
 
