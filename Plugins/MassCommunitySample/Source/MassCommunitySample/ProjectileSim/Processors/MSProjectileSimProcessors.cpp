@@ -197,7 +197,7 @@ void UMSProjectileOctreeQueryProcessors::Execute(FMassEntityManager& EntityManag
 	FMSOctree2& MSOctree2 = MSSubsystem->Octree2;
 
 	TQueue<FMassEntityHandle,EQueueMode::Mpsc> EntitiesThatWereHit;
-	std::atomic<int32> EntitiesThatWereHitNum;
+	std::atomic<int32> EntitiesThatWereHitNum(0);
 
 	auto World = EntityManager.GetWorld();
 
