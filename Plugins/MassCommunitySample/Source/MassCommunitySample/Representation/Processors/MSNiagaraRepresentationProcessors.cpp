@@ -13,7 +13,7 @@
 UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
 {
 	//We don't care about rendering on the dedicated server!
-	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
 	//join the other representation processors in their existing group
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Representation;
 
@@ -105,7 +105,7 @@ void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntityManag
 UMSNiagaraRepresentationSpawnProcs::UMSNiagaraRepresentationSpawnProcs()
 {
 	//We don't care about rendering on the dedicated server!
-	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
 	//join the other representation processors in their existing group
 	//ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Representation;
 	ExecutionOrder.ExecuteAfter.Add(TEXT("MSNiagaraRepresentationProcessors"));

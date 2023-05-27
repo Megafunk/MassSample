@@ -6,7 +6,7 @@
 
 UismPerInstanceDataUpdater::UismPerInstanceDataUpdater()
 {
-	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Representation);
 }
 
@@ -54,7 +54,7 @@ void UismPerInstanceDataUpdater::Execute(FMassEntityManager& EntityManager, FMas
 
 UISMPerInstanceDataChangerExampleProcessor::UISMPerInstanceDataChangerExampleProcessor()
 {
-	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Representation;
 }
 void UISMPerInstanceDataChangerExampleProcessor::ConfigureQueries()

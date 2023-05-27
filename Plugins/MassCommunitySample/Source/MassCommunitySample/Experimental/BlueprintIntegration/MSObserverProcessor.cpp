@@ -11,6 +11,8 @@ UMSObserverProcessorBP::UMSObserverProcessorBP()
 {
 	bAutoRegisterWithProcessingPhases = false;
 	bRequiresGameThreadExecution = true;
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::Server | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
+	
 }
 
 
