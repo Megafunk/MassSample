@@ -10,8 +10,6 @@ public class MassSampleProjectTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.AddRange(new string[] { "MassSampleProject" });
-
-		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
-
+		
 	}
 }

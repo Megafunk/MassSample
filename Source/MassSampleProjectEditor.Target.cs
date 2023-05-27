@@ -11,7 +11,6 @@ public class MassSampleProjectEditorTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.Add("MassSampleProject");
 		
-		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
-
+		
 	}
 }
