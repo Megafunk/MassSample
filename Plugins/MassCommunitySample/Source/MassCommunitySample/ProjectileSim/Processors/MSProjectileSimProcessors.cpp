@@ -88,6 +88,8 @@ UMSProjectileSimProcessors::UMSProjectileSimProcessors()
 {
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
 	bRequiresGameThreadExecution = true;
+
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }
 
 void UMSProjectileSimProcessors::ConfigureQueries()
@@ -159,7 +161,7 @@ void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntityManager, FMas
 
 	if (EntitiesThatHitSomething.Num() > 0)
 	{
-		Context.GetMutableSubsystem<UMassSignalSubsystem>(EntityManager.GetWorld())->SignalEntities(MassSample::Signals::OnProjectileHitSomething, EntitiesThatHitSomething);
+		Context.GetMutableSubsystem<UMassSignalSubsystem>()->SignalEntities(MassSample::Signals::OnProjectileHitSomething, EntitiesThatHitSomething);
 	}
 }
 
@@ -168,6 +170,9 @@ UMSProjectileOctreeQueryProcessors::UMSProjectileOctreeQueryProcessors()
 {
 	ExecutionOrder.ExecuteAfter.Add(UMSOctreeProcessor::StaticClass()->GetFName());
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
+	
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
+	
 	bRequiresGameThreadExecution = false;
 }
 
@@ -265,6 +270,7 @@ void UMSProjectileOctreeQueryProcessors::Execute(FMassEntityManager& EntityManag
 	if (!EntitiesThatWereHit.IsEmpty())
 	{
 		auto Entities = UE::Mass::Utils::EntityQueueToArray(EntitiesThatWereHit,EntitiesThatWereHitNum);
-		Context.GetMutableSubsystem<UMassSignalSubsystem>(EntityManager.GetWorld())->SignalEntities(MassSample::Signals::OnGetHit, Entities);
+		Context.GetMutableSubsystem<UMassSignalSubsystem>()->SignalEntitiesDeferred(Context, MassSample::Signals::OnGetHit, Entities);
+
 	}
 }
