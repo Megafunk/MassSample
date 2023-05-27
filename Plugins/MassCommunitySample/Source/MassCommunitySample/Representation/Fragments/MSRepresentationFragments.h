@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
 #include "MassEntityTypes.h"
-#include  "MSRepresentationFragments.generated.h"
+#include "Representation/MSNiagaraActor.h"
+#include "MSRepresentationFragments.generated.h"
 
 /**	Please keep in mind that we key NiagaraSystemFragments off of the pointer
 *	to the niagara system selected in the trait.

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "NiagaraActor.h"
-#include "GameFramework/Actor.h"
 #include "MSNiagaraActor.generated.h"
 
 UCLASS()
