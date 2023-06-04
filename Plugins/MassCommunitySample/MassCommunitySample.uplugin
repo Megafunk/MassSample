@@ -39,6 +39,10 @@
 		{
 			"Name": "MassCrowd",
 			"Enabled": true
+		},
+		{
+			"Name": "CodeView",
+			"Enabled": true
 		}
 	]
 }
