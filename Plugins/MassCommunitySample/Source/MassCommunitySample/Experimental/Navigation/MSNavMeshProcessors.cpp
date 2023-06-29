@@ -75,6 +75,6 @@ void UMSNavMeshProcessors::Execute(FMassEntityManager& EntityManager, FMassExecu
 
 	if (EntitiesToSignalPathDone.Num() > 0)
 	{
-		Context.GetMutableSubsystem<UMassSignalSubsystem>(EntityManager.GetWorld())->SignalEntities(UE::Mass::Signals::NewStateTreeTaskRequired, EntitiesToSignalPathDone);
+		Context.GetMutableSubsystem<UMassSignalSubsystem>()->SignalEntities(UE::Mass::Signals::NewStateTreeTaskRequired, EntitiesToSignalPathDone);
 	}
 }
