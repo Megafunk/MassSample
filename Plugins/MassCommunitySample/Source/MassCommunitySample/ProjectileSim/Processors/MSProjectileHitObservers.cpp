@@ -39,8 +39,7 @@ void UMSProjectileHitObservers::ConfigureQueries()
 
 void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	Context.SetFlushDeferredCommands(true);
-
+	
 	CollisionHitEventQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
 	
