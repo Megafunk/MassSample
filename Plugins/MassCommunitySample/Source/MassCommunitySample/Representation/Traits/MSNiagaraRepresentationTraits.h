@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
-#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "NiagaraSystem.h"
 #include "MSNiagaraRepresentationTraits.generated.h"
 
@@ -20,8 +19,12 @@ public:
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = "Config")
-	UNiagaraSystem* SharedNiagaraSystem;
+	TSoftObjectPtr<UNiagaraSystem> SharedNiagaraSystem;
 	
 	UPROPERTY(EditAnywhere, Category = "Config")
-	UStaticMesh* StaticMesh;
+	TSoftObjectPtr<UStaticMesh> StaticMesh;
+
+	UPROPERTY(EditAnywhere, Category = "Config")
+	TSoftObjectPtr<UMaterialInterface> MaterialOverride;
+
 };

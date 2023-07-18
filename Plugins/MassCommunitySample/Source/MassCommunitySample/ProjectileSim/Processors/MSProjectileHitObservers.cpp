@@ -11,7 +11,7 @@
 #include "Common/Fragments/MSOctreeFragments.h"
 #include "ProjectileSim/MassProjectileHitInterface.h"
 #include "MassSignalSubsystem.h"
-#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Experimental/Physics/MSMassCollision.h"
 #include "VisualLogger/VisualLogger.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 

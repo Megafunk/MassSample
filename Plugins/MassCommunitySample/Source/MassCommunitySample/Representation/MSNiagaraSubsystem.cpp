@@ -5,6 +5,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 #include "Fragments/MSRepresentationFragments.h"
+#include "Materials/MaterialInstance.h"
 
 
 void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -15,7 +16,7 @@ void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 }
 
-FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem, UStaticMesh* StaticMeshOverride)
+FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem, UStaticMesh* StaticMeshOverride, UMaterialInterface* MaterialOverride)
 {
 
 	// We only want to key these based off of unique types of niagara systems! Usually the entire fragment would be hashed.
@@ -25,8 +26,11 @@ FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType
 	uint32 ParamsHash = NiagaraAssetHash;
 	if(StaticMeshOverride)
 	{
-		uint32 StaticMeshOverrideAssetHash = GetTypeHash(StaticMeshOverride->GetPathName());
-		ParamsHash = HashCombineFast(NiagaraAssetHash,StaticMeshOverrideAssetHash);
+		ParamsHash = HashCombineFast(NiagaraAssetHash,GetTypeHash(StaticMeshOverride->GetFName()));
+	}
+	if(MaterialOverride)
+	{
+		ParamsHash = HashCombineFast(NiagaraAssetHash,GetTypeHash(MaterialOverride->GetFName()));
 	}
 	FSharedNiagaraSystemFragment SharedStructToReturn;
 
@@ -51,7 +55,15 @@ FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType
 	if(StaticMeshOverride)
 	{
 		NewNiagaraActor->GetNiagaraComponent()->SetVariableStaticMesh("StaticMeshToRender", StaticMeshOverride);
-		NewNiagaraActor->GetNiagaraComponent()->SetVariableMaterial("StaticMeshMaterial", StaticMeshOverride->GetMaterial(0));
+
+		if(MaterialOverride)
+		{
+			NewNiagaraActor->GetNiagaraComponent()->SetVariableMaterial("StaticMeshMaterial", MaterialOverride);
+		}
+		else
+		{
+			NewNiagaraActor->GetNiagaraComponent()->SetVariableMaterial("StaticMeshMaterial", StaticMeshOverride->GetMaterial(0));
+		}
 	}
 	SharedStructToReturn.NiagaraManagerActor = NewNiagaraActor;
 

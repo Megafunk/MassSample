@@ -119,13 +119,14 @@ struct MASSCOMMUNITYSAMPLE_API FMSAngularVelocity : public FMassFragment
 	FVector Value = FVector::ZeroVector;
 };
 
+
 /**
  * Signal names
  */
 namespace MassSample::Signals
 {
-	static const FName OnProjectileHitSomething = FName("SampleOnCollide");
-	static const FName OnGetHit = FName("SampleOnHit");
+	static const FName OnEntityHitSomething = FName("SampleOnEntityHitSomething");
+	static const FName OnGetHit = FName("SampleOnGetHit");
 }
 
 

@@ -4,16 +4,38 @@
 #include "MassEntityTemplateRegistry.h"
 #include "MassMovementFragments.h"
 #include "Common/Fragments/MSFragments.h"
+#include "Experimental/Physics/MSMassCollision.h"
 #include "Representation/MSNiagaraSubsystem.h"
 #include "Representation/Fragments/MSRepresentationFragments.h"
 
 void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
+	FMassEntityManager& EntityManager = UE::Mass::Utils::GetEntityManagerChecked(World);
+
+	// Evil main thread loads
+	if(StaticMesh)
+	{
+		StaticMesh.LoadSynchronous();
+		FConstSharedStruct SharedStaticMeshFragment = EntityManager.GetOrCreateConstSharedFragment(FMSSharedStaticMesh(StaticMesh));
+		BuildContext.AddConstSharedFragment(SharedStaticMeshFragment);
+	}
+	SharedNiagaraSystem.LoadSynchronous();
+
+
+	
 	UMSNiagaraSubsystem* NiagaraSubsystem = UWorld::GetSubsystem<UMSNiagaraSubsystem>(&World);
 
 	BuildContext.RequireFragment<FTransformFragment>();
 
-	FSharedStruct SharedFragment = NiagaraSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem,StaticMesh);
+	UMaterial* Material = nullptr;
+
+	if(MaterialOverride)
+	{
+		MaterialOverride.LoadSynchronous();
+	}
+
+	FSharedStruct SharedFragment =
+		NiagaraSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem.Get(),StaticMesh.Get(),MaterialOverride.Get());
 
 	BuildContext.AddSharedFragment(SharedFragment);
 }

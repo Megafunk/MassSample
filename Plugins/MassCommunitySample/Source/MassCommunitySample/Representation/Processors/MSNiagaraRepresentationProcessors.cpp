@@ -7,7 +7,6 @@
 #include "Common/Fragments/MSFragments.h"
 #include "NiagaraComponent.h"
 #include "NiagaraDataInterfaceArrayFunctionLibrary.h"
-#include "Representation//MSNiagaraActor.h"
 #include "Representation/Fragments/MSRepresentationFragments.h"
 
 UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
@@ -156,5 +155,5 @@ void UMSNiagaraRepresentationSpawnProcs::Initialize(UObject& Owner)
 	Super::Initialize(Owner);
 	UMassSignalSubsystem* SignalSubsystem = GetWorld()->GetSubsystem<UMassSignalSubsystem>();
 
-	SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnProjectileHitSomething);
+	SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnEntityHitSomething);
 }

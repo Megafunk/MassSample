@@ -1,6 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
+#define MASSSAMPLE_PARALLEL_OCTREE_QUERY 1
 
 #include "CoreMinimal.h"
 #include "MassProcessor.h"
@@ -24,26 +25,6 @@ class MASSCOMMUNITYSAMPLE_API UMSProjectileSimProcessors : public UMassProcessor
 
 	FMassEntityQuery LineTraceFromPreviousPosition;
 
-};
-
-
-UCLASS()
-class MASSCOMMUNITYSAMPLE_API UMSProjectileOctreeQueryProcessors : public UMassProcessor
-{
-	GENERATED_BODY()
-
-	UMSProjectileOctreeQueryProcessors();
-	
-	virtual void ConfigureQueries() override;
-
-	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
-	
-	virtual void Initialize(UObject& Owner) override;
-	
-	FMassEntityQuery ProjectileOctreeQuery;
-
-	UPROPERTY()
-	class UMSSubsystem* MSSubsystem;;
 };
 
 

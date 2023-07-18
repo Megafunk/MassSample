@@ -35,7 +35,7 @@ void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& Build
 	}
 	if(bQueriesOctree)
 	{
-		BuildContext.AddTag<FMSProjectileOctreeQueryTag>();
+		BuildContext.AddTag<FMSOctreeQueryTag>();
 	}
 
 	if(bRotationFollowsVelocity)

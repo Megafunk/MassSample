@@ -22,21 +22,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSCollisionIgnoredActorsFragment : public FMassF
 	TArray<AActor*,TInlineAllocator<2>> IgnoredActors;
 };
 
-// TODO: Move this elsewhere? It's not entirely projectile specific
-USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FMSHitResultFragment : public FMassFragment
-{
-	GENERATED_BODY()
-	FMSHitResultFragment() = default;
 
-	explicit FMSHitResultFragment(const FHitResult& HitResult)
-		: HitResult(HitResult)
-	{
-	}
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	FHitResult HitResult;
-};
 
 // This would arguably make more sense as a shared thing but it's only a byte...
 USTRUCT(BlueprintType)
@@ -61,7 +47,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSLineTraceTag : public FMassTag
 };
 
 USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FMSProjectileOctreeQueryTag : public FMassTag
+struct MASSCOMMUNITYSAMPLE_API FMSOctreeQueryTag : public FMassTag
 {
 	GENERATED_BODY()
 };

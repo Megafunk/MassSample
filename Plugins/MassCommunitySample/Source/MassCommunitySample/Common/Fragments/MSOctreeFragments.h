@@ -79,16 +79,3 @@ struct MASSCOMMUNITYSAMPLE_API FMSSharedBaseBounds : public FMassSharedFragment
 	FBoxSphereBounds BoxSphereBounds{ForceInit};
 };
 
-USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FMSSharedStaticMesh : public FMassSharedFragment
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-	TSoftObjectPtr<UStaticMesh> StaticMesh;
-	// These can't be obtained from the default body settings afaik? Oh well.
-	// todo-makenumbergoup store these suckers inline for realsies?
-	
-	TArray<Chaos::FImplicitObject*, TInlineAllocator<32>> GeoPointers;
-
-};

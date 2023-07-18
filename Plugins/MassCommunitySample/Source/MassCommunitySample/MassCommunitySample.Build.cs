@@ -47,6 +47,7 @@ public class MassCommunitySample : ModuleRules
 				"MassRepresentation",
 				"MassReplication",
 				"MassNavigation",
+				"MassSimulation",
 				//needed for replication setup
 				"NetCore",
 				"AIModule",
