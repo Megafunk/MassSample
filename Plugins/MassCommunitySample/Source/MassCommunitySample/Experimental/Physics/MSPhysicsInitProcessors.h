@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MassObserverProcessor.h"
-#include "PhysicsInitProcessors.generated.h"
+#include "MSPhysicsInitProcessors.generated.h"
 
 /**
  * Inits new physics objects to the chaos simulation when a FMSMassPhysicsFragment is added

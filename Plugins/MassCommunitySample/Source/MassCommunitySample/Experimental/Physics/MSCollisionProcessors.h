@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "MassProcessor.h"
 
-#include "CollisionProcessors.generated.h"
+#include "MSCollisionProcessors.generated.h"
 /**
  * Queries the Mass Sample octree 
  */

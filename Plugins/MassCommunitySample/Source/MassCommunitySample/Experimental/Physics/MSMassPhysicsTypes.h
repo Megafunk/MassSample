@@ -3,7 +3,7 @@
 #pragma once
 
 #include "MassEntityTypes.h"
-#include "BMassPhysicsTypes.generated.h"
+#include "MSMassPhysicsTypes.generated.h"
 
 // Handle to our physics thread particle?
 USTRUCT(BlueprintType)

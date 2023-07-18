@@ -6,7 +6,7 @@
 #include "MassEntitySubsystem.h"
 #include "MassObserverRegistry.h"
 #include "MassProcessor.h"
-#include "MassUtils.h"
+#include "MSMassUtils.h"
 #include "MassSimulationSubsystem.h"
 #include "LambdaBasedMassProcessor.generated.h"
 
@@ -14,7 +14,41 @@
 
 
 /**
- *  A nicer Mass processer API to make stuff easily, regular manager only for now
+ *  A simple Mass processer template to make stuff faster
+ *
+ *  Currrenlty handles MSMassUtils::Query<T...>  types
+ *
+ *
+ * Example that creates query for FTransformFragment (read/write)FOtherFragment (readonly)
+ * Note the const indicating readonly in the template params
+ * MSMassUtils::Processor<FTransformFragment, const FOtherFragment>(EntitySim).ForEachChunk([this](FMassExecutionContext& Context)
+ *	{
+ *		auto Transforms = Context.GetMutableFragmentView<FTransformFragment>();
+ *      auto OtherFragment = Context.GetFragmentView<FOtherFragment>();
+ *		for (int32 i = 0; i < Context.GetNumEntities(); i++)
+ *		{
+ *			// do stuff as normal 
+ *		}
+ *	});
+ *
+ * MSMassUtils::GameThreadProcessor for GT only
+ *
+ *
+ *
+ * 
+ * Observer listening for FOtherFragment added:
+ *
+ *  * MSMassUtils::Processor<FTransformFragment, const FOtherFragment>(EntitySim).OnAdded<FOtherFragment>([this](FMassExecutionContext& Context)
+ *	{
+ *		auto Transforms = Context.GetMutableFragmentView<FTransformFragment>();
+ *      auto OtherFragment = Context.GetFragmentView<FOtherFragment>();
+ *		for (int32 i = 0; i < Context.GetNumEntities(); i++)
+ *		{
+ *			// do stuff as normal 
+ *		}
+ *	});
+ *
+ *   
  */
 UCLASS()
 class MASSCOMMUNITYSAMPLE_API ULambdaMassProcessor : public UMassProcessor

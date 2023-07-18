@@ -3,7 +3,7 @@
 
 #include "MSMassPhysics.h"
 
-#include "BMassPhysicsTypes.h"
+#include "MSMassPhysicsTypes.h"
 #include "MassCommonFragments.h"
 #include "MassSimulationSubsystem.h"
 #include "MassRepresentationFragments.h"
@@ -17,7 +17,7 @@ void UMSPhysicsWorldSubS::Initialize(FSubsystemCollectionBase& Collection)
 	
 	auto EntitySim = Collection.InitializeDependency<UMassSimulationSubsystem>();
 
-	// chaos transforms to mass transforms (uses dynamic MSMassUtils::GameThreadProcessor, nothing special about this processor wise besides that)
+	// chaos transforms to mass transforms (uses dynamic MSMassUtils::GameThreadProcessor, nothing special about this processor-wise besides that)
 	MSMassUtils::GameThreadProcessor<const FMSMassPhysicsFragment,FTransformFragment>(EntitySim).ForEachChunk([this](FMassExecutionContext& Context)
 	{
 		auto PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
