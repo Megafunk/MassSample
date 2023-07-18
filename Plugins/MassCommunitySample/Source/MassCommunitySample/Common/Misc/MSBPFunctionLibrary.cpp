@@ -76,23 +76,16 @@ FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEn
 }
 
 
-void UMSBPFunctionLibrary::SetEntityTransform(const FMSEntityViewBPWrapper EntityHandle, const FTransform Transform, const UObject* WorldContextObject)
+void UMSBPFunctionLibrary::SetEntityTransform(const FMSEntityViewBPWrapper EntityHandle, const FTransform Transform)
 {
-	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetEntityManager();
 
-	if (!EntityManager.IsEntityValid(EntityHandle.EntityView.GetEntity()))
+	if (!EntityHandle.EntityView.GetEntity().IsValid())
 	{
 		UE_LOG(LogTemp, Error, TEXT("Passed in an invalid Entity"));
 		return;
 	}
-
-
-	if (!EntityManager.GetArchetypeComposition(EntityManager.GetArchetypeForEntity(EntityHandle.EntityView.GetEntity())).Fragments
-	                  .Contains(*FTransformFragment::StaticStruct()))
-		return;
-
-	if (const auto TransformFragment = EntityManager.GetFragmentDataPtr<FTransformFragment>(
-		EntityHandle.EntityView.GetEntity()))
+	
+	if (const auto TransformFragment = EntityHandle.EntityView.GetFragmentDataPtr<FTransformFragment>())
 	{
 		TransformFragment->SetTransform(Transform);
 	}
@@ -117,6 +110,12 @@ FTransform UMSBPFunctionLibrary::GetEntityTransform(const FMSEntityViewBPWrapper
 
 void UMSBPFunctionLibrary::SetEntityVelocity(const FMSEntityViewBPWrapper EntityHandle, const FVector Velocity)
 {
+
+	if (!EntityHandle.EntityView.GetEntity().IsValid())
+	{
+		return;
+	};
+
 	if (auto MassFragmentPtr = EntityHandle.EntityView.GetFragmentDataPtr<FMassVelocityFragment>())
 	{
 		MassFragmentPtr->Value = Velocity;
@@ -124,6 +123,10 @@ void UMSBPFunctionLibrary::SetEntityVelocity(const FMSEntityViewBPWrapper Entity
 }
 void UMSBPFunctionLibrary::SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force)
 {
+	if (!EntityHandle.EntityView.GetEntity().IsValid())
+	{
+		return;
+	};
 	
 	if (auto MassFragmentPtr = EntityHandle.EntityView.GetFragmentDataPtr<FMassForceFragment>())
 	{
@@ -249,6 +252,14 @@ void UMSBPFunctionLibrary::SetEntityFragment(FMSEntityViewBPWrapper Entity, FIns
 
 	FStructView structview = EntityManager.GetFragmentDataStruct(Entity.EntityView.GetEntity(),
 	                                                             Fragment.GetScriptStruct());
+
+	// If it's not present just add it through the manager
+	if(!structview.IsValid())
+	{
+
+		EntityManager.AddFragmentInstanceListToEntity(Entity.EntityView.GetEntity(), {Fragment});
+		
+	}
 	
 	if (structview.IsValid())
 	{

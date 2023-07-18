@@ -66,8 +66,8 @@ UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass")
+public:
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass" , meta=(CustomStructureParam))
 	static bool EntityHasFragment(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass",meta=(WorldContext = "WorldContextObject"))
@@ -82,8 +82,8 @@ class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLi
 	static FMSEntityViewBPWrapper SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig,
 															 const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
 
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void SetEntityTransform(const FMSEntityViewBPWrapper EntityHandle,const FTransform Transform, const UObject* WorldContextObject);
+	UFUNCTION(BlueprintCallable, Category = "Mass")
+	static void SetEntityTransform(const FMSEntityViewBPWrapper EntityHandle,const FTransform Transform);
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
 	static FTransform GetEntityTransform(FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
@@ -109,9 +109,8 @@ class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLi
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
 	static void FindClosestHashGridEntityInBox(const FVector Center,const FVector Extents, FMSEntityViewBPWrapper& Entity, const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
 
-	//TODO: Have this also helpfully add missing fragments
 	/**
-	 * Sets an entity's fragment data. This might need more testing...
+	 * Sets an entity's fragment data or adds it if it's ins't present. This might need more testing...
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta=(WorldContext = "WorldContextObject"))
 	static void SetEntityFragment(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment,const UObject* WorldContextObject);
