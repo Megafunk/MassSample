@@ -60,7 +60,6 @@ protected:
 	{
 		ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 		bAllowMultipleInstances = true;
-		bAllowDuplicates = true;
 		bAutoRegisterWithProcessingPhases = false;
 	};
 	virtual void ConfigureQueries() override

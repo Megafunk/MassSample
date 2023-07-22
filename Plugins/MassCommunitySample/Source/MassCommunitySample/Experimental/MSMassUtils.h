@@ -11,21 +11,6 @@
  */
 namespace MSMassUtils
 {
-	/**
-	 *Template based Mass query
-	 * Supports: (for now)
-	 * Fragments,Tags, (non const) FMassSharedFragment
-	 * Access: readonly/readwrite
-	 * If you need the other kinds, just add them to the query later I suppose.
-	 */
-	template <typename... TFragments>
-	FMassEntityQuery Query()
-	{
-		FMassEntityQuery Query;
-
-		(AddAnyFragment<TFragments>(Query, *TFragments::StaticStruct()), ...);
-		return Query;
-	}
 
 	// Meant for use with variadic templates in the above Query<> 
 	template <typename T>
@@ -56,5 +41,23 @@ namespace MSMassUtils
 			Query.AddSharedRequirement<T>(Access, Presence);
 		}
 	}
+	
+	/**
+	 *Template based Mass query
+	 * Supports: (for now)
+	 * Fragments,Tags, (non const) FMassSharedFragment
+	 * Access: readonly/readwrite
+	 * If you need the other kinds, just add them to the query later I suppose.
+	 */
+	template <typename... TFragments>
+	FMassEntityQuery Query()
+	{
+		FMassEntityQuery Query;
+
+		(MSMassUtils::AddAnyFragment<TFragments>(Query, *TFragments::StaticStruct()), ...);
+		return Query;
+	}
+
+
 
 }
