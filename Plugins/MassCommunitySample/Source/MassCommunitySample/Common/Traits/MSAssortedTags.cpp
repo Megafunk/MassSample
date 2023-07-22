@@ -7,18 +7,16 @@
 
 void UMSAssortedTags::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
-	for (auto& Tag : Tags)
+	for (const FInstancedStruct& Tag : Tags)
 	{
-		const UScriptStruct* TagStruct = Tag.GetScriptStruct();
-
-		if (TagStruct)
+		if(!Tag.IsValid())
 		{
-			if(TagStruct->IsChildOf(FMassTag::StaticStruct()))
-			{
-				BuildContext.AddTag(*TagStruct);
-			}
+			continue;
 		}
-
-
+		const UScriptStruct* StructType = Tag.GetScriptStruct();
+		if (StructType->IsChildOf(FMassTag::StaticStruct()))
+		{
+			BuildContext.AddTag(*StructType);
+		}
 	}
 }

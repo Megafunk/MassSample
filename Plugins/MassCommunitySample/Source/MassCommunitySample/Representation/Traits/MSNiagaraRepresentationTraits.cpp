@@ -15,11 +15,12 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 	// Evil main thread loads
 	if(StaticMesh)
 	{
-		StaticMesh.LoadSynchronous();
 		FConstSharedStruct SharedStaticMeshFragment = EntityManager.GetOrCreateConstSharedFragment(FMSSharedStaticMesh(StaticMesh));
 		BuildContext.AddConstSharedFragment(SharedStaticMeshFragment);
 	}
+	StaticMesh.LoadSynchronous();
 	SharedNiagaraSystem.LoadSynchronous();
+	MaterialOverride.LoadSynchronous();
 
 
 	
@@ -31,7 +32,6 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 
 	if(MaterialOverride)
 	{
-		MaterialOverride.LoadSynchronous();
 	}
 
 	FSharedStruct SharedFragment =

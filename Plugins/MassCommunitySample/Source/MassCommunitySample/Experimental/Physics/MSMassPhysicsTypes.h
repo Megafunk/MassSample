@@ -10,6 +10,15 @@ USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSMassPhysicsFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	
+	// Note: the term "Actor" here means chaos physics actor handle, which is not a uobject unreal actor...
 	FPhysicsActorHandle SingleParticlePhysicsProxy;
 };
+
+
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSChaosToMassTag : public FMassTag
+{GENERATED_BODY()};
+
+USTRUCT(BlueprintType)
+struct MASSCOMMUNITYSAMPLE_API FMSMassToChaosTag : public FMassTag
+{GENERATED_BODY()};
