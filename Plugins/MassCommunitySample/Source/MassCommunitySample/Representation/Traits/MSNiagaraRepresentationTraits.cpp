@@ -13,14 +13,15 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 	FMassEntityManager& EntityManager = UE::Mass::Utils::GetEntityManagerChecked(World);
 
 	// Evil main thread loads
+	StaticMesh.LoadSynchronous();
+	SharedNiagaraSystem.LoadSynchronous();
+	MaterialOverride.LoadSynchronous();
+
 	if(StaticMesh)
 	{
 		FConstSharedStruct SharedStaticMeshFragment = EntityManager.GetOrCreateConstSharedFragment(FMSSharedStaticMesh(StaticMesh));
 		BuildContext.AddConstSharedFragment(SharedStaticMeshFragment);
 	}
-	StaticMesh.LoadSynchronous();
-	SharedNiagaraSystem.LoadSynchronous();
-	MaterialOverride.LoadSynchronous();
 
 
 	
