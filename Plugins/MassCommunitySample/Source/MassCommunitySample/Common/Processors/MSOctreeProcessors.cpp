@@ -21,6 +21,7 @@ UMSOctreeProcessor::UMSOctreeProcessor()
 
 void UMSOctreeProcessor::Initialize(UObject& Owner)
 {
+	Super::Initialize(Owner);
 	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
 #if CHAOS_DEBUG_DRAW
 	Chaos::FDebugDrawQueue::GetInstance().SetConsumerActive(this, true);
@@ -126,6 +127,7 @@ UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcess
 
 void UMSHashGridMemberInitializationProcessor::Initialize(UObject& Owner)
 {
+	Super::Initialize(Owner);
 	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
 }
 
@@ -198,6 +200,7 @@ UMSOctreeMemberCleanupProcessor::UMSOctreeMemberCleanupProcessor()
 
 void UMSOctreeMemberCleanupProcessor::Initialize(UObject& Owner)
 {
+	Super::Initialize(Owner);
 	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
 }
 

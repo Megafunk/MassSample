@@ -15,6 +15,7 @@
 
 void UMSProjectileSimProcessors::Initialize(UObject& Owner)
 {
+	Super::Initialize(Owner);
 }
 
 

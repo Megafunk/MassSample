@@ -20,6 +20,8 @@ UMSEntityViewBenchMark::UMSEntityViewBenchMark()
 
 void UMSEntityViewBenchMark::Initialize(UObject& Owner)
 {
+	Super::Initialize(Owner);
+
 	FEntityViewBenchmarkFragment Fragment;
 
 	FMassEntityManager& EntityManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
