@@ -3,30 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MassProcessor.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "MSMassPhysics.generated.h"
 /**
  * 
  */
 UCLASS()
-class MASSCOMMUNITYSAMPLE_API UMSPhysicsWorldSubS : public UTickableWorldSubsystem
+class MASSCOMMUNITYSAMPLE_API UMSChaosMassTranslationProcessorsProcessors : public UMassProcessor
 {
 	GENERATED_BODY()
+	UMSChaosMassTranslationProcessorsProcessors();
 
-public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
-	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
+	virtual void ConfigureQueries() override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
+	FMassEntityQuery ChaosSimToMass;
 
-	virtual TStatId GetStatId() const override
-	{
-		RETURN_QUICK_DECLARE_CYCLE_STAT(UMSPhysicsWorldSubS, STATGROUP_Tickables);
-	}
-
-	virtual void Tick(float DeltaTime) override;
+	FMassEntityQuery UpdateChaosKinematicTargets;
+	FMassEntityQuery MassTransformsToChaosBodies;
 
 
-
-	
 };

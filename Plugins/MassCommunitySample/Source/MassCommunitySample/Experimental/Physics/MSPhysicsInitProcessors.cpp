@@ -52,17 +52,9 @@ FBodyCollisionFilterData CollisionFilterDataDummy(const FCollisionResponseContai
 
 // UObject free chaos body creation (mostly hardcoded as a dynamic body with no welds?).
 // This does not call SetUserData as that requires a body instance so I thought I should do that elsewhere?
-FPhysicsActorHandle InitAndAddNewChaosBody(FActorCreationParams& ActorParams, const FCollisionResponseContainer& ResponseContainer,
-                                           FKAggregateGeom* AggregateGeom, float Density)
+FPhysicsActorHandle InitAndAddNewChaosBody(FActorCreationParams& ActorParams, const FBodyCollisionData& CollisionData, FKAggregateGeom* AggregateGeom,
+                                           float Density)
 {
-#if USE_BODYINSTANCE_DEBUG_NAMES
-#endif
-#if ENGINE_MINOR_VERSION >= 3
-	// Not sure about this one... I think false is the default?
-	ActorParams.bUpdateKinematicFromSimulation = false;
-#endif
-
-
 	FPhysicsActorHandle NewPhysHandle;
 	// if we were static we only need this:
 	// {
@@ -74,53 +66,81 @@ FPhysicsActorHandle InitAndAddNewChaosBody(FActorCreationParams& ActorParams, co
 	// {
 	FPhysicsInterface::CreateActor(ActorParams, NewPhysHandle);
 
-	Chaos::FRigidBodyHandle_External& Body_External = NewPhysHandle->GetGameThreadAPI();
-	Body_External.SetCCDEnabled(false);
+	FPhysicsInterface::SetCcdEnabled_AssumesLocked(NewPhysHandle, false);
 	// no clue about this one
-	Body_External.SetSmoothEdgeCollisionsEnabled(false);
+	FPhysicsInterface::SetSmoothEdgeCollisionsEnabled_AssumesLocked(NewPhysHandle, false);
 	// this seems to help make it not wiggle on the ground
-	Body_External.SetInertiaConditioningEnabled(true);
-	// I prefer to use body_external but these do a lot more than the others than set a flag
-	FPhysicsInterface::SetIsKinematic_AssumesLocked(NewPhysHandle, false);
+	FPhysicsInterface::SetInertiaConditioningEnabled_AssumesLocked(NewPhysHandle, true);
+	// We want to set this to false if we are simulating physics
+	FPhysicsInterface::SetIsKinematic_AssumesLocked(NewPhysHandle, !ActorParams.bSimulatePhysics);
 	FPhysicsInterface::SetMaxLinearVelocity_AssumesLocked(NewPhysHandle, MAX_flt);
 
 	// currently does nothing...
 	FPhysicsInterface::SetSendsSleepNotifies_AssumesLocked(NewPhysHandle, true);
 
-
+	//FPhysicsInterface::SetAngularMotionLimitType_AssumesLocked()
 	FGeometryAddParams CreateGeometryParams;
 	// pass in our parameters
 
 	CreateGeometryParams.Geometry = AggregateGeom;
-	// I made this 
 
-	// the rest are just regular generic dynamic body values so far
+
+	CreateGeometryParams.CollisionData = CollisionData;
 	CreateGeometryParams.CollisionData.CollisionFlags.bEnableQueryCollision = true;
 	CreateGeometryParams.CollisionData.CollisionFlags.bEnableSimCollisionSimple = true;
 	CreateGeometryParams.CollisionTraceType = ECollisionTraceFlag::CTF_UseDefault;
+
 	CreateGeometryParams.Scale = FVector::One();
 	CreateGeometryParams.LocalTransform = Chaos::FRigidTransform3::Identity;
-	// No clue if this needs to be the same as the params transform
-	CreateGeometryParams.WorldTransform = Chaos::FRigidTransform3::Identity;
+	// No clue if this needs to be the same as the params transform... I assume this is more for uh, more static stuff?
+	CreateGeometryParams.WorldTransform = ActorParams.InitialTM;
 
 	CreateGeometryParams.bDoubleSided = false;
-	CreateGeometryParams.CollisionData.CollisionFlags.bEnableSimCollisionComplex = false;
-
-	CreateGeometryParams.CollisionData.CollisionFilterData = CollisionFilterDataDummy(ResponseContainer, ECollisionTraceFlag::CTF_UseDefault);
 
 
 	// seem pointless for regular meshes? is it for skeletons?
 	//CreateGeometryParams.ChaosTriMeshes = MakeArrayView(CylinderMeshBody->ChaosTriMeshes);
 
-	// helper that makes our geom list
+	// helper that makes our geom list 		
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
 	TArray<TUniquePtr<Chaos::FImplicitObject>> Geoms;
+#else
+	TArray<Chaos::FImplicitObjectPtr> Geoms;
+#endif
 	Chaos::FShapesArray Shapes;
 	ChaosInterface::CreateGeometry(CreateGeometryParams, Geoms, Shapes);
 
-	// geo before shapes I think...
-	// Do we want the first one only?
-	Body_External.SetGeometry(MoveTemp(Geoms[0]));
-	Body_External.SetShapesArray(MoveTemp(Shapes));
+
+	// this is what most of the earlier FPhysicsInterface:: calls operate on
+	Chaos::FRigidBodyHandle_External& Body_External = NewPhysHandle->GetGameThreadAPI();
+
+	// geo before shapes
+	// mimicking landscape.cpp
+	if (Geoms.Num() == 1)
+	{
+		Body_External.SetGeometry(MoveTemp(Geoms[0]));
+	}
+	else
+	{
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
+	  Body_External.SetGeometry(MakeUnique<Chaos::FImplicitObjectUnion>(MoveTemp(Geoms)));
+#else
+		Body_External.MergeGeometry(MoveTemp(Geoms));
+#endif
+	}
+
+	// Construct Shape Bounds
+	for (auto& Shape : Shapes)
+	{
+		Chaos::FRigidTransform3 WorldTransform = Chaos::FRigidTransform3(Body_External.X(), Body_External.R());
+		Shape->UpdateShapeBounds(WorldTransform);
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
+		Body_External.SetShapesArray(MoveTemp(Shapes));
+#else
+		Body_External.MergeShapesArray(MoveTemp(Shapes));
+#endif
+	}
 
 
 	// Calculate the mass properties based on the shapes assuming uniform density
@@ -137,7 +157,7 @@ FPhysicsActorHandle InitAndAddNewChaosBody(FActorCreationParams& ActorParams, co
 	return NewPhysHandle;
 }
 
-UMSPhysicsInitProcessors::UMSPhysicsInitProcessors()
+UMSPhysicsInitProcessor::UMSPhysicsInitProcessor()
 {
 	ObservedType = FMSMassPhysicsFragment::StaticStruct();
 	Operation = EMassObservedOperation::Add;
@@ -145,16 +165,21 @@ UMSPhysicsInitProcessors::UMSPhysicsInitProcessors()
 	bRequiresGameThreadExecution = true;
 }
 
-void UMSPhysicsInitProcessors::ConfigureQueries()
+void UMSPhysicsInitProcessor::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FMSMassPhysicsFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	EntityQuery.AddConstSharedRequirement<FMSSharedStaticMesh>();
+
+	// try FAggGeomFragment first and then  FMSSharedStaticMesh's static mesh's geom
+	EntityQuery.AddSharedRequirement<FSharedCollisionSettingsFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
+	// this is const as it's just an asset ptr
+	EntityQuery.AddConstSharedRequirement<FMSSharedStaticMesh>(EMassFragmentPresence::Optional);
+
 
 	EntityQuery.RegisterWithProcessor(*this);
 }
 
-void UMSPhysicsInitProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext)
+void UMSPhysicsInitProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext)
 {
 	// a FPhysicsActorHandle is a Chaos particle pointer (not a regular actor) 
 	TArray<FPhysicsActorHandle> NewPhysicsHandles;
@@ -167,56 +192,102 @@ void UMSPhysicsInitProcessors::Execute(FMassEntityManager& EntityManager, FMassE
 		auto PhysicsFragments = Context.GetMutableFragmentView<FMSMassPhysicsFragment>();
 		auto Transforms = Context.GetFragmentView<FTransformFragment>();
 
-		UStaticMesh* StaticMesh = Context.GetConstSharedFragment<FMSSharedStaticMesh>().StaticMesh.Get();
-		if (!ensure(StaticMesh))
-		{
-			return;
-		}
+		FKAggregateGeom* AggregateGeom = nullptr;
 
-		UBodySetup* BodySetup = StaticMesh->GetBodySetup();
-		FKAggregateGeom* AggregateGeom = &BodySetup->AggGeom;
-		if ((AggregateGeom->GetElementCount() <= 0))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UMSPhysicsInitProcessors static mesh (%s) has no collision geometry!"), *StaticMesh->GetName());
-			return;
-		}
-		FCollisionResponseContainer ResponseContainer = BodySetup->DefaultInstance.GetResponseToChannels();
+		FBodyInstance* BodyInstance = nullptr;
 
-		// perhaps this should be how we can pass over hits... a manager component? 
-		FBodyInstance& BodyInstance = BodySetup->DefaultInstance;
-		
-		// todo-karl just use this thing instead of our evil CollisionFilterDataDummy?
-		// FBodyCollisionFilterData FilterData;
-		// BodyInstance.BuildBodyFilterData(FilterData);
+		void* UserData = nullptr;
 
-		// the weird indirection is because FPhysicsUserData stores an enum about what it is with this ctor
-		BodyInstance.PhysicsUserData = FPhysicsUserData(&BodyInstance);
-
-		// Mass... (the weight, not this ECS plugin)
-		float Density = BodySetup->CalculateMass();
+		float Density = 100.0f;
 
 		// Note: the term "Actor" here means chaos physics actor handle, which is not a uobject unreal actor...
 		FActorCreationParams ActorParams;
-		// we COULD use our gravity tag?
-		//ActorParams.bEnableGravity = Context.DoesArchetypeHaveTag<FMSGravityTag>();
-		ActorParams.bEnableGravity = true;
 
-		const int32 Num = Context.GetNumEntities();
-		for (int32 i = 0; i < Num; i++)
+		ActorParams.bEnableGravity = Context.DoesArchetypeHaveTag<FMSGravityTag>();
+
+		// do we care about QueryAndProbe?
+		ECollisionEnabled::Type CollisionEnabled = ECollisionEnabled::QueryOnly;
+		if (Context.DoesArchetypeHaveTag<FMSSimulatesPhysicsTag>())
+		{
+			ActorParams.bSimulatePhysics = true;
+			CollisionEnabled = ECollisionEnabled::QueryAndPhysics;
+		};
+
+		ActorParams.bUpdateKinematicFromSimulation = Context.DoesArchetypeHaveTag<FMSUpdateKinematicFromSimulationTag>();
+
+		// We want to try a dedicated collision fragment before using a static mesh 
+		if (auto* SharedCollisionSettings = Context.GetMutableSharedFragmentPtr<FSharedCollisionSettingsFragment>())
+		{
+			// gross but I can't figure out a nice way to avoid this
+			AggregateGeom = &SharedCollisionSettings->Geometry;
+			BodyInstance = &SharedCollisionSettings->BodyInstance;
+
+			if ((AggregateGeom->GetElementCount() <= 0))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UMSPhysicsInitProcessors FSharedCollisionSettingsFragment has no collision geometry!"));
+				return;
+			}
+		}
+		else if (auto* SharedStaticMesh = Context.GetConstSharedFragmentPtr<FMSSharedStaticMesh>())
+		{
+			if (!ensure(SharedStaticMesh->StaticMesh))
+			{
+				return;
+			}
+
+			UStaticMesh* StaticMesh = SharedStaticMesh->StaticMesh.LoadSynchronous();
+			UBodySetup* BodySetup = StaticMesh->GetBodySetup();
+			BodyInstance = &BodySetup->DefaultInstance;
+
+			// Mass... (the weight, not this ECS plugin)
+			Density = BodySetup->CalculateMass();
+
+			AggregateGeom = &BodySetup->AggGeom;
+			if ((AggregateGeom->GetElementCount() <= 0))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UMSPhysicsInitProcessors static mesh (%s) has no collision geometry!"), *StaticMesh->GetName());
+				return;
+			}
+		};
+
+
+		if (!BodyInstance)
+		{
+			return;
+		}
+
+		// #if USE_BODYINSTANCE_DEBUG_NAMES
+		// 		ActorParams.DebugName = (char*)*FString("MassPhysicsBody");
+		// #endif
+
+
+		// the weird indirection is because FPhysicsUserData stores an enum about what it is with this ctor
+		BodyInstance->PhysicsUserData = FPhysicsUserData(BodyInstance);
+		// "SetUserData" required for queries hitting this it seems due to SetHitResultFromShapeAndFaceIndex
+		UserData = &BodyInstance->PhysicsUserData;
+
+		FBodyCollisionData CollisionData;
+
+		// this one relies on a live non-default bodysetup + does lots of other uobject stuff so I made CollisionFilterDataDummy
+		//BodyInstance->BuildBodyFilterData(CollisionData.CollisionFilterData);
+		CollisionData.CollisionFilterData = CollisionFilterDataDummy(BodyInstance->GetResponseToChannels(), ECollisionTraceFlag::CTF_UseDefault);
+		BodyInstance->BuildBodyCollisionFlags(CollisionData.CollisionFlags, CollisionEnabled, true /*usecomplexassimple */);
+
+		for (int32 i = 0; i < Context.GetNumEntities(); i++)
 		{
 			ActorParams.InitialTM = Transforms[i].GetTransform();
 			check(PhysScene)
 			ActorParams.Scene = PhysScene;
 			ActorParams.bStatic = false;
 			ActorParams.bQueryOnly = false;
-			ActorParams.bSimulatePhysics = true;
 
-			FPhysicsActorHandle NewHandle = InitAndAddNewChaosBody(ActorParams, ResponseContainer, AggregateGeom, Density);
+			FPhysicsActorHandle NewHandle = InitAndAddNewChaosBody(ActorParams, CollisionData, AggregateGeom, Density);
 
 			Chaos::FRigidBodyHandle_External& Body_External = NewHandle->GetGameThreadAPI();
 
 			// "SetUserData" required for queries hitting this it seems due to SetHitResultFromShapeAndFaceIndex
-			Body_External.SetUserData(&BodyInstance.PhysicsUserData);
+			Body_External.SetUserData(UserData);
+
 			NewPhysicsHandles.Add(NewHandle);
 
 			PhysicsFragments[i].SingleParticlePhysicsProxy = NewHandle;
@@ -228,5 +299,42 @@ void UMSPhysicsInitProcessors::Execute(FMassEntityManager& EntityManager, FMassE
 	{
 		// We update the solver immediately... Not sure if we should
 		PhysScene->AddActorsToScene_AssumesLocked(NewPhysicsHandles, false);
+	});
+}
+
+
+UMSPhysicsCleanupProcessor::UMSPhysicsCleanupProcessor()
+{
+	ObservedType = FMSMassPhysicsFragment::StaticStruct();
+	Operation = EMassObservedOperation::Remove;
+	// PHyisics API stuff is picky here
+	bRequiresGameThreadExecution = true;
+}
+
+void UMSPhysicsCleanupProcessor::ConfigureQueries()
+{
+	EntityQuery.AddRequirement<FMSMassPhysicsFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);
+}
+
+void UMSPhysicsCleanupProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext)
+{
+	FPhysScene* PhysScene = GetWorld()->GetPhysicsScene();
+
+	EntityQuery.ForEachEntityChunk(EntityManager, InContext, [this,&PhysScene](FMassExecutionContext& Context)
+	{
+		if (!ensure(PhysScene))
+		{
+			return;
+		}
+		auto PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
+
+		for (int32 i = 0; i < Context.GetNumEntities(); i++)
+		{
+			if (FPhysicsActorHandle PhysicsHandle = PhysicsFragments[i].SingleParticlePhysicsProxy)
+			{
+				FChaosEngineInterface::ReleaseActor(PhysicsHandle, PhysScene);
+			}
+		}
 	});
 }
