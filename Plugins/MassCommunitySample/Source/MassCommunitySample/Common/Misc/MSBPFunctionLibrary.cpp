@@ -27,11 +27,9 @@ bool UMSBPFunctionLibrary::EntityHasTag(FMSEntityViewBPWrapper Entity, FInstance
 {
 	if (Tag.IsValid() && Tag.GetScriptStruct()->IsChildOf(FMassTag::StaticStruct()))
 	{
-		const FMassEntityManager& EntityManager =
-			WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
+		const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
 
-		return EntityManager.GetArchetypeComposition(Entity.TempArchetypeGet(EntityManager)).Tags.Contains(
-			*Tag.GetScriptStruct());
+		return EntityManager.GetArchetypeComposition(Entity.TempArchetypeGet(EntityManager)).Tags.Contains(*Tag.GetScriptStruct());
 	}
 
 	return false;
@@ -44,28 +42,27 @@ bool UMSBPFunctionLibrary::IsEntityValid(FMSEntityViewBPWrapper Entity, UObject*
 	return EntityManager.IsEntityValid(Entity.EntityView.GetEntity());
 }
 
-FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig,
-	const UObject* WorldContextObject, EReturnSuccess& ReturnBranch)
+FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig, const UObject* WorldContextObject,
+                                                                         EReturnSuccess& ReturnBranch)
 {
 	if (!MassEntityConfig)
 	{
 		ReturnBranch = EReturnSuccess::Failure;
 		return FMSEntityViewBPWrapper();
-
 	}
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3	
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
 	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*WorldContextObject->GetWorld(),*WorldContextObject->GetWorld());
 #else
 	const FMassEntityTemplate& EntityTemplate = MassEntityConfig->GetConfig().GetOrCreateEntityTemplate(*WorldContextObject->GetWorld());
 #endif
-	
+
 	FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
 	auto SpawnerSubsystem = WorldContextObject->GetWorld()->GetSubsystem<UMassSpawnerSubsystem>();
 
 	TArray<FMassEntityHandle> Entities;
-	SpawnerSubsystem->SpawnEntities(EntityTemplate.GetTemplateID(),1,FStructView(),TSubclassOf<UMassProcessor>(), Entities);
-	
+	SpawnerSubsystem->SpawnEntities(EntityTemplate.GetTemplateID(), 1, FStructView(), TSubclassOf<UMassProcessor>(), Entities);
+
 	//If no observers did anything, we can just assume the archetype is the same as our template
 	FMSEntityViewBPWrapper NewEntityWrapper;
 	NewEntityWrapper.EntityView = FMassEntityView(EntityManager, Entities[0]);
@@ -78,13 +75,12 @@ FMSEntityViewBPWrapper UMSBPFunctionLibrary::SpawnEntityFromEntityConfig(UMassEn
 
 void UMSBPFunctionLibrary::SetEntityTransform(const FMSEntityViewBPWrapper EntityHandle, const FTransform Transform)
 {
-
 	if (!EntityHandle.EntityView.GetEntity().IsValid())
 	{
 		UE_LOG(LogTemp, Error, TEXT("Passed in an invalid Entity"));
 		return;
 	}
-	
+
 	if (const auto TransformFragment = EntityHandle.EntityView.GetFragmentDataPtr<FTransformFragment>())
 	{
 		TransformFragment->SetTransform(Transform);
@@ -99,8 +95,7 @@ FTransform UMSBPFunctionLibrary::GetEntityTransform(const FMSEntityViewBPWrapper
 
 	if (!EntityManager.IsEntityValid(EntityHandle.EntityView.GetEntity())) return FTransform::Identity;
 
-	if (const auto TransformFragmentPtr = EntityManager.GetFragmentDataPtr<FTransformFragment>(
-		EntityHandle.EntityView.GetEntity()))
+	if (const auto TransformFragmentPtr = EntityManager.GetFragmentDataPtr<FTransformFragment>(EntityHandle.EntityView.GetEntity()))
 	{
 		return TransformFragmentPtr->GetTransform();
 	}
@@ -110,7 +105,6 @@ FTransform UMSBPFunctionLibrary::GetEntityTransform(const FMSEntityViewBPWrapper
 
 void UMSBPFunctionLibrary::SetEntityVelocity(const FMSEntityViewBPWrapper EntityHandle, const FVector Velocity)
 {
-
 	if (!EntityHandle.EntityView.GetEntity().IsValid())
 	{
 		return;
@@ -121,13 +115,14 @@ void UMSBPFunctionLibrary::SetEntityVelocity(const FMSEntityViewBPWrapper Entity
 		MassFragmentPtr->Value = Velocity;
 	}
 }
+
 void UMSBPFunctionLibrary::SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force)
 {
 	if (!EntityHandle.EntityView.GetEntity().IsValid())
 	{
 		return;
 	};
-	
+
 	if (auto MassFragmentPtr = EntityHandle.EntityView.GetFragmentDataPtr<FMassForceFragment>())
 	{
 		MassFragmentPtr->Value = Force;
@@ -151,15 +146,14 @@ void UMSBPFunctionLibrary::DestroyEntity(const FMSEntityViewBPWrapper EntityHand
 bool UMSBPFunctionLibrary::GetMassAgentEntity(FMSEntityViewBPWrapper& OutEntity, UMassAgentComponent* Agent, const UObject* WorldContextObject)
 {
 	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetEntityManager();
-	
+
 	if (!Agent->IsEntityPendingCreation())
 	{
 		FMassEntityHandle EntityHandle = Agent->GetEntityHandle();
-		OutEntity = FMSEntityViewBPWrapper(EntityManager,EntityHandle);
+		OutEntity = FMSEntityViewBPWrapper(EntityManager, EntityHandle);
 		return true;
 	}
 	return false;
-	
 }
 
 void UMSBPFunctionLibrary::FindOctreeEntitiesInBox(const FVector Center, const FVector Extents, TArray<FMSEntityViewBPWrapper>& Entities,
@@ -173,11 +167,10 @@ void UMSBPFunctionLibrary::FindOctreeEntitiesInBox(const FVector Center, const F
 		TArray<FMassEntityHandle> EntitiesFound;
 
 
-		MassSampleSystem->Octree2.FindElementsWithBoundsTest(FBoxCenterAndExtent(Center, Extents),
-         [&](const FMSEntityOctreeElement& OctreeElement)
-         {
-             EntitiesFound.Add(OctreeElement.EntityHandle);
-         });
+		MassSampleSystem->Octree2.FindElementsWithBoundsTest(FBoxCenterAndExtent(Center, Extents), [&](const FMSEntityOctreeElement& OctreeElement)
+		{
+			EntitiesFound.Add(OctreeElement.EntityHandle);
+		});
 
 		for (auto EntityFound : EntitiesFound)
 		{
@@ -190,8 +183,7 @@ void UMSBPFunctionLibrary::FindOctreeEntitiesInBox(const FVector Center, const F
 }
 
 void UMSBPFunctionLibrary::FindClosestHashGridEntityInBox(const FVector Center, const FVector Extents, FMSEntityViewBPWrapper& Entity,
-                                                          const UObject* WorldContextObject,
-                                                          EReturnSuccess& ReturnBranch)
+                                                          const UObject* WorldContextObject, EReturnSuccess& ReturnBranch)
 {
 	QUICK_SCOPE_CYCLE_COUNTER(FindCloestHashGridEntityInSphere);
 
@@ -199,18 +191,16 @@ void UMSBPFunctionLibrary::FindClosestHashGridEntityInBox(const FVector Center, 
 	{
 		double ShortestDistance = MAX_dbl;
 		FMassEntityHandle EntityHandle;
-		MassSampleSystem->Octree2.FindElementsWithBoundsTest(FBoxCenterAndExtent(Center, Extents),
-             [&](const FMSEntityOctreeElement& OctreeElement)
-             {
-                 double Distance = UE::Geometry::DistanceSquared(
-                     FVector(OctreeElement.Bounds.Center), Center);
+		MassSampleSystem->Octree2.FindElementsWithBoundsTest(FBoxCenterAndExtent(Center, Extents), [&](const FMSEntityOctreeElement& OctreeElement)
+		{
+			double Distance = UE::Geometry::DistanceSquared(FVector(OctreeElement.Bounds.Center), Center);
 
-                 if (Distance < ShortestDistance)
-                 {
-                     EntityHandle = OctreeElement.EntityHandle;
-                     ShortestDistance = Distance;
-                 }
-             });
+			if (Distance < ShortestDistance)
+			{
+				EntityHandle = OctreeElement.EntityHandle;
+				ShortestDistance = Distance;
+			}
+		});
 		const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetEntityManager();
 
 		if (EntityHandle.IsValid() && ShortestDistance != MAX_dbl)
@@ -227,8 +217,7 @@ void UMSBPFunctionLibrary::FindClosestHashGridEntityInBox(const FVector Center, 
 }
 
 
-void UMSBPFunctionLibrary::SetEntityFragment(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment,
-                                             const UObject* WorldContextObject)
+void UMSBPFunctionLibrary::SetEntityFragment(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment, const UObject* WorldContextObject)
 {
 	auto& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
 
@@ -250,34 +239,32 @@ void UMSBPFunctionLibrary::SetEntityFragment(FMSEntityViewBPWrapper Entity, FIns
 		return;
 	}
 
-	FStructView structview = EntityManager.GetFragmentDataStruct(Entity.EntityView.GetEntity(),
-	                                                             Fragment.GetScriptStruct());
+	FStructView StructView = EntityManager.GetFragmentDataStruct(Entity.EntityView.GetEntity(), Fragment.GetScriptStruct());
 
 	// If it's not present just add it through the manager
-	if(!structview.IsValid())
+	if (!StructView.IsValid())
 	{
-
 		EntityManager.AddFragmentInstanceListToEntity(Entity.EntityView.GetEntity(), {Fragment});
-		
 	}
-	
-	if (structview.IsValid())
+	else
 	{
-		#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
 			auto Memory = structview.GetMutableMemory();
-		#else
-			auto Memory = structview.GetMemory();
-		#endif
+		FMemory::Memcpy(Memory,Fragment.GetMutableMemory(),Fragment.GetScriptStruct()->GetStructureSize());
+
+#else
+		uint8* Memory = StructView.GetMemory();
+		FMemory::Memcpy(Memory, Fragment.GetMutableMemory(), Fragment.GetScriptStruct()->GetStructureSize());
+#endif
 	}
 }
 
-FInstancedStruct UMSBPFunctionLibrary::GetEntityFragmentByType(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment, const UObject* WorldContextObject,
-                                                               EReturnSuccess& ReturnBranch)
+FInstancedStruct UMSBPFunctionLibrary::GetEntityFragmentByType(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment,
+                                                               const UObject* WorldContextObject, EReturnSuccess& ReturnBranch)
 {
 	ReturnBranch = EReturnSuccess::Failure;
 
-	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->
-	                                                              GetEntityManager();
+	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetEntityManager();
 
 	if (!Entity.EntityView.GetEntity().IsValid())
 	{
@@ -297,8 +284,7 @@ FInstancedStruct UMSBPFunctionLibrary::GetEntityFragmentByType(FMSEntityViewBPWr
 		return FInstancedStruct();
 	}
 
-	FStructView structview = EntityManager.GetFragmentDataStruct(Entity.EntityView.GetEntity(),
-	                                                             Fragment.GetScriptStruct());
+	FStructView structview = EntityManager.GetFragmentDataStruct(Entity.EntityView.GetEntity(), Fragment.GetScriptStruct());
 
 	if (structview.IsValid())
 	{
