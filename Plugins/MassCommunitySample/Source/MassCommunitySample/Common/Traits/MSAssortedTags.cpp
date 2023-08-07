@@ -5,7 +5,7 @@
 
 #include "MassEntityTemplateRegistry.h"
 
-void UMSAssortedTags::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
+void UDEPRECATED_UMSAssortedTags::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
 	for (const FInstancedStruct& Tag : Tags)
 	{
