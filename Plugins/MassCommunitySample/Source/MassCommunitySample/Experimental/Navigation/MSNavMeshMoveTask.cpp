@@ -5,6 +5,7 @@
 #include "StateTreeLinker.h"
 #include "AITypes.h"
 #include "MassStateTreeExecutionContext.h"
+#include "NavMesh/NavMeshRenderingComponent.h"
 
 bool FMassNavMeshPathFollowTask::Link(FStateTreeLinker& Linker)
 {
@@ -82,8 +83,12 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 			}
 
 #if WITH_EDITOR
-			// Result.Path.Get()->DebugDraw(Query.NavData.Get(), FColor::MakeRandomColor(),
-			   //                          Context.GetWorld()->GetCanvasForRenderingToTarget(), false, 10.0f);
+			if (UNavMeshRenderingComponent::IsNavigationShowFlagSet(Context.GetWorld()))
+			{
+				// rather expensive...
+				Result.Path.Get()->DebugDraw(Query.NavData.Get(), FColor::MakeRandomSeededColor(MassContext.GetEntity().Index),
+							Context.GetWorld()->GetCanvasForRenderingToTarget(), false, 10.0f);
+			}
 #endif
 		}
 		else
