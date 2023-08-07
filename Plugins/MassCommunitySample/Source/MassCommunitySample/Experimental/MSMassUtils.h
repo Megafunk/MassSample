@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LambdaBasedMassProcessor.h"
 #include "MassEntityQuery.h"
 
 /**
@@ -26,6 +25,10 @@ namespace MSMassUtils
 		if constexpr (TIsPointer<T>::Value)
 		{
 			Presence = EMassFragmentPresence::Optional;
+		}
+		if constexpr (TIsSigned<T>::Value)
+		{
+			Presence = EMassFragmentPresence::None;
 		}
 
 		if constexpr (TIsDerivedFrom<T, FMassFragment>::IsDerived)

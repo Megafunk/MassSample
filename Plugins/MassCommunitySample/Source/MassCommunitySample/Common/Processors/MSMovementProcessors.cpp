@@ -25,9 +25,9 @@ void UMSGravityProcessor::ConfigureQueries()
 {
 	// Only include entities that meet the following rules:
 	
-		// ALL must have an FMoverTag (just to split this up from other similar queries)
+		// ALL must have an FMSGravityTag (just to split this up from other similar queries)
 		GravityEntityQuery.AddTagRequirement<FMSGravityTag>(EMassFragmentPresence::All);
-		// must have an FMassForceFragment and we are reading and mutating it 
+		// must have an FMassVelocityFragment and we are reading and mutating it 
 		GravityEntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 
 		// Finally,  we make the register aware of our new query as we define it ourselves

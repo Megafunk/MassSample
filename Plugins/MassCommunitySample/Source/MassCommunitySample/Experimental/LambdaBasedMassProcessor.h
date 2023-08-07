@@ -11,8 +11,6 @@
 #include "LambdaBasedMassProcessor.generated.h"
 
 
-
-
 /**
  *  A simple Mass processer template to make stuff faster
  *
@@ -58,26 +56,31 @@ class MASSCOMMUNITYSAMPLE_API ULambdaMassProcessor : public UMassProcessor
 protected:
 	ULambdaMassProcessor()
 	{
-		ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 		bAllowMultipleInstances = true;
 		bAutoRegisterWithProcessingPhases = false;
+		
 	};
+	virtual void Initialize(UObject& Owner) override
+	{
+		Super::Initialize(Owner);
+	}
+
 	virtual void ConfigureQueries() override
 	{
 		Query.RegisterWithProcessor(*this);
 	};
 	FORCEINLINE_DEBUGGABLE virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
+
 public:
 	FMassExecuteFunction ExecuteFunction;
-	
+
 	FMassEntityQuery Query;
-	
+
 	template <typename TFragmentObserved>
 	void DynamicToObserver(const FMassExecuteFunction& Function, EMassObservedOperation OperationType)
 	{
 		// we need to unregister this to make it an observer since we already did this after making me! gross!!!
 		GetTypedOuter<UMassSimulationSubsystem>()->UnregisterDynamicProcessor(*this);
-		
 		FMassObserverManager& ObserverManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager().GetObserverManager();
 		ObserverManager.AddObserverInstance(*TFragmentObserved::StaticStruct(), OperationType, *this);
 		ExecuteFunction = Function;
@@ -89,16 +92,22 @@ public:
 		DynamicToObserver<TFragmentObserved>(Function, EMassObservedOperation::Add);
 		return *this;
 	}
-	
+
 	template <typename TFragmentObserved>
 	ULambdaMassProcessor& OnRemoved(const FMassExecuteFunction& Function)
 	{
 		DynamicToObserver<TFragmentObserved>(Function, EMassObservedOperation::Remove);
 		return *this;
 	}
-	
+
 	FORCEINLINE_DEBUGGABLE ULambdaMassProcessor& ForEachChunk(const FMassExecuteFunction& Function)
 	{
+		ExecuteFunction = Function;
+		return *this;
+	}
+	FORCEINLINE_DEBUGGABLE ULambdaMassProcessor& ParallelForEachChunk(const FMassExecuteFunction& Function)
+	{
+		Query.bAllowParallelExecution = true;
 		ExecuteFunction = Function;
 		return *this;
 	}
@@ -107,36 +116,63 @@ public:
 	{
 		bRequiresGameThreadExecution = bInRequiresGameThread;
 	}
+
+	void SetExecutionFlags(EProcessorExecutionFlags NewExecutionFlags)
+	{
+		ExecutionFlags = static_cast<int32>(NewExecutionFlags);
+	}
+
+	ULambdaMassProcessor& Before(const FName BeforeProcessorName)
+	{
+		ExecutionOrder.ExecuteBefore.Add(BeforeProcessorName);
+		return *this;
+	}
+	ULambdaMassProcessor& After(const FName AfterProcessorName)
+	{
+		ExecutionOrder.ExecuteAfter.Add(AfterProcessorName);
+
+		return *this;
+	}
+	ULambdaMassProcessor& InGroup(const FName GroupName)
+	{
+		ExecutionOrder.ExecuteInGroup =  GroupName;
+		return *this;
+	}
+	ULambdaMassProcessor& Phase(const EMassProcessingPhase Phase)
+	{
+		ProcessingPhase = Phase;
+		return *this;
+	}
+	
 };
 
 
 namespace MSMassUtils
 {
 
-	// Makes a new dynamic processor + calls MSMassUtils::Query<>
-	// bRequiresGameThreadExecution = false here
-	template <typename... TFragments>
-	ULambdaMassProcessor& Processor(UMassSimulationSubsystem* EntitySim)
+	// Makes a new dynamic processor registered to the entity sim
+	inline ULambdaMassProcessor& Processor(UMassSimulationSubsystem* EntitySim, FMassEntityQuery& Query,  bool bRequiresGameThread = false, const FName Name = NAME_None,
+	                                       const EProcessorExecutionFlags ExecutionFlags = EProcessorExecutionFlags::All)
 	{
-		ULambdaMassProcessor* NewProcessor = NewObject<ULambdaMassProcessor>(EntitySim);
-		NewProcessor->Query = MSMassUtils::Query<TFragments...>();
-		NewProcessor->Query.RegisterWithProcessor(*NewProcessor);
-		EntitySim->RegisterDynamicProcessor(*NewProcessor);
-		return *NewProcessor;
-	}
-	// the same as MSMassUtils::Processor but sets bRequiresGameThreadExecution to true
-	template <typename... TFragments>
-	ULambdaMassProcessor& GameThreadProcessor(UMassSimulationSubsystem* EntitySim)
-	{
-		ULambdaMassProcessor* NewProcessor = NewObject<ULambdaMassProcessor>(EntitySim);
-		NewProcessor->SetRequiresgameThread(true);
-		NewProcessor->Query = MSMassUtils::Query<TFragments...>();
-		NewProcessor->Query.RegisterWithProcessor(*NewProcessor);
-		EntitySim->RegisterDynamicProcessor(*NewProcessor);
-		return *NewProcessor;
-	}
+		ULambdaMassProcessor* NewProcessor = NewObject<ULambdaMassProcessor>(EntitySim, Name);
+		NewProcessor->SetExecutionFlags(ExecutionFlags);
+		NewProcessor->SetRequiresgameThread(bRequiresGameThread);
 
-	
+		NewProcessor->Query = Query;
+		NewProcessor->Query.bAllowParallelExecution &= !bRequiresGameThread;
+		NewProcessor->Query.RegisterWithProcessor(*NewProcessor);
+
+		EntitySim->RegisterDynamicProcessor(*NewProcessor);
+		return *NewProcessor;
+	}
+	// Makes a new dynamic processor registered to the entity sim with a templated query! See MSMassUtils::Query<>
+	template <typename... TFragments>
+	ULambdaMassProcessor& Processor(UMassSimulationSubsystem* EntitySim, const FName Name = NAME_None, bool bRequiresGameThread = false,
+									const EProcessorExecutionFlags ExecutionFlags = EProcessorExecutionFlags::All)
+	{
+		FMassEntityQuery Query = MSMassUtils::Query<TFragments...>();
+		return MSMassUtils::Processor(EntitySim,Query, bRequiresGameThread,Name,ExecutionFlags);
+	}
 }
 
 // 100% evil template shenanigans to template GetMutableFragmentView, thanks for Phy, Vblanco, and Bruxisma for this
