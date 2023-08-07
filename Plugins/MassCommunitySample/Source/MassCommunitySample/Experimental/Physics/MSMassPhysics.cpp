@@ -76,11 +76,13 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 				// I feel like we should figure out if this actually matters or not
 				Body_External.ClearKinematicTarget();
 
-
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3
 				if (Body_External.UpdateKinematicFromSimulation())
 				{
 					Body_External.SetKinematicTarget(NewPose + FTransform(Forces[i].Value));
 				}
+#endif
+				
 			}
 		}
 	});

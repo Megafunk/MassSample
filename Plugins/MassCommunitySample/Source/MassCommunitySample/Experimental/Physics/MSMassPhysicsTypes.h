@@ -22,7 +22,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSMassPhysicsFragment : public FMassFragment
 		SingleParticlePhysicsProxy = ParticlePhysicsProxy;
 	};
 };
-
+// Imitates the collision shapes a static mesh would normally have
 USTRUCT(BlueprintType)
 struct FSharedCollisionSettingsFragment : public FMassSharedFragment
 {
@@ -44,8 +44,9 @@ struct MASSCOMMUNITYSAMPLE_API FMSSimulatesPhysicsTag : public FMassTag
 
 
 /* Inits new choas bodies with bUpdateKinematicFromSimulation = true
- * your guess is as good as mine as for when to use this, the init body param seems fairly new?
+ * which is VERY NEW and is on main only as of writing?
  * I think what this does is do an actual solve to move the bodies around with the SetKinematicTarget stuff
+ * 
  */
 USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSUpdateKinematicFromSimulationTag : public FMassTag

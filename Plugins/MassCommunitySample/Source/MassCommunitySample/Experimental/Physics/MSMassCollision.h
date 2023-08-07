@@ -33,6 +33,9 @@ struct MASSCOMMUNITYSAMPLE_API FMSHitResultFragment : public FMassFragment
 	FHitResult HitResult;
 };
 
+// To be clear here, these are more raw math queries against geo we pass in and not something you use for regular physics sim
+// A holdover from before we figured out how to directly make chaos physics bodies
+// might be useful later if we want outside-chaos collisions for very rarely queried bodies?
 namespace MassSample::Collision
 {
 	// Does chaos raycast against a mesh from a shared static mesh in local space, then returns a mostly done FHitResult

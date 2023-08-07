@@ -7,7 +7,8 @@
 
 #include "MSCollisionProcessors.generated.h"
 /**
- * Queries the Mass Sample octree 
+ * Queries the Mass Sample octree
+ * 
  */
 UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSEntityCollisionQueryProcessors : public UMassProcessor

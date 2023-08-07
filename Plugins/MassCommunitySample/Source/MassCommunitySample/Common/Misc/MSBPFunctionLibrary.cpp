@@ -249,9 +249,8 @@ void UMSBPFunctionLibrary::SetEntityFragment(FMSEntityViewBPWrapper Entity, FIns
 	else
 	{
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
-			auto Memory = structview.GetMutableMemory();
+		auto Memory = StructView.GetMutableMemory();
 		FMemory::Memcpy(Memory,Fragment.GetMutableMemory(),Fragment.GetScriptStruct()->GetStructureSize());
-
 #else
 		uint8* Memory = StructView.GetMemory();
 		FMemory::Memcpy(Memory, Fragment.GetMutableMemory(), Fragment.GetScriptStruct()->GetStructureSize());

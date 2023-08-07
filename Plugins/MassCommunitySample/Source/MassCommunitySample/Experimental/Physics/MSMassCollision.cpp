@@ -27,8 +27,13 @@ namespace MassSample::Collision
 		// convex geo only for now...
 		for (FKConvexElem Shape : SharedMesh->StaticMesh.Get()->GetBodySetup()->AggGeom.ConvexElems)
 		{
-			//@todo-karl cache this inside the shared fragment I suppose 
+			//@todo-karl cache this inside the shared fragment I suppose
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
+			Chaos::FConvex* Implicit = Shape.GetChaosConvexMesh().Get();
+#else
 			Chaos::FConvex* Implicit = Shape.GetChaosConvexMesh();
+#endif
 			if(!Implicit)
 			{
 				continue;

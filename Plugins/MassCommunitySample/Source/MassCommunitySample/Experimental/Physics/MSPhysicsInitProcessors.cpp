@@ -212,9 +212,10 @@ void UMSPhysicsInitProcessor::Execute(FMassEntityManager& EntityManager, FMassEx
 			ActorParams.bSimulatePhysics = true;
 			CollisionEnabled = ECollisionEnabled::QueryAndPhysics;
 		};
-
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3
 		ActorParams.bUpdateKinematicFromSimulation = Context.DoesArchetypeHaveTag<FMSUpdateKinematicFromSimulationTag>();
-
+#endif
+		
 		// We want to try a dedicated collision fragment before using a static mesh 
 		if (auto* SharedCollisionSettings = Context.GetMutableSharedFragmentPtr<FSharedCollisionSettingsFragment>())
 		{

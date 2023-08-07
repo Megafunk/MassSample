@@ -31,7 +31,6 @@ void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& Build
 	if(bHasGravity)
 	{
 		BuildContext.AddTag<FMSGravityTag>();
-		
 	}
 	if(bQueriesOctree)
 	{
