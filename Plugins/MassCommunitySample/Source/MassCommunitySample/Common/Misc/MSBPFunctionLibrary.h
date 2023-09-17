@@ -92,6 +92,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mass")
 	static void SetEntityVelocity(FMSEntityViewBPWrapper EntityHandle, FVector Velocity);
 
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
+	static FVector GetEntityVelocity(FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
+
 	UFUNCTION(BlueprintCallable, Category = "Mass")
 	static void SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force);
 	

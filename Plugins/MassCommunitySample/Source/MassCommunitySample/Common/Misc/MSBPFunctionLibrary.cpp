@@ -116,6 +116,21 @@ void UMSBPFunctionLibrary::SetEntityVelocity(const FMSEntityViewBPWrapper Entity
 	}
 }
 
+FVector UMSBPFunctionLibrary::GetEntityVelocity(const FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject)
+{
+	const FMassEntityManager& EntityManager = WorldContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetEntityManager();
+
+
+	if (!EntityManager.IsEntityValid(EntityHandle.EntityView.GetEntity())) return FVector();
+
+	if (const auto VelocityFragmentPtr = EntityManager.GetFragmentDataPtr<FMassVelocityFragment>(EntityHandle.EntityView.GetEntity()))
+	{
+		return VelocityFragmentPtr->Value;
+	}
+
+	return FVector();
+}
+
 void UMSBPFunctionLibrary::SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force)
 {
 	if (!EntityHandle.EntityView.GetEntity().IsValid())
