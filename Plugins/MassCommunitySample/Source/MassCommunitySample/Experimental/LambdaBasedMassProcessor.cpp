@@ -2,12 +2,3 @@
 
 
 #include "LambdaBasedMassProcessor.h"
-
-
-void ULambdaMassProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
-{
-	Query.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& InnerContext)
-	{
-		ExecuteFunction(InnerContext);
-	});
-}

@@ -69,10 +69,16 @@ protected:
 	{
 		Query.RegisterWithProcessor(*this);
 	};
-	FORCEINLINE_DEBUGGABLE virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
+	FORCEINLINE_DEBUGGABLE virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override
+	{
+		Query.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& InnerContext)
+		{
+			ChunkExecuteFunction(InnerContext);
+		});
+	};
 
 public:
-	FMassExecuteFunction ExecuteFunction;
+	FMassExecuteFunction ChunkExecuteFunction;
 
 	FMassEntityQuery Query;
 
@@ -83,7 +89,7 @@ public:
 		GetTypedOuter<UMassSimulationSubsystem>()->UnregisterDynamicProcessor(*this);
 		FMassObserverManager& ObserverManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager().GetObserverManager();
 		ObserverManager.AddObserverInstance(*TFragmentObserved::StaticStruct(), OperationType, *this);
-		ExecuteFunction = Function;
+		ChunkExecuteFunction = Function;
 	}
 
 	template <typename TFragmentObserved>
@@ -102,16 +108,16 @@ public:
 
 	FORCEINLINE_DEBUGGABLE ULambdaMassProcessor& ForEachChunk(const FMassExecuteFunction& Function)
 	{
-		ExecuteFunction = Function;
+		ChunkExecuteFunction = Function;
 		return *this;
 	}
 	// future evil parallel query engine changes only, this won't do anything until then
 	FORCEINLINE_DEBUGGABLE ULambdaMassProcessor& ParallelForEachChunk(const FMassExecuteFunction& Function)
 	{
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4
 		Query.bAllowParallelExecution = true;
 #endif
-		ExecuteFunction = Function;
+		ChunkExecuteFunction = Function;
 		return *this;
 	}
 
@@ -125,12 +131,12 @@ public:
 		ExecutionFlags = static_cast<int32>(NewExecutionFlags);
 	}
 
-	ULambdaMassProcessor& Before(const FName BeforeProcessorName)
+	ULambdaMassProcessor& BeforeGroup(const FName BeforeProcessorName)
 	{
 		ExecutionOrder.ExecuteBefore.Add(BeforeProcessorName);
 		return *this;
 	}
-	ULambdaMassProcessor& After(const FName AfterProcessorName)
+	ULambdaMassProcessor& AfterGroup(const FName AfterProcessorName)
 	{
 		ExecutionOrder.ExecuteAfter.Add(AfterProcessorName);
 
@@ -146,7 +152,22 @@ public:
 		ProcessingPhase = Phase;
 		return *this;
 	}
-	
+	ULambdaMassProcessor& NoPrune()
+	{
+		bNeverPrune = true;
+		return *this;
+	}
+
+	bool bNeverPrune = false;
+
+	virtual bool ShouldAllowQueryBasedPruning(const bool bRuntimeMode) const override
+	{
+		if(!bNeverPrune)
+		{
+			return Super::ShouldAllowQueryBasedPruning(bRuntimeMode);
+		}
+		return false;
+	};
 };
 
 
@@ -162,7 +183,7 @@ namespace MSMassUtils
 		NewProcessor->SetRequiresgameThread(bRequiresGameThread);
 
 		NewProcessor->Query = Query;
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4
 		NewProcessor->Query.bAllowParallelExecution &= !bRequiresGameThread;
 #endif
 		NewProcessor->Query.RegisterWithProcessor(*NewProcessor);
