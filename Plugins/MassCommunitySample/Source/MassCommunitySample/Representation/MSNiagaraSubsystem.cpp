@@ -5,7 +5,6 @@
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 #include "Fragments/MSRepresentationFragments.h"
-#include "Materials/MaterialInstance.h"
 
 
 void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)

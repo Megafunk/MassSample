@@ -10,5 +10,4 @@ UCLASS()
 class MASSCOMMUNITYSAMPLE_API AMSNiagaraActor : public ANiagaraActor
 {
 	GENERATED_BODY()
-	virtual void PostRegisterAllComponents() override;
 };

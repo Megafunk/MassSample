@@ -1,10 +1,9 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Representation/MSNiagaraSubsystem.h"
 #include "MassProcessor.h"
 #include "MassSignalProcessorBase.h"
-#include "UObject/Object.h"
 #include "MSNiagaraRepresentationProcessors.generated.h"
 
 

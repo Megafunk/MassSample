@@ -7,9 +7,4 @@
 
 
 
-void AMSNiagaraActor::PostRegisterAllComponents()
-{
-	Super::PostRegisterAllComponents();
-	GetNiagaraComponent()->SetTickBehavior(ENiagaraTickBehavior::ForceTickLast);
-}
 
