@@ -29,7 +29,7 @@ namespace MassSample::Collision
 		{
 			//@todo-karl cache this inside the shared fragment I suppose
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
 			Chaos::FConvex* Implicit = Shape.GetChaosConvexMesh().Get();
 #else
 			Chaos::FConvex* Implicit = Shape.GetChaosConvexMesh();

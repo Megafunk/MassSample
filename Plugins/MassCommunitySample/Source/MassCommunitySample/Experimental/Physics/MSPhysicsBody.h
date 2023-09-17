@@ -32,7 +32,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bHasGravity = false;
 
-	// Used to force create a physics body. Hardcoded to a single capsule
+	// very experimental, I don't know of a nice way to expose these arrays so it's hardcoded to a capsule for now :/
 	UPROPERTY(EditAnywhere,AdvancedDisplay)
 	bool bManualCollisionSettingsAndGeo = false;
 	UPROPERTY(EditAnywhere,AdvancedDisplay,meta=(EditCondition="bManualCollisionSettingsAndGeo"))
