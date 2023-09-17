@@ -9,14 +9,15 @@ Our **very WIP** understanding of Unreal Engine 5's experimental Entity Componen
 
 We are totally open to contributions, If something is wrong or you think it could be improved, feel free to [open an issue](https://github.com/Megafunk/MassSample/issues) or submit a [pull request](https://github.com/Megafunk/MassSample/pulls).
 
-Currently built for the Unreal Engine 5 latest version binary from the Epic Games launcher. 
+Currently built for the Unreal Engine 5 latest version binary from the Epic Games launcher.
 This documentation will be updated often!
+
 # ⚠ 5.2 Bugfix ⚠
 There is a bug in 5.2 for setting Execution Flags for the world and Mass processors that can be resolved either in the Mass config or engine changes 
 [here!](https://dev.epicgames.com/community/learning/tutorials/JXMl/unreal-engine-your-first-60-minutes-with-mass#**massprocessorbugin5.2)
 
 #### **Requirements:**
-- Unreal Engine 5.2 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- Unreal Engine 5.3 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - `Git` version control:
   - [Windows](https://gitforwindows.org/)
   - [Linux/Unix & macOS](https://git-scm.com/downloads)
@@ -331,8 +332,8 @@ The chunk size (`UE::Mass::ChunkSize`) has been conveniently set based on next-g
 ### 4.6 Processors
 Processors combine multiple user-defined [queries](#mass-queries) with functions that compute entities.
 
-Processors are automatically registered with Mass and added to the `EMassProcessingPhase::PrePhsysics` processing phase by default. Each `EMassProcessingPhase` relates to an `ETickingGroup`, meaning that, by default, processors tick every frame in their given processing phase.
-
+Unreal classes deriving from UMassProcessor are automatically registered with Mass and added to the `EMassProcessingPhase::PrePhsysics` processing phase by default. Each `EMassProcessingPhase` relates to an `ETickingGroup`, meaning that, by default, processors tick every frame in their given processing phase.
+They can also be created and registered with the `UMassSimulationSubsystem` but the common case is to create a new type. 
 Users can configure to which processing phase their processor belongs by modifying the `ProcessingPhase` variable included in `UMassProcessor`: 
 
 | `EMassProcessingPhase` | Related `ETickingGroup` | Description |
@@ -899,6 +900,9 @@ At the time of writing, Observers are only triggered by the Mass Manager directl
 - The [deferred commands](#mass-queries-mq) that change entity should all call one of the above. 
 
 This covers processors and spawners but not single Entity changes from C++.
+
+Thankfully a [recent commit](https://github.com/EpicGames/UnrealEngine/commit/2b883dec5f6c821648f2d6005ac06e704099dbd9
+) on ue5-main has rectified this issue.
 
 If you need to, asking the observer manager to check for changes should only require calling `OnCompositionChanged()` with the delta of newly added or removed components.
 <!-- FIXMEFUNK: This is kind of a wacky example. I assume most people who need this might 
