@@ -116,17 +116,17 @@ FPhysicsActorHandle InitAndAddNewChaosBody(FActorCreationParams& ActorParams, co
 
 	// geo before shapes
 	// mimicking landscape.cpp
-	if (Geoms.Num() == 1)
+
+	
+	// if we already have geometry, merge it
+	if (Body_External.Geometry())
 	{
-		Body_External.SetGeometry(MoveTemp(Geoms[0]));
+		Body_External.MergeGeometry(MoveTemp(Geoms));
 	}
 	else
 	{
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 3
-	  Body_External.SetGeometry(MakeUnique<Chaos::FImplicitObjectUnion>(MoveTemp(Geoms)));
-#else
-		Body_External.MergeGeometry(MoveTemp(Geoms));
-#endif
+		TUniquePtr<Chaos::FImplicitObjectUnion> Union = MakeUnique<Chaos::FImplicitObjectUnion>(MoveTemp(Geoms));
+		Body_External.SetGeometry(MoveTemp(Union));
 	}
 
 	// Construct Shape Bounds

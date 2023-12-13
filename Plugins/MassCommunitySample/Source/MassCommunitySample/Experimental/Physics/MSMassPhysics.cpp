@@ -13,18 +13,21 @@
 #include "Physics/Experimental/PhysScene_Chaos.h"
 #include "PhysicsProxy/SingleParticlePhysicsProxy.h"
 
-
+#if CHAOS_DEBUG_DRAW
 Chaos::DebugDraw::FChaosDebugDrawSettings ChaosMassPhysDebugDebugDrawSettings(
 	/* ArrowSize =					*/ 1.5f,
 	/* BodyAxisLen =				*/ 4.0f,
 	/* ContactLen =					*/ 4.0f,
 	/* ContactWidth =				*/ 2.0f,
-	/* ContactPhiWidth =			*/ 0.0f,
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
+	/* ContactPhiWidth =			*/ 0.0f, //this isn't around in 5.4?
+#endif
+
 	/* ContactInfoWidth				*/ 2.0f,
 	/* ContactOwnerWidth =			*/ 0.0f,
 	/* ConstraintAxisLen =			*/ 5.0f,
 	/* JointComSize =				*/ 2.0f,
-	/* LineThickness =				*/ 1.15f,
+	/* LineThickness =				*/ 0.15f,
 	/* DrawScale =					*/ 1.0f,
 	/* FontHeight =					*/ 10.0f,
 	/* FontScale =					*/ 1.5f,
@@ -37,8 +40,8 @@ Chaos::DebugDraw::FChaosDebugDrawSettings ChaosMassPhysDebugDebugDrawSettings(
 	/* InertiaScale =				*/ 0.0f,
 	/* DrawPriority =				*/ 10.0f,
 	/* bShowSimple =				*/ true,
-	/* bShowComplex =				*/ true,
-	/* bInShowLevelSetCollision =	*/ true,
+	/* bShowComplex =				*/ false,
+	/* bInShowLevelSetCollision =	*/ false,
 	/* InShapesColorsPerState =     */ Chaos::DebugDraw::GetDefaultShapesColorsByState(),
 	/* InShapesColorsPerShaepType=  */ Chaos::DebugDraw::GetDefaultShapesColorsByShapeType(),
 	/* InBoundsColorsPerState =     */ Chaos::DebugDraw::GetDefaultBoundsColorsByState(),
@@ -50,6 +53,7 @@ TAutoConsoleVariable<bool> CVMSDrawChaosBodies(
 	TEXT("ms.drawchaosbodies"),
 	false,
 	TEXT("draw debug info for all mass chaos bodies using the chaos debug draw queue, make sure you also called p.Chaos.DebugDraw.Enabled 1"));
+#endif
 
 UMSChaosMassTranslationProcessorsProcessors::UMSChaosMassTranslationProcessorsProcessors()
 {
@@ -149,7 +153,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 				Body_External.UpdateShapeBounds();
 			}
 
-#if !UE_BUILD_SHIPPING
+#if CHAOS_DEBUG_DRAW
 			if(CVMSDrawChaosBodies.GetValueOnAnyThread())
 			{
 				if (GetWorld()->GetPhysicsScene() && PhysicsHandle)
