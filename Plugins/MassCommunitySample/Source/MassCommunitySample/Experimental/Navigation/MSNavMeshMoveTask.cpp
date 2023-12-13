@@ -84,13 +84,13 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 
 			// rather expensive, uncomment this if you want to see where stuff is headed though
 
-		// #if WITH_EDITOR
-		// 			if (UNavMeshRenderingComponent::IsNavigationShowFlagSet(Context.GetWorld()))
-		// 			{
-		// 				Result.Path.Get()->DebugDraw(Query.NavData.Get(), FColor::MakeRandomSeededColor(MassContext.GetEntity().Index),
-		// 							Context.GetWorld()->GetCanvasForRenderingToTarget(), false, 10.0f);
-		// 			}
-		// #endif
+		#if WITH_EDITOR
+					if (UNavMeshRenderingComponent::IsNavigationShowFlagSet(Context.GetWorld()))
+					{
+						Result.Path.Get()->DebugDraw(Query.NavData.Get(), FColor::MakeRandomSeededColor(MassContext.GetEntity().Index),
+									Context.GetWorld()->GetCanvasForRenderingToTarget(), false, 10.0f);
+					}
+		#endif
 			
 		}
 		else
