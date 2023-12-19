@@ -4,6 +4,7 @@
 #include "MSPathologicalBenchmarkProcessor.h"
 
 #include "MassEntitySubsystem.h"
+#include "MassExecutionContext.h"
 
 //make this true to try the benchmark!
 constexpr bool benchmark = false;

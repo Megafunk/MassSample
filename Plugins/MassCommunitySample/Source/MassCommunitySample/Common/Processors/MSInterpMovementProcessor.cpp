@@ -4,6 +4,7 @@
 #include "MSInterpMovementProcessor.h"
 #include "MassCommonFragments.h"
 #include "MassCommonTypes.h"
+#include "MassExecutionContext.h"
 #include "Common/Fragments/MSFragments.h"
 
 UMSInterpMovementProcessor::UMSInterpMovementProcessor()

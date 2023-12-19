@@ -1,6 +1,7 @@
 ﻿#include "ISMPerInstanceDataProcessors.h"
 #include "MassRepresentationFragments.h"
 #include "MassRepresentationTypes.h"
+#include "Misc/EngineVersionComparison.h"
 #include "Representation/Fragments/MSRepresentationFragments.h"
 #include "MassRepresentationSubsystem.h"
 
@@ -38,10 +39,15 @@ void UismPerInstanceDataUpdater::Execute(FMassEntityManager& EntityManager, FMas
 			const FMassRepresentationFragment& Representation = RepresentationList[EntityIdx];
 			if(Representation.CurrentRepresentation == EMassRepresentationType::StaticMeshInstance)
 			{
+#if UE_VERSION_OLDER_THAN(5, 4, 0)
 				const FMassRepresentationLODFragment& RepresentationLOD = RepresentationLODList[EntityIdx];
 				FMassInstancedStaticMeshInfo& ISMInfo = ISMInfos[Representation.StaticMeshDescIndex];
 				const FSampleISMPerInstanceSingleFloatFragment& RenderData = RenderDatas[EntityIdx];
-
+#else
+				const FMassRepresentationLODFragment& RepresentationLOD = RepresentationLODList[EntityIdx];
+				FMassInstancedStaticMeshInfo& ISMInfo = ISMInfos[Representation.StaticMeshDescHandle.ToIndex()];
+				const FSampleISMPerInstanceSingleFloatFragment& RenderData = RenderDatas[EntityIdx];
+#endif
 
 				// This can accept any struct that the size of n floats. It seems to be required to be called every frame we want to change it
 				ISMInfo.AddBatchedCustomData(RenderData.Data, RepresentationLOD.LODSignificance);

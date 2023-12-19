@@ -4,6 +4,7 @@
 #include "MSSceneCompTransformToActorTranslators.h"
 
 #include "MassCommonTypes.h"
+#include "MassExecutionContext.h"
 #include "Translators/MassSceneComponentLocationTranslator.h"
 
 UMSTransformToSceneCompTranslatorFastPath::UMSTransformToSceneCompTranslatorFastPath()

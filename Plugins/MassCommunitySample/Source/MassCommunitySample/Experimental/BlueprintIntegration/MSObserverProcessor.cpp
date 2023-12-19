@@ -3,6 +3,7 @@
 
 #include "MSObserverProcessor.h"
 #include "MassCommonFragments.h"
+#include "MassExecutionContext.h"
 
 #include "MassObserverRegistry.h"
 #include "Common/Misc/MSBPFunctionLibrary.h"
@@ -56,9 +57,9 @@ void UMSObserverProcessorBP::Execute(FMassEntityManager& EntityManager, FMassExe
 
 		for (int32 i = 0; i < QueryLength; ++i)
 		{
-			for (auto FragmentView : FragmentViews)
+			for ([[maybe_unused]] auto FragmentView : FragmentViews)
 			{
-				
+				// snipped for now, might not bother with these
 			}
 			BPExecute(FMSEntityViewBPWrapper(Archetype,Context.GetEntity(i)), World);
 

@@ -2,6 +2,7 @@
 
 #include "MSObserverSamples.h"
 #include "MassCommonFragments.h"
+#include "MassExecutionContext.h"
 #include "Common/Fragments/MSFragments.h"
 
 UMSObserverOnAdd::UMSObserverOnAdd()

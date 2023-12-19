@@ -99,7 +99,7 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 	FMassArchetypeSharedFragmentValues SharedFragmentValues;
 	
 	// This is what traits use to create their shared fragment info as well
-	FConstSharedStruct& SharedFragmentSharedStruct = EntityManager->GetOrCreateConstSharedFragment(SharedFragmentExample);
+	const FConstSharedStruct& SharedFragmentSharedStruct = EntityManager->GetOrCreateConstSharedFragment(SharedFragmentExample);
 	SharedFragmentValues.AddConstSharedFragment(SharedFragmentSharedStruct);
 
 	EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(ReserverdEntity, MoveTemp(SharedFragmentValues), MyTransformFragment, MyColorFragment);

@@ -6,6 +6,7 @@
 #include "MassEntitySubsystem.h"
 
 #include "MassEntityView.h"
+#include "MassExecutionContext.h"
 
 
 UMSEntityViewBenchMark::UMSEntityViewBenchMark()
