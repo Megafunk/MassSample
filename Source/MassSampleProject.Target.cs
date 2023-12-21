@@ -12,6 +12,7 @@ public class MassSampleProjectTarget : TargetRules
 		ExtraModuleNames.AddRange(new string[] { "MassSampleProject" });
 
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
+		
 
 	}
 }
