@@ -29,19 +29,25 @@ protected:
 
 	// Thanks to vblanco for this fast transform setting trick
 	// According to him the first two steps (comp to world and updatebounds) can be threaded but not the render dirty
-	FORCEINLINE static void SetWorldTransformFastPath(USceneComponent* InComp, const FTransform& InTransform)
+	static void SetWorldTransformFastPath(USceneComponent* InComp, const FTransform& InTransform)
 	{
 		// directly set transform and update bounds 
 		InComp->SetComponentToWorld(InTransform);
 		InComp->UpdateBounds();
+
 		
-		// Evil static cast (yes this will explode instantly on non primitives) 
-		auto bodyinstance = static_cast<UPrimitiveComponent*>(InComp)->BodyInstance;
-		// thanks to Intax/BlueMan for the advice
-		FPhysicsCommand::ExecuteWrite(bodyinstance.ActorHandle, [&](const FPhysicsActorHandle& Actor)
+		if(UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(InComp))
 		{
-		   FPhysicsInterface::SetGlobalPose_AssumesLocked(bodyinstance.ActorHandle, InTransform);
-		});
+			// this is NOT an AActor, chaos calls bodies actors because.. reasons
+			FPhysicsActorHandle ChaosParticleHandle = Primitive->BodyInstance.ActorHandle;
+			
+			FPhysicsCommand::ExecuteWrite(ChaosParticleHandle, [&ChaosParticleHandle, &InTransform](const FPhysicsActorHandle& Actor)
+			{
+			   FPhysicsInterface::SetGlobalPose_AssumesLocked(ChaosParticleHandle, InTransform);
+			});
+		}
+		
+
 		// dirty the render transform 
 		InComp->MarkRenderTransformDirty();
 		
@@ -52,20 +58,20 @@ protected:
 
 			//These are to support non-relative transforms (could probably omit as this is rare?)
 
-			if(UNLIKELY(InComp->IsUsingAbsoluteLocation()))
-			{
-				CompWorldTransform.CopyTranslation(InTransform);
-			}
-			
-			if(UNLIKELY(InComp->IsUsingAbsoluteRotation()))
-			{
-				CompWorldTransform.CopyRotation(InTransform);
-			}
-			
-			if(UNLIKELY(InComp->IsUsingAbsoluteScale()))
-			{
-				CompWorldTransform.CopyScale3D(InTransform);
-			}
+			// if(UNLIKELY(InComp->IsUsingAbsoluteLocation()))
+			// {
+			// 	CompWorldTransform.CopyTranslation(InTransform);
+			// }
+			//
+			// if(UNLIKELY(InComp->IsUsingAbsoluteRotation()))
+			// {
+			// 	CompWorldTransform.CopyRotation(InTransform);
+			// }
+			//
+			// if(UNLIKELY(InComp->IsUsingAbsoluteScale()))
+			// {
+			// 	CompWorldTransform.CopyScale3D(InTransform);
+			// }
 
 			// Recursive!
 			SetWorldTransformFastPath(Component,CompWorldTransform);
