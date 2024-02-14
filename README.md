@@ -156,6 +156,8 @@ USTRUCT()
 struct MASSCOMMUNITYSAMPLE_API FLifeTimeFragment : public FMassFragment
 {
 	GENERATED_BODY()
+
+	UPROPERTY()
 	float Time;
 };
 ```
@@ -783,7 +785,7 @@ class MASSCOMMUNITYSAMPLE_API UMSDebugTagTrait : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
 public:
-	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override
+	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override
 	{
 		// Adding a tag
 		BuildContext.AddTag<FMassSampleDebuggableTag>();
@@ -829,7 +831,7 @@ Traits can override `ValidateTemplate` to provide custom validation code for the
 
 In the following snippet, we check if a field of the trait is `nullptr` and log an error:
 ```c++
-void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+void UMSNiagaraRepresentationTrait::ValidateTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
 	// If our shared niagara system is null, show an error!
 	if (!SharedNiagaraSystem)
