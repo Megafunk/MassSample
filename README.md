@@ -157,7 +157,6 @@ struct MASSCOMMUNITYSAMPLE_API FLifeTimeFragment : public FMassFragment
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
 	float Time;
 };
 ```
