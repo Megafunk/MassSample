@@ -6,7 +6,7 @@
 - Alvaro Jover - [@vorixo](https://github.com/vorixo)
 
 #### **Translations:**
-* [🇷🇺 Russian](README_RU.MD) - [Vladimir Pobedinskiy]([@VladimirPobedinskiy](https://github.com/vorixo))
+* [🇷🇺 Russian](README_RU.md) - [Vladimir Pobedinskiy]([@VladimirPobedinskiy](https://github.com/VladimirPobedinskiy))
 
 Our **very WIP** understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are **not** affiliated with Epic Games and this system is actively being changed often so this information might not be totally accurate.
 
