@@ -258,7 +258,7 @@ int32 UMyWorldSubsystem::Read() const
 	return Number;
 }
 ```
-Приведенный выше код ориентирован на многопоточность, отсюда и токены `UE_MT_X`.
+Приведенный выше код ориентирован на многопоточность, отсюда и преффиксы `UE_MT_X`.
 
 <!-- FIXMEVORI-UE5: Maybe a section exposing the different UE_MT_X tokens? (Get informed about their full scope) -->
 
