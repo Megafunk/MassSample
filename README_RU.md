@@ -5,7 +5,7 @@
 - Karl Mavko - [@Megafunk](https://github.com/Megafunk)
 - Alvaro Jover - [@vorixo](https://github.com/vorixo)
 
-Наше **очень долго находящеея в разработке** понимание эксперементальной системы сущностей движка Unreal Engine 5 - плагин Entity Component System (ECS) с небольшим примером. Мы **не относимся** к Epic Games и в эту систему часто вносятся изменения, поэтому информация может быть не совсем точной.
+Наше **очень долго находящееся в разработке** понимание эксперементальной системы сущностей движка Unreal Engine 5 - плагин Entity Component System (ECS) с небольшим примером. Мы **не относимся** к Epic Games и в эту систему часто вносятся изменения, поэтому информация может быть не совсем точной.
 
 Мы полностью открыты для вклада, если что-то не так или вы считаете, что это можно улучшить, не стесняйтесь [открыть issue](https://github.com/Megafunk/MassSample/issues) или отправить [pull request](https://github.com/Megafunk/MassSample/pulls).
 
