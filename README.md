@@ -5,6 +5,9 @@
 - Karl Mavko - [@Megafunk](https://github.com/Megafunk)
 - Alvaro Jover - [@vorixo](https://github.com/vorixo)
 
+#### **Translations:**
+* [🇷🇺 Russian](README_RU.MD) - [Vladimir Pobedinskiy]([@VladimirPobedinskiy](https://github.com/vorixo))
+
 Our **very WIP** understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are **not** affiliated with Epic Games and this system is actively being changed often so this information might not be totally accurate.
 
 We are totally open to contributions, If something is wrong or you think it could be improved, feel free to [open an issue](https://github.com/Megafunk/MassSample/issues) or submit a [pull request](https://github.com/Megafunk/MassSample/pulls).
