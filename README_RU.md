@@ -624,7 +624,7 @@ void UDeathProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionC
 
 
 ##### 4.7.3.1 Основные операции изменения
-Следующие листинги определяют базовые мутации, которые вы можете отложить:
+Следующие листинги определяют базовые изменения, которые вы можете отсрочить:
 
 Отсрочка обычно выполняется из `FMassExecutionContext` обработчика с помощью `.Defer()`, но их можно выполнить и вне обработки с помощью вызова `EntityManager->Defer()`. 
 
@@ -700,9 +700,9 @@ EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(E
 EntityManager->Defer().PushCommand<FMassDeferredSetCommand>(
    [&](FMassEntityManager& Manager)
   {
-      	// Это запускается, когда отложенные команды смываются
+      	// Выполняется, когда отложенные команды сбрасываются.
       	MyActor.DoGameThreadWork();
-      	// Здесь также могут происходить обычные вызовы мессенджера. Например:
+      	// Здесь также могут происходить регулярные вызовы менеджера по работе с Mass. Например:
   	EntityManager.BuildEntity(ReservedEntity, InstanceStructs, EntityTemplate.GetSharedFragmentValues());
   });
 ```
