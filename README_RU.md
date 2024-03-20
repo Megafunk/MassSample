@@ -1142,11 +1142,11 @@ The `MassGameplay' плагин компилирует ряд полезных �
 
 <a name="mass-pm-gp-mm"></a>
 #### 6.2.2 `MassMovement`
-Features an important `UMassApplyMovementProcessor` processor that moves entities based on their velocity and force.
+Включает важный обработчик `UMassApplyMovementProcessor`, который перемещает сущности на основе их скорости и силы.
 
 <a name="mass-pm-gp-mr"></a>
 #### 6.2.3 `MassRepresentation`
-Processors and fragments for rendering entities in the world. They generally use an ISMC to do so, but can also swap entities out with full Unreal actors at user specified distances.
+Обработчики и фрагменты для рендеринга сущностей в мире. Обычно они используют для этого ISMC, но также могут менять местами сущности с полноценными актерами Unreal на заданных пользователем расстояниях.
 
 <a name="mass-pm-gp-ms"></a>
 #### 6.2.4 `MassSpawner`
