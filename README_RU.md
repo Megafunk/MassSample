@@ -960,8 +960,18 @@ void UMyMassObserverProcessor::Register()
 <!--FIXMEFUNK - we really need to figure out which ini this goes in...-->
 - Потоковая обработка (по потоку на обработчик) на основе графа зависимостей обработчиков путем установки консольной переменной `mass.FullyParallel 1`.
 
-- Параллелизация запросов для вызовов, которые распределяют работу одного запроса по нескольким потокам, с помощью аргумента команды `ParallelMassQueries=1` для данного процесса Unreal. В настоящее время этот аргумент не используется ни в модулях Mass, ни в примерах, и при отсрочке команд от него несколько раз за кадр он, похоже, не работает.
-
+- Параллелизм в каждом запросе распределяет работу одного запроса по нескольким потокам с помощью `ParallelFor`. Это можно сделать, используя `Query.ParallelForEachEntityChunk` вместо `Query.ForEachEntityChunk`.
+```c++
+MyQuery.ParallelForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
+{
+	//Перебираем все сущности в текущем блоке и делаем что-нибудь!
+	for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+	{
+		// ...
+	}
+}, FMassEntityQuery::ForceParallelExecution);
+```
+Обратите внимание, что ParallelForEachEntityChunk по умолчанию создает выделенный командный буфер для каждого задания.
 
 <a name="mass-cm"></a>
 ## 5. Общие операции с Mass

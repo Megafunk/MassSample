@@ -5,9 +5,6 @@
 - Karl Mavko - [@Megafunk](https://github.com/Megafunk)
 - Alvaro Jover - [@vorixo](https://github.com/vorixo)
 
-#### **Translations:**
-* [🇷🇺 Russian](README_RU.md) - [Vladimir Pobedinskiy]([@VladimirPobedinskiy](https://github.com/VladimirPobedinskiy))
-
 Our **very WIP** understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are **not** affiliated with Epic Games and this system is actively being changed often so this information might not be totally accurate.
 
 We are totally open to contributions, If something is wrong or you think it could be improved, feel free to [open an issue](https://github.com/Megafunk/MassSample/issues) or submit a [pull request](https://github.com/Megafunk/MassSample/pulls).
@@ -962,7 +959,18 @@ Out of the box Mass can spread out work to threads in two different ways:
 <!--FIXMEFUNK - we really need to figure out which ini this goes in...-->
 - Per-Processor threading based on the processor dependency graph by setting the console variable `mass.FullyParallel 1`
 
-- Per-query parrallel for calls that spread the job of one query over multiple threads by using the command argument `ParallelMassQueries=1` for the given Unreal process. This is currently used nowhere in the Mass modules or sample and currently it seems to break when deferring commands from it multiple times a frame.
+- Per-query parallelism spreads the job of one query over multiple threads using a `ParallelFor`. This is available by using `Query.ParallelForEachEntityChunk` in place of `Query.ForEachEntityChunk`.
+```c++
+MyQuery.ParallelForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
+{
+	//Loop over every entity in the current chunk and do stuff!
+	for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+	{
+		// ...
+	}
+}, FMassEntityQuery::ForceParallelExecution);
+```
+Note that ParallelForEachEntityChunk will create a dedicated command buffer for each job by default.
 
 
 <a name="mass-cm"></a>
