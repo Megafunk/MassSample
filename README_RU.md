@@ -187,7 +187,7 @@ struct MASSCOMMUNITYSAMPLE_API FVisibilityDistanceSharedFragment : public FMassS
 
 <a name="mass-tags"></a>
 ### 4.3 Теги
-Пустые `UScriptStructs`, которые могут использоваться [обработчиками](#mass-processors) для фильтрации сущностей для обработки на основе их наличия/отсутствия. 
+Пустые `UScriptStructs`, которые могут использоваться [обработчиками](#mass-processors) для фильтрации сущностей для обработки на основе наличия/отсутствия определенных тегов. 
 Чтобы создать тег, наследуйте от [`FMassTag`](https://docs.unrealengine.com/5.0/en-US/API/Plugins/MassEntity/FMassTag/).
 
 ```c++
@@ -197,7 +197,7 @@ struct MASSCOMMUNITYSAMPLE_API FProjectileTag : public FMassTag
 	GENERATED_BODY()
 };
 ```
-**Примечание:** Теги никогда не должны содержать свойства членов.
+**Примечание:** Теги никогда не должны содержать свойства-члены.
 
 <a name="mass-subsystems"></a>
 ### 4.4 Подсистемы
