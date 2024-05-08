@@ -29,6 +29,7 @@ void UMSEntityCollisionQueryProcessors::Initialize(UObject& Owner)
 	Super::Initialize(Owner);
 
 	MSSubsystem = Owner.GetWorld()->GetSubsystem<UMSSubsystem>();
+	SignalSubsystem = Owner.GetWorld()->GetSubsystem<UMassSignalSubsystem>();
 }
 
 void UMSEntityCollisionQueryProcessors::ConfigureQueries()
@@ -113,6 +114,9 @@ void UMSEntityCollisionQueryProcessors::Execute(FMassEntityManager& EntityManage
 	if (EntitiesThatWereHitNum > 0)
 	{
 		TArray<FMassEntityHandle> Entities = UE::Mass::Utils::EntityQueueToArray(EntitiesCollided, EntitiesThatWereHitNum);
-		Context.GetMutableSubsystem<UMassSignalSubsystem>()->SignalEntities(MassSample::Signals::OnEntityHitSomething, Entities);
+		if (UMassSignalSubsystem* SignalSubsystem = Context.GetMutableSubsystem<UMassSignalSubsystem>())
+		{
+			SignalSubsystem->SignalEntitiesDeferred(Context, MassSample::Signals::OnEntityHitSomething, Entities);
+		}
 	}
 }
