@@ -36,7 +36,7 @@ public:
 
 
 	UPROPERTY(Category="Query", EditAnywhere,
-		meta = (BaseStruct = "MassFragment", ExcludeBaseStruct, NoElementDuplicate))
+		meta = (BaseStruct = "/Script/MassEntity.MassFragment", ExcludeBaseStruct, NoElementDuplicate))
 	TArray<FInstancedStruct> FragmentRequirements;
 	UPROPERTY(Category="Query", EditAnywhere, meta = (BaseStruct = "/Script/MassEntity.MassTag", ExcludeBaseStruct, NoElementDuplicate))
 	TArray<FInstancedStruct> TagRequirements;
