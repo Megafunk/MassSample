@@ -8,8 +8,5 @@ public class MassSampleProjectEditorTarget : MassSampleProjectTarget
 	public MassSampleProjectEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		
-		bUseUnityBuild = false;
-
 	}
 }
