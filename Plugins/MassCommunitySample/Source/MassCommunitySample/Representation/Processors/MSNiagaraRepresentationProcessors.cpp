@@ -15,15 +15,12 @@ UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
 	//join the other representation processors in their existing group
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Representation;
-
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 4
 	ProcessingPhase = EMassProcessingPhase::FrameEnd;
-#else
-	// personal engine change where I added "PostUpdate" to the mass processing phases.
-	// this is to safely mass niagara systems AFTER animations and then BEFORE they get pushed to the render thread by their niagara component
+	
+	// I made a personal engine change where I added "PostUpdate" to the mass processing phases.
+	// this is to safely execute mass niagara systems AFTER animations and then BEFORE they get pushed to the render thread by their niagara component
 	// In the future I should  just do something that uses the process dependencies to ensure their order rather than ticking groups
-	ProcessingPhase = EMassProcessingPhase::PostUpdate;
-#endif
+	// ProcessingPhase = EMassProcessingPhase::PostUpdate;
 }
 
 void UMSNiagaraRepresentationProcessors::ConfigureQueries()
@@ -153,7 +150,10 @@ void UMSNiagaraRepresentationSpawnProcs::SignalEntities(FMassEntityManager& Enti
 void UMSNiagaraRepresentationSpawnProcs::Initialize(UObject& Owner)
 {
 	Super::Initialize(Owner);
-	UMassSignalSubsystem* SignalSubsystem = GetWorld()->GetSubsystem<UMassSignalSubsystem>();
-
-	SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnEntityHitSomething);
+	
+	UMassSignalSubsystem* SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
+	if (SignalSubsystem)
+	{
+		SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnEntityHitSomething);
+	}
 }

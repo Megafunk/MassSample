@@ -114,9 +114,6 @@ public:
 	// future evil parallel query engine changes only, this won't do anything until then
 	FORCEINLINE_DEBUGGABLE ULambdaMassProcessor& ParallelForEachChunk(const FMassExecuteFunction& Function)
 	{
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4
-		Query.bAllowParallelExecution = true;
-#endif
 		ChunkExecuteFunction = Function;
 		return *this;
 	}
@@ -183,9 +180,7 @@ namespace MSMassUtils
 		NewProcessor->SetRequiresgameThread(bRequiresGameThread);
 
 		NewProcessor->Query = Query;
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4
-		NewProcessor->Query.bAllowParallelExecution &= !bRequiresGameThread;
-#endif
+
 		NewProcessor->Query.RegisterWithProcessor(*NewProcessor);
 
 		EntitySim->RegisterDynamicProcessor(*NewProcessor);

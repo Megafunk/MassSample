@@ -45,7 +45,7 @@ public:
 	FMassEntityQuery EntityQuery;
 
 	UPROPERTY()
-	UMSSubsystem* MassSampleSystem;
+	UMSSubsystem* MassSampleSystem = nullptr;
 	
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;

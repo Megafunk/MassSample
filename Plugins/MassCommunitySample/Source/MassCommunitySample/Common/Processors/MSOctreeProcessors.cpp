@@ -118,7 +118,7 @@ void UMSOctreeProcessor::BeginDestroy()
 	Super::BeginDestroy();
 }
 
-UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor()
+UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor() : EntityQuery(*this)
 {
 	ObservedType = FMSOctreeFragment::StaticStruct();
 	bRequiresGameThreadExecution = true;
