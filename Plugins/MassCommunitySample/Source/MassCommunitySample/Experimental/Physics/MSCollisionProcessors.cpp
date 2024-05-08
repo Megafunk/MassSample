@@ -29,7 +29,6 @@ void UMSEntityCollisionQueryProcessors::Initialize(UObject& Owner)
 	Super::Initialize(Owner);
 
 	MSSubsystem = Owner.GetWorld()->GetSubsystem<UMSSubsystem>();
-	SignalSubsystem = Owner.GetWorld()->GetSubsystem<UMassSignalSubsystem>();
 }
 
 void UMSEntityCollisionQueryProcessors::ConfigureQueries()
