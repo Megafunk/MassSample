@@ -88,9 +88,10 @@ struct MASSCOMMUNITYSAMPLE_API FMassSampleDebuggableTag : public FMassTag
 
 // A simple shared fragment example
 // Generally these are added through traits
+// This one is a const mass fragment, which is required to use this as a readonly shared fragment
 
 USTRUCT()
-struct MASSCOMMUNITYSAMPLE_API FMSExampleSharedFragment : public FMassSharedFragment
+struct MASSCOMMUNITYSAMPLE_API FMSExampleSharedFragment : public FMassConstSharedFragment
 {
 	GENERATED_BODY()
 

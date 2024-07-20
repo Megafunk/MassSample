@@ -25,7 +25,7 @@ public:
 	FMSOctree2 Octree2;
 	
 	UPROPERTY()
-	UNavigationSystemV1* NavSystem;
+	TObjectPtr<UNavigationSystemV1> NavSystem;
 
 	UFUNCTION(BlueprintCallable)
 	int32 SampleSpawnEntityExamples();

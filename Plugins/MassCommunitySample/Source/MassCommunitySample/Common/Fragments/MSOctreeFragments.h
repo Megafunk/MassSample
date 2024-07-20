@@ -71,7 +71,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSInOctreeGridTag : public FMassTag
 
 // experimental, using it to set pivot offsets to the octree for now
 USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FMSSharedBaseBounds : public FMassSharedFragment
+struct MASSCOMMUNITYSAMPLE_API FMSSharedBaseBounds : public FMassConstSharedFragment
 {
 	GENERATED_BODY()
 	// This must hash unique or this will hash collide? I need to figure that out..

@@ -27,7 +27,7 @@ class MASSCOMMUNITYSAMPLE_API UMSEntityCollisionQueryProcessors : public UMassPr
 	FMassEntityQuery OctreeQueryQuery;
 
 	UPROPERTY()
-	class UMSSubsystem* MSSubsystem;;
+	 TObjectPtr<class UMSSubsystem> MSSubsystem;
 };
 
 

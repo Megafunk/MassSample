@@ -28,5 +28,5 @@ public:
 	
 
 	UPROPERTY()
-	TMap<uint32, AMSNiagaraActor*> PreexistingSharedNiagaraActors;
+	TMap<uint32, TObjectPtr<AMSNiagaraActor>> PreexistingSharedNiagaraActors;
 };

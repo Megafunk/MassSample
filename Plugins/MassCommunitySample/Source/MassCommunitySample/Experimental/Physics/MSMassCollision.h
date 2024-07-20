@@ -8,7 +8,7 @@
 
 
 USTRUCT(BlueprintType)
-struct MASSCOMMUNITYSAMPLE_API FMSSharedStaticMesh : public FMassSharedFragment
+struct MASSCOMMUNITYSAMPLE_API FMSSharedStaticMesh : public FMassConstSharedFragment
 {
 	GENERATED_BODY()
 	FMSSharedStaticMesh() = default;

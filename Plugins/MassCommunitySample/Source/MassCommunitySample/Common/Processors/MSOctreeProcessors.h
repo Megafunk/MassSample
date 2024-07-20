@@ -25,7 +25,7 @@ public:
 	FMassEntityQuery RemoveFromGridEntityQuery;
 	
 	UPROPERTY()
-	UMSSubsystem* MassSampleSystem;
+	TObjectPtr<UMSSubsystem> MassSampleSystem;
 
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
@@ -45,7 +45,7 @@ public:
 	FMassEntityQuery EntityQuery;
 
 	UPROPERTY()
-	UMSSubsystem* MassSampleSystem = nullptr;
+	TObjectPtr<UMSSubsystem> MassSampleSystem = nullptr;
 	
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
@@ -66,7 +66,7 @@ public:
 	FMassEntityQuery EntityQuery;
 
 	UPROPERTY()
-	UMSSubsystem* MassSampleSystem;
+	TObjectPtr<UMSSubsystem> MassSampleSystem;
 	
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
