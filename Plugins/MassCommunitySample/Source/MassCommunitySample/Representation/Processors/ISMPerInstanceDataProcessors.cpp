@@ -1,12 +1,13 @@
 ﻿#include "ISMPerInstanceDataProcessors.h"
 #include "MassRepresentationFragments.h"
 #include "MassRepresentationTypes.h"
+#include "Misc/EngineVersionComparison.h"
 #include "Representation/Fragments/MSRepresentationFragments.h"
 #include "MassRepresentationSubsystem.h"
 
 UismPerInstanceDataUpdater::UismPerInstanceDataUpdater()
 {
-	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Representation);
 }
 
@@ -16,11 +17,13 @@ void UismPerInstanceDataUpdater::ConfigureQueries()
 	EntityQuery.AddRequirement<FMassRepresentationFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FMassRepresentationLODFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddSharedRequirement<FMassRepresentationSubsystemSharedFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);
+
 }
 
-void UismPerInstanceDataUpdater::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UismPerInstanceDataUpdater::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		UMassRepresentationSubsystem* RepresentationSubsystem = Context.GetMutableSharedFragment<FMassRepresentationSubsystemSharedFragment>().RepresentationSubsystem;
 		check(RepresentationSubsystem);
@@ -36,10 +39,15 @@ void UismPerInstanceDataUpdater::Execute(UMassEntitySubsystem& EntitySubsystem, 
 			const FMassRepresentationFragment& Representation = RepresentationList[EntityIdx];
 			if(Representation.CurrentRepresentation == EMassRepresentationType::StaticMeshInstance)
 			{
+#if UE_VERSION_OLDER_THAN(5, 4, 0)
 				const FMassRepresentationLODFragment& RepresentationLOD = RepresentationLODList[EntityIdx];
 				FMassInstancedStaticMeshInfo& ISMInfo = ISMInfos[Representation.StaticMeshDescIndex];
 				const FSampleISMPerInstanceSingleFloatFragment& RenderData = RenderDatas[EntityIdx];
-
+#else
+				const FMassRepresentationLODFragment& RepresentationLOD = RepresentationLODList[EntityIdx];
+				FMassInstancedStaticMeshInfo& ISMInfo = ISMInfos[Representation.StaticMeshDescHandle.ToIndex()];
+				const FSampleISMPerInstanceSingleFloatFragment& RenderData = RenderDatas[EntityIdx];
+#endif
 
 				// This can accept any struct that the size of n floats. It seems to be required to be called every frame we want to change it
 				ISMInfo.AddBatchedCustomData(RenderData.Data, RepresentationLOD.LODSignificance);
@@ -52,16 +60,18 @@ void UismPerInstanceDataUpdater::Execute(UMassEntitySubsystem& EntitySubsystem, 
 
 UISMPerInstanceDataChangerExampleProcessor::UISMPerInstanceDataChangerExampleProcessor()
 {
-	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone);
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Representation;
 }
 void UISMPerInstanceDataChangerExampleProcessor::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FSampleISMPerInstanceSingleFloatFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);
+
 }
-void UISMPerInstanceDataChangerExampleProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UISMPerInstanceDataChangerExampleProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		const TArrayView<FSampleISMPerInstanceSingleFloatFragment> CustomISMDataFragments = Context.GetMutableFragmentView<FSampleISMPerInstanceSingleFloatFragment>();
 		const int32 NumEntities = Context.GetNumEntities();

@@ -8,8 +8,8 @@ public class MassSampleProjectTarget : TargetRules
 	public MassSampleProjectTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.AddRange(new string[] { "MassSampleProject" });
 
+		DefaultBuildSettings = BuildSettingsVersion.V5;
 	}
 }

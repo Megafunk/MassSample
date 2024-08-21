@@ -10,33 +10,29 @@
 DECLARE_STATS_GROUP(TEXT("MassSampleView"), STATGROUP_MASSSAMPLEVIEW, STATCAT_Advanced);
 DECLARE_STATS_GROUP(TEXT("MassSampleViewWrapped"), STATGROUP_MASSSAMPLEVIEWWRAPPED, STATCAT_Advanced);
 
-USTRUCT()
 struct FMassEntityWrapper
 {
 	// Is this fair to compare with editor binary code?
-
-	GENERATED_BODY()
 	
 
-	FMassEntityWrapper() = default;
-	FMassEntityWrapper(const UMassEntitySubsystem* InEntitySubsystem, const FMassEntityHandle& Entity):
+	FMassEntityWrapper(FMassEntityManager& InEntitySubsystem, FMassEntityHandle& Entity):
 	EntitySystem(InEntitySubsystem),
 	Handle(Entity){};
 
 	template<typename T>
 	FORCEINLINE bool HasTag() const
 	{
-		checkSlow(EntitySystem && Handle.IsValid());
-		return EntitySystem->GetArchetypeComposition(EntitySystem->GetArchetypeForEntity(Handle)).Tags.Contains<T>();
+		checkSlow(Handle.IsValid());
+		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).Tags.Contains<T>();
 	}
 	
 	FORCEINLINE bool HasTag(const UScriptStruct& TagType) const
 	{
-		checkSlow(EntitySystem && Handle.IsValid());
-		return EntitySystem->GetArchetypeComposition(EntitySystem->GetArchetypeForEntity(Handle)).Tags.Contains(TagType);
+		checkSlow(Handle.IsValid());
+		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).Tags.Contains(TagType);
 	}
 
-	const UMassEntitySubsystem* EntitySystem;
+	FMassEntityManager& EntitySystem;
 	FMassEntityHandle Handle;
 
 };
@@ -82,7 +78,7 @@ protected:
 	void BenchA(FMassEntityHandle Entity);
 	void BenchB(FMassEntityHandle Entity);
 
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 	uint32 Counter;
 

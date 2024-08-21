@@ -4,12 +4,9 @@
 #include "MSHashGridTrait.h"
 
 #include "MassEntityTemplateRegistry.h"
-#include "Common/Fragments/MSHashGridFragments.h"
+#include "Common/Fragments/MSOctreeFragments.h"
 
-void UMSHashGridTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+void UMSHashGridTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
-
-	BuildContext.AddFragment<FMSGridCellStartingLocationFragment>();
-	BuildContext.AddTag<FMSInHashGridTag>();
-
+	BuildContext.AddFragment<FMSOctreeFragment>();
 }

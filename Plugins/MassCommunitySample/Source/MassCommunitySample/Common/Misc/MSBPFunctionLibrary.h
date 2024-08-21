@@ -4,28 +4,55 @@
 
 #include "CoreMinimal.h"
 #include "MassEntityConfigAsset.h"
-#include "StructView.h"
-
-#include "MassEntityTypes.h"
-
+#include "MassEntityView.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 #include "MSBPFunctionLibrary.generated.h"
 
 
+// 
 
+// TODO @karl having two of these feels quite weird, it makes sense in C++ but do we care about the distinction in BP?
+// Feedback please!! What makes the most sense? Personally I think BP stuff should be where we have the most freedom
+// to just get data we need on the spot even if it means we do some repeated work. Or perhaps the mass entity view can be smarter?
+/**
+ * FMassEntityView wrapper for for general blueprint use
+ * This can be rather evil due to the fact that the EntityView is transient in representing the actual state
+ * If you want to store an entity ID longer term you might be better off with the FMSEntityHandleBPWrapper
+ */
 USTRUCT(BlueprintType)
-struct FEntityHandleWrapper
+struct FMSEntityViewBPWrapper
 {
 	GENERATED_BODY()
-	FMassEntityHandle Entity;
+
+	FMSEntityViewBPWrapper() = default;
+
+	FMSEntityViewBPWrapper(const FMassArchetypeHandle& Archetype, FMassEntityHandle EntityHandle)
+	{
+		EntityView = FMassEntityView(Archetype, EntityHandle);
+	}
+	
+	FMSEntityViewBPWrapper(const FMassEntityManager& Manager, FMassEntityHandle EntityHandle)
+	{
+		EntityView = FMassEntityView(Manager,EntityHandle);
+	}
+
+	//This goofy function is needed due to protected functions in FMassEntityView preventing non template use :(
+	FMassArchetypeHandle TempArchetypeGet(const FMassEntityManager& Manager) const
+	{
+		return Manager.GetArchetypeForEntity(EntityView.GetEntity());
+	}
+	
+
+	FMassEntityView EntityView;
 
 };
-// A fragment wrapped inside an instanced struct... which is also wrapped inside a blueprint wrapper! It sucks but it's 
+
+// An entity handle only BP wrapper.
 USTRUCT(BlueprintType)
-struct FInstancedStructBPWrapper
+struct FMSEntityHandleBPWrapper
 {
 	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, meta = (BaseStruct = "MassFragment", ExcludeBaseStruct))
-	FInstancedStruct Struct;
+	FMassEntityHandle EntityHandle;
 };
 
 UENUM()
@@ -39,108 +66,71 @@ UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSBPFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass" , meta=(CustomStructureParam))
+	static bool EntityHasFragment(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment);
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass",meta=(WorldContext = "WorldContextObject"))
+	static bool EntityHasTag(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment, UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass", meta=(WorldContext = "WorldContextObject", ExpandBoolAsExecs = "ReturnValue"))
+	static bool IsEntityValid(FMSEntityViewBPWrapper Entity, UObject* WorldContextObject);
+	
+	
+	
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
+	static FMSEntityViewBPWrapper SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig,
+															 const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
+
+	UFUNCTION(BlueprintCallable, Category = "Mass")
+	static void SetEntityTransform(const FMSEntityViewBPWrapper EntityHandle,const FTransform Transform);
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FEntityHandleWrapper SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig, const UObject* WorldContextObject, const bool bDebug = false);
+	static FTransform GetEntityTransform(FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
 
 
-	// todo: broken and hardcoded for testing, Don't use this yet!
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FEntityHandleWrapper SpawnEntityFromEntityConfigDeferred(AActor* Owner, UMassEntityConfigAsset* MassEntityConfig,
-															 const UObject* WorldContextObject);
-	// todo: also broken and hardcoded for testing, Don't use this yet!
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FEntityHandleWrapper SpawnEntityFromEntityConfigDeferredBugRepro(AActor* Owner,
-																	 UMassEntityConfigAsset* MassEntityConfig,
-																	 const UObject* WorldContextObject);
+	UFUNCTION(BlueprintCallable, Category = "Mass")
+	static void SetEntityVelocity(FMSEntityViewBPWrapper EntityHandle, FVector Velocity);
 
-	//todo: Lazy fragment-specific versions until we can think of something nicer
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void SetEntityTransform(const FEntityHandleWrapper EntityHandle,const FTransform Transform, const UObject* WorldContextObject);
+	static FVector GetEntityVelocity(FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "Mass")
+	static void SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force);
 	
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void SetEntityCollisionQueryIgnoredActors(const FEntityHandleWrapper EntityHandle,const TArray<AActor*> IgnoredActors,const UObject* WorldContextObject);
+	static void DestroyEntity(const FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
 
 
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandBoolAsExecs = "ReturnValue"))
+	static bool GetMassAgentEntity(FMSEntityViewBPWrapper& OutEntity, UMassAgentComponent* Agent, const UObject* WorldContextObject);
+
+	
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FTransform GetEntityTransform(FEntityHandleWrapper EntityHandle, const UObject* WorldContextObject);
-
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void SetEntityForce(FEntityHandleWrapper EntityHandle, FVector Force, const UObject* WorldContextObject);
-
-
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void FindHashGridEntitiesInSphere(const FVector Location,const double Radius, TArray<FEntityHandleWrapper>& Entities ,const UObject* WorldContextObject);
+	static void FindOctreeEntitiesInBox(const FVector Center,const FVector Extents, TArray<FMSEntityViewBPWrapper>& Entities ,const UObject* WorldContextObject);
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
-	static void FindClosestHashGridEntityInSphere(const FVector Location,const double Radius, FEntityHandleWrapper& Entity, const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
-
-	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	FString GetEntityDebugString(FEntityHandleWrapper Entity, const UObject* WorldContextObject);
+	static void FindClosestHashGridEntityInBox(const FVector Center,const FVector Extents, FMSEntityViewBPWrapper& Entity, const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
 
 	/**
-	 * Sets an entity's fragment data or adds it if it isn't present.
+	 * Sets an entity's fragment data or adds it if it's ins't present. This might need more testing...
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta=(WorldContext = "WorldContextObject"))
-	static void SetEntityFragment(FEntityHandleWrapper Entity, FInstancedStructBPWrapper Fragment,const UObject* WorldContextObject);
-	
+	static void SetEntityFragment(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment,const UObject* WorldContextObject);
 
+
+	/**
+	 * You may need to make a new fragment struct variable to pass in here to serve as the type
+	 * A better experience would probably require a custom k2 node thingy?
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta=(WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
-	static FInstancedStructBPWrapper GetEntityFragmentByType(FEntityHandleWrapper Entity, FInstancedStructBPWrapper Fragment,const UObject* WorldContextObject, EReturnSuccess& ReturnBranch);
+	static FInstancedStruct GetEntityFragmentByType(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment,const UObject* WorldContextObject, EReturnSuccess& ReturnBranch);
 
-	/*
-	* Create a new Struct Instance from the given source data.
-	*/
-	UFUNCTION(BlueprintCallable, CustomThunk, Category = "Utilities|Instanced Struct", meta = (CustomStructureParam = "Data", ExpandEnumAsExecs = "ExecResult"))
-	static FInstancedStructBPWrapper MakeInstancedStruct(EReturnSuccess& ExecResult, const int32& Data);
-
-	/*
-	* Retrieves data from a struct instance if it matches the provided type.
-	*/
-	UFUNCTION(BlueprintCallable, CustomThunk, Category = "Utilities|Instanced Struct", meta = (CustomStructureParam = "Data", ExpandEnumAsExecs = "ExecResult"))
-	static void BreakInstancedStruct(EReturnSuccess& ExecResult, const FInstancedStructBPWrapper& InstancedStruct, int32& Data);
-
-	/*
-	* Resets an InstancedStruct.
-	*/
-	UFUNCTION(BlueprintCallable, Category = "Utilities|Instanced Struct", meta = (AdvancedDisplay = "1"))
-	static void Reset(UPARAM(Ref)FInstancedStructBPWrapper& InstancedStruct, const UScriptStruct* StructType = nullptr)
+	UFUNCTION(BlueprintPure)
+	static void BreakIndexToInt(const FMSEntityViewBPWrapper& InValue, int32& Index)
 	{
-		InstancedStruct.Struct.InitializeAs(StructType, nullptr);
-	}
+		Index = InValue.EntityView.GetEntity().Index;
+	};
 
-	/*
-	* Checks whether an InstancedStruct is valid or contains any data
-	*/
-	UFUNCTION(BlueprintCallable, Category = "Utilities|Instanced Struct", meta = (DisplayName = "Is Valid", ExpandEnumAsExecs = "ReturnValue"))
-	static EReturnSuccess IsInstancedStructValid(UPARAM(Ref)const FInstancedStructBPWrapper& Fragment)
-	{
-		return Fragment.Struct.IsValid() ? EReturnSuccess::Success : EReturnSuccess::Failure;
-	}
-
-	/*
-	* Checks whether an InstancedStruct is empty/null (opposite of IsValid)
-	*/
-	UFUNCTION(BlueprintCallable, Category = "Utilities|Instanced Struct", meta = (DisplayName = "Is Null"))
-	static bool IsInstancedStructNull(UPARAM(Ref)const FInstancedStructBPWrapper& InstancedStruct)
-	{
-		return InstancedStruct.Struct.GetMemory() == nullptr && InstancedStruct.Struct.GetScriptStruct() == nullptr;
-	}
-
-	/*
-	* Checks whether two InstancedStructs (and the data contained within) are equal.
-	*/
-	UFUNCTION(BlueprintPure, Category = "Utilities|Instanced Struct", meta = (CompactNodeTitle = "==", DisplayName = "Equal", Keywords = "== equal"))
-	static bool EqualEqual_InstancedStruct(const FInstancedStructBPWrapper& A, const FInstancedStructBPWrapper& B) { return A.Struct == B.Struct; }
-
-	/*
-	* Checks whether two InstancedStructs are not equal.
-	*/
-	UFUNCTION(BlueprintPure, Category = "Utilities|Instanced Struct", meta = (CompactNodeTitle = "!=", DisplayName = "Not Equal", Keywords = "!= not equal"))
-	static bool NotEqual_InstancedStruct(const FInstancedStructBPWrapper& A, const FInstancedStructBPWrapper& B) { return A.Struct != B.Struct; }
-
-private:
-	DECLARE_FUNCTION(execMakeInstancedStruct);
-	DECLARE_FUNCTION(execBreakInstancedStruct);
 	
 };

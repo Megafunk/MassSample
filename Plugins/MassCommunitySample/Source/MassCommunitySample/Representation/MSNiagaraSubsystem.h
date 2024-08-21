@@ -1,30 +1,32 @@
 ﻿#pragma once
-#include <ThirdParty/Vulkan/Include/vulkan/vulkan_core.h>
-
 #include "CoreMinimal.h"
-#include "MassEntitySubsystem.h"
 #include "MassRepresentationProcessor.h"
 #include "MSNiagaraActor.h"
-#include "EntitySystem/MovieSceneEntityIDs.h"
-
-#include "Field/FieldSystemNodes.h"
 #include "MSNiagaraSubsystem.generated.h"
 
 UCLASS()
-class UMSNiagaraSubsystem : public UWorldSubsystem
+class MASSCOMMUNITYSAMPLE_API UMSNiagaraSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 protected:
 	
-	UPROPERTY()
-	UMassEntitySubsystem* MassSubsystem;
+	TSharedPtr<FMassEntityManager> MassManager;
 	
 	FMassArchetypeHandle BulletArchetype;
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-public:
-	FSharedStruct GetOrCreateSharedNiagaraFragmentForSystemType(class UNiagaraSystem* NiagaraSystem);
+	virtual void Deinitialize() override
+	{
+		MassManager.Reset();
+		PreexistingSharedNiagaraActors.Empty();
+	};
 
+public:
+	// Creates/Finds a new niagara shared fragment and their manager actor. Can also set an overriden static mesh (a tad hacky though)
+	FSharedStruct GetOrCreateSharedNiagaraFragmentForSystemType(class UNiagaraSystem* NiagaraSystem, UStaticMesh* StaticMeshOverride, UMaterialInterface* MaterialOverride = nullptr);
+	
+
+	UPROPERTY()
 	TMap<uint32, AMSNiagaraActor*> PreexistingSharedNiagaraActors;
 };

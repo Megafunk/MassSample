@@ -4,6 +4,7 @@
 #include "MSInterpMovementProcessor.h"
 #include "MassCommonFragments.h"
 #include "MassCommonTypes.h"
+#include "MassExecutionContext.h"
 #include "Common/Fragments/MSFragments.h"
 
 UMSInterpMovementProcessor::UMSInterpMovementProcessor()
@@ -17,12 +18,13 @@ void UMSInterpMovementProcessor::ConfigureQueries()
 	EntityQuery.AddRequirement<FInterpLocationFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FOriginalTransformFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.RegisterWithProcessor(*this);
 
 }
 
-void UMSInterpMovementProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSInterpMovementProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 	{
 		const int32 QueryLength = Context.GetNumEntities();
 

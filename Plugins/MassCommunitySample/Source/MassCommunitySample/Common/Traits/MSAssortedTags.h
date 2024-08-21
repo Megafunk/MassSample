@@ -9,14 +9,14 @@
 #include "MSAssortedTags.generated.h"
 
 /**
- * The build in assorted fragments will probably do this too at some point
+ * Not working due to due to BuildContext.AddTag checking for fragments and not tags
  */
-UCLASS(meta=(DisplayName="Assorted Tags"))
-class MASSCOMMUNITYSAMPLE_API UMSAssortedTags : public UMassEntityTraitBase
+UCLASS(meta=(DisplayName="Assorted Tags"), Deprecated)
+class MASSCOMMUNITYSAMPLE_API UDEPRECATED_UMSAssortedTags : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
-	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
+	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
 
-	UPROPERTY(EditAnywhere, meta = (BaseStruct = "MassTag", ExcludeBaseStruct))
+	UPROPERTY(EditAnywhere, meta = (BaseStruct = "/Script/MassEntity.MassTag", ExcludeBaseStruct))
 	TArray<FInstancedStruct> Tags;
 };

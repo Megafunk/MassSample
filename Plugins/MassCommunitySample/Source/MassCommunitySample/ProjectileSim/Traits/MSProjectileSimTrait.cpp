@@ -6,17 +6,39 @@
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
 #include "MassMovementFragments.h"
-#include "ProjectileSim/Fragments/MSProjectileFragments.h"
+#include "Common/Fragments/MSFragments.h"
 
-void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const
+void UMSProjectileSimTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
-	BuildContext.AddFragment<FLineTraceFragment>();
-	BuildContext.AddFragment<FTransformFragment>();
-	BuildContext.AddFragment<FMassVelocityFragment>();
-	BuildContext.AddTag<FProjectileTag>();
+	BuildContext.AddFragment<FMSCollisionIgnoredActorsFragment>();
+	BuildContext.RequireFragment<FTransformFragment>();
+	BuildContext.RequireFragment<FMassVelocityFragment>();
+	BuildContext.AddTag<FMSProjectileTag>();
+	BuildContext.AddTag<FMSLineTraceTag>();
+
+	BuildContext.AddFragment(FConstStructView::Make(CollisionChannelFragment));
+
+	
 
 	if (bFiresHitEventToActors)
 	{
-		BuildContext.AddTag<FFireHitEventTag>();
+		BuildContext.AddTag<FMSProjectileFireHitEventTag>();
+	}
+	if (bRicochet)
+	{
+		BuildContext.AddTag<FMSProjectileRicochetTag>();
+	}
+	if(bHasGravity)
+	{
+		BuildContext.AddTag<FMSGravityTag>();
+	}
+	if(bQueriesOctree)
+	{
+		BuildContext.AddTag<FMSOctreeQueryTag>();
+	}
+
+	if(bRotationFollowsVelocity)
+	{
+		BuildContext.AddTag<FMSRotationFollowsVelocityTag>();
 	}
 }

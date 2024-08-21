@@ -7,7 +7,7 @@
 #include "UObject/Interface.h"
 #include "MassProjectileHitInterface.generated.h"
 
-UINTERFACE()
+UINTERFACE(BlueprintType)
 class UMassProjectileHitInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -21,5 +21,5 @@ class MASSCOMMUNITYSAMPLE_API IMassProjectileHitInterface
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintImplementableEvent, Category="Mass")
-	void ProjectileHit(FEntityHandleWrapper Entity, FHitResult HitResult);
+	void ProjectileHit(FMSEntityViewBPWrapper Entity, FHitResult HitResult);
 };

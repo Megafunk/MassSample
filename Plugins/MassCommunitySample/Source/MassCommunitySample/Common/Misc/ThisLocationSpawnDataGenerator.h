@@ -20,15 +20,10 @@ class MASSCOMMUNITYSAMPLE_API UThisLocationSpawnDataGenerator : public UMassEnti
 public:
 	virtual void Generate(UObject& QueryOwner, TConstArrayView<FMassSpawnedEntityType> EntityTypes, int32 Count,FFinishedGeneratingSpawnDataSignature& FinishedGeneratingSpawnPointsDelegate) const override
 	{
-		if (Count <= 0)
-		{
-			FinishedGeneratingSpawnPointsDelegate.Execute(TArray<FMassEntitySpawnDataGeneratorResult>());
-			return;
-		}
-
+		
 		const FTransform& OwnerTransform = CastChecked<AActor>(&QueryOwner)->GetTransform();
 
-		if(!OwnerTransform.IsValid())
+		if (Count <= 0 || !OwnerTransform.IsValid())
 		{
 			FinishedGeneratingSpawnPointsDelegate.Execute(TArray<FMassEntitySpawnDataGeneratorResult>());
 			return;
@@ -58,10 +53,7 @@ public:
 				while (v < EntityCount)
 				{
 					FTransform& Transform = Transforms.Transforms.AddDefaulted_GetRef();
-					Transform.SetRotation(OwnerTransform.GetRotation());
-					Transform.SetLocation(OwnerTransform.GetTranslation());
-					// Not doing scale here
-
+					Transform = OwnerTransform;
 					v++;
 				}			
 				

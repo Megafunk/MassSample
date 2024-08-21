@@ -13,12 +13,13 @@
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": false,
+	"EnabledByDefault": true,
 	"Installed": false,
 	"Modules": [
 		{
 			"Name": "MassCommunitySample",
 			"Type": "Runtime",
-			"LoadingPhase": "PreLoadingScreen"
+			"LoadingPhase": "PreDefault"
 		}
 	],
 
@@ -37,6 +38,10 @@
 		},
 		{
 			"Name": "MassCrowd",
+			"Enabled": true
+		},
+		{
+			"Name": "CodeView",
 			"Enabled": true
 		}
 	]

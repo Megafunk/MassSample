@@ -4,104 +4,101 @@
 #include "MSProjectileSimProcessors.h"
 
 #include "MassCommonFragments.h"
-#include "MassObserverRegistry.h"
-#include "ProjectileSim/Fragments/MSProjectileFragments.h"
-#include "MassRepresentationTypes.h"
+#include "MassCommonUtils.h"
+#include "MassExecutionContext.h"
+#include "MassMovementFragments.h"
+#include "MassSignalSubsystem.h"
 #include "Common/Fragments/MSFragments.h"
-#include "HAL/ThreadManager.h"
+#include "Experimental/Physics/MSMassCollision.h"
+#include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
 
 void UMSProjectileSimProcessors::Initialize(UObject& Owner)
 {
-	
+	Super::Initialize(Owner);
 }
 
 
 UMSProjectileSimProcessors::UMSProjectileSimProcessors()
 {
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
+
+	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }
 
 void UMSProjectileSimProcessors::ConfigureQueries()
 {
-	LineTraceFromPreviousPosition.AddRequirement<FLineTraceFragment>(EMassFragmentAccess::ReadWrite);
+	LineTraceFromPreviousPosition.AddRequirement<FMSCollisionIgnoredActorsFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
+
 	LineTraceFromPreviousPosition.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);
+	LineTraceFromPreviousPosition.AddRequirement<FMSCollisionChannelFragment>(EMassFragmentAccess::ReadOnly);
 	LineTraceFromPreviousPosition.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	LineTraceFromPreviousPosition.AddTagRequirement<FProjectileTag>(EMassFragmentPresence::All);
+	LineTraceFromPreviousPosition.AddTagRequirement<FMSProjectileTag>(EMassFragmentPresence::All);
+	LineTraceFromPreviousPosition.AddTagRequirement<FMSLineTraceTag>(EMassFragmentPresence::All);
 
-	MyQuery = LineTraceFromPreviousPosition;
+	LineTraceFromPreviousPosition.RegisterWithProcessor(*this);
 
-	MyQuery.AddRequirement<FSampleColorFragment>(EMassFragmentAccess::ReadOnly,EMassFragmentPresence::Optional);
-
-	//LineTraceFromPreviousPosition.AddTagRequirement<FNotMovingTag>(EMassFragmentPresence::None);
+	ProcessorRequirements.AddSubsystemRequirement<UMassSignalSubsystem>(EMassFragmentAccess::ReadWrite);
 }
 
-void UMSProjectileSimProcessors::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-
+	TQueue<FMassEntityHandle, EQueueMode::Mpsc> EntitiesThatHitSomething;
+	std::atomic<int32> NumEntitiesThatHitSomething;
 	
-	LineTraceFromPreviousPosition.ForEachEntityChunk(EntitySubsystem,Context,[this](FMassExecutionContext& Context)
+	LineTraceFromPreviousPosition.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_LineTraceFromPreviousPosition);
 
-		
-		const auto Linetraces = Context.GetMutableFragmentView<FLineTraceFragment>();
-		const auto Velocities = Context.GetFragmentView<FMassVelocityFragment>();
-		const auto Transforms = Context.GetFragmentView<FTransformFragment>();
 
-		int32 NumEntities= Context.GetNumEntities();
+		const TArrayView<FMSCollisionIgnoredActorsFragment> IgnoredActorsFragments = Context.GetMutableFragmentView<
+			FMSCollisionIgnoredActorsFragment>();
+		TConstArrayView<FMassVelocityFragment> Velocities = Context.GetFragmentView<FMassVelocityFragment>();
+		TConstArrayView<FTransformFragment> Transforms = Context.GetFragmentView<FTransformFragment>();
+		TConstArrayView<FMSCollisionChannelFragment> CollisionChannels = Context.GetFragmentView<FMSCollisionChannelFragment>();
 
+		int32 NumEntities = Context.GetNumEntities();
 
+		FCollisionQueryParams QueryParams;
 		for (int32 i = 0; i < NumEntities; ++i)
+
 		{
 			FHitResult HitResult;
 
 			FVector CurrentLocation = Transforms[i].GetTransform().GetTranslation();
-			
-			//If we hit something, add a new fragment with the data!
-			if(GetWorld()->
-				LineTraceSingleByChannel(
-					HitResult,
-					
-					CurrentLocation - Velocities[i].Value,
-					CurrentLocation,
-					ECollisionChannel::ECC_Camera,
-					Linetraces[i].QueryParams
-				))
+			FVector Velocity = Velocities[i].Value;
+
+			TEnumAsByte<ECollisionChannel> CollisionChannel = CollisionChannels[i].Channel;
+
+
+			QueryParams.ClearIgnoredActors();
+
+			//todo-perf: somehow keep the query params around as this is fairly evil to do
+			if (IgnoredActorsFragments.Num() > 0)
 			{
-		
+				QueryParams.AddIgnoredActors(static_cast<TArray<AActor*>>(IgnoredActorsFragments[i].IgnoredActors));
+			}
+
+
+			if (GetWorld()->LineTraceSingleByChannel(HitResult,
+			                                         // Create the previous location from our velocity
+			                                         CurrentLocation - (Velocity * Context.GetDeltaTimeSeconds()), CurrentLocation, CollisionChannel,
+			                                         QueryParams))
+			{
 				FMassEntityHandle Entity = Context.GetEntity(i);
-				
-				FConstStructView HitResultConstStruct = FConstStructView::Make(FHitResultFragment(HitResult));
-		
-				Context.Defer().PushCommand(FCommandAddFragmentInstance(Entity, HitResultConstStruct));
+
+				EntitiesThatHitSomething.Enqueue(Entity);
+				++NumEntitiesThatHitSomething;
+				Context.Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, FMSHitResultFragment(HitResult));
 			}
 		}
 	});
 
 
-
-
-		
-	MyQuery.ForEachEntityChunk(EntitySubsystem, Context, [](FMassExecutionContext& Context)
+	if (NumEntitiesThatHitSomething > 0)
 	{
-		const TArrayView<FSampleColorFragment> OptionalFragmentList = Context.GetMutableFragmentView<FSampleColorFragment>();
+		TArray<FMassEntityHandle> Entities = UE::Mass::Utils::EntityQueueToArray(EntitiesThatHitSomething, NumEntitiesThatHitSomething);
 
-		for (int32 i = 0; i < Context.GetNumEntities(); ++i)
-		{
-			// An optional fragment array is present in our current chunk if the OptionalFragmentList isn't empty
-			if(OptionalFragmentList.Num() > 0)
-			{
-				// Now that we know it is safe to do so, we can compute
-;			UE_LOG( LogTemp, Error, TEXT("optional hit!"));
-
-			}		
-		}
-	});
-
-
-	
-
-
-		
+		Context.GetMutableSubsystem<UMassSignalSubsystem>()->SignalEntities(MassSample::Signals::OnEntityHitSomething, Entities);
+	}
 }

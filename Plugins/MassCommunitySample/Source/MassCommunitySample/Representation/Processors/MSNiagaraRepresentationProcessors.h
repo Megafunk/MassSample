@@ -1,9 +1,9 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Representation/MSNiagaraSubsystem.h"
 #include "MassProcessor.h"
-#include "UObject/Object.h"
+#include "MassSignalProcessorBase.h"
 #include "MSNiagaraRepresentationProcessors.generated.h"
 
 
@@ -15,21 +15,28 @@ class MASSCOMMUNITYSAMPLE_API UMSNiagaraRepresentationProcessors : public UMassP
 public:
 	
 	UMSNiagaraRepresentationProcessors();
-
-
-	void Initialize(UObject& Owner)
-	{
-		Super::Initialize(Owner);
-		//get subsystems here etc..
-	}
-
 	
 	virtual void ConfigureQueries() override;
 
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 	
 	FMassEntityQuery PositionToNiagaraFragmentQuery;
 	FMassEntityQuery PushArraysToNiagaraSystems;
 };
 
+UCLASS()
+class MASSCOMMUNITYSAMPLE_API UMSNiagaraRepresentationSpawnProcs : public UMassSignalProcessorBase
+{
+	GENERATED_BODY()
+public:
+	
+	UMSNiagaraRepresentationSpawnProcs();
+	
+	virtual void ConfigureQueries() override;
+	
+	virtual void SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context,
+		FMassSignalNameLookup& EntitySignals) override;
+protected:
+	virtual void Initialize(UObject& Owner) override;
+};

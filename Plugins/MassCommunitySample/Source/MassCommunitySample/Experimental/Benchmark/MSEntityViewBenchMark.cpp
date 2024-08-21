@@ -3,8 +3,10 @@
 
 #include "MSEntityViewBenchMark.h"
 #include "MassCommonTypes.h"
+#include "MassEntitySubsystem.h"
 
 #include "MassEntityView.h"
+#include "MassExecutionContext.h"
 
 
 UMSEntityViewBenchMark::UMSEntityViewBenchMark()
@@ -19,9 +21,11 @@ UMSEntityViewBenchMark::UMSEntityViewBenchMark()
 
 void UMSEntityViewBenchMark::Initialize(UObject& Owner)
 {
+	Super::Initialize(Owner);
+
 	FEntityViewBenchmarkFragment Fragment;
 
-	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	FMassEntityManager& EntityManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
 
 	int EntityCount = 5000;
 	FParse::Value(FCommandLine::Get(), TEXT("ViewBenchmarkCount="), EntityCount);
@@ -31,24 +35,24 @@ void UMSEntityViewBenchMark::Initialize(UObject& Owner)
 		// Add either tag 1 or tag 2
 
 		const int randomint = FMath::RandRange(1,4);
-		const auto entityHandle = EntitySubsystem->CreateEntity({FStructView::Make(Fragment)});
+		const auto entityHandle = EntityManager.CreateEntity({FInstancedStruct::Make(Fragment)});
 
 		switch (randomint)
 		{
 			case 1:
-				EntitySubsystem->AddTagToEntity(entityHandle,FEntityViewBenchmarkTag1::StaticStruct());
+				EntityManager.AddTagToEntity(entityHandle,FEntityViewBenchmarkTag1::StaticStruct());
 
 			break;
 			case 2:
-				EntitySubsystem->AddTagToEntity(entityHandle,FEntityViewBenchmarkTag2::StaticStruct());
+				EntityManager.AddTagToEntity(entityHandle,FEntityViewBenchmarkTag2::StaticStruct());
 
 			break;
 			case 3:
-				EntitySubsystem->AddTagToEntity(entityHandle,FEntityViewBenchmarkTag3::StaticStruct());
+				EntityManager.AddTagToEntity(entityHandle,FEntityViewBenchmarkTag3::StaticStruct());
 
 			break;
 			case 4:
-				EntitySubsystem->AddTagToEntity(entityHandle,FEntityViewBenchmarkTag4::StaticStruct());
+				EntityManager.AddTagToEntity(entityHandle,FEntityViewBenchmarkTag4::StaticStruct());
 
 			break;
 		}
@@ -58,6 +62,7 @@ void UMSEntityViewBenchMark::Initialize(UObject& Owner)
 void UMSEntityViewBenchMark::ConfigureQueries()
 {
 	EntityViewQuery.AddRequirement<FEntityViewBenchmarkFragment>(EMassFragmentAccess::ReadOnly);
+	EntityViewQuery.RegisterWithProcessor(*this);
 
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::SyncWorldToMass;
 }
@@ -67,10 +72,10 @@ void UMSEntityViewBenchMark::BenchA(FMassEntityHandle Entity)
 	DECLARE_SCOPE_CYCLE_COUNTER(TEXT("BenchA"), STAT_EntityView, STATGROUP_MASSSAMPLEVIEW);
 	
 	FPlatformMisc::MemoryBarrier();
+
+	FMassEntityManager& EntityManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
 	
-	auto EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-	
-	FMassEntityWrapper EntityWrapper = FMassEntityWrapper(EntitySubsystem, Entity);
+	FMassEntityWrapper EntityWrapper = FMassEntityWrapper(EntityManager, Entity);
 	
 	if(EntityWrapper.HasTag<FEntityViewBenchmarkTag1>())
 	{
@@ -96,9 +101,9 @@ void UMSEntityViewBenchMark::BenchB(FMassEntityHandle Entity)
 
 	FPlatformMisc::MemoryBarrier();
 
-	auto EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	FMassEntityManager& EntityManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();;
 
-	FMassEntityView EntityView = FMassEntityView(*EntitySubsystem, Entity);
+	FMassEntityView EntityView = FMassEntityView(EntityManager, Entity);
 			
 	if(EntityView.HasTag<FEntityViewBenchmarkTag1>())
 	{
@@ -118,11 +123,11 @@ void UMSEntityViewBenchMark::BenchB(FMassEntityHandle Entity)
 	}
 }
 
-void UMSEntityViewBenchMark::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMSEntityViewBenchMark::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	TArray<FMassEntityHandle> AllEntitiesList;
 	
-	EntityViewQuery.ForEachEntityChunk(EntitySubsystem, Context, [&,this](FMassExecutionContext& Context)
+	EntityViewQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
 	{
 		AllEntitiesList.Append(TArray<FMassEntityHandle>(Context.GetEntities()));
 	});
