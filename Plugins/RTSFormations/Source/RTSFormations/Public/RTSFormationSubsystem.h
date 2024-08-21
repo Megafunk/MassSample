@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FormationPresets.h"
+#include "MassSubsystemBase.h"
 #include "Common/Misc/MSBPFunctionLibrary.h"
 #include "RTSFormationSubsystem.generated.h"
 
@@ -76,11 +77,12 @@ public:
 
 class UMassAgentComponent;
 struct FMassEntityHandle;
+
 /**
  * Subsystem that handles the bulk of data shared among entities for the formation system. Enables simple unit creation and entity spawning
  */
 UCLASS()
-class RTSFORMATIONS_API URTSFormationSubsystem : public UTickableWorldSubsystem
+class RTSFORMATIONS_API URTSFormationSubsystem : public UMassTickableSubsystemBase
 {
 	GENERATED_BODY()
 	
@@ -126,4 +128,13 @@ public:
 	FTimerHandle MoveHandle;
 	
 	int CurrentIndex = 0;
+};
+
+template<>
+struct TMassExternalSubsystemTraits<URTSFormationSubsystem>
+{
+	enum
+	{
+		GameThreadOnly = false
+	};
 };

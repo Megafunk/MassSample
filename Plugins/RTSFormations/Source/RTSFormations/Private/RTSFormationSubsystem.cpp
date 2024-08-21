@@ -22,14 +22,13 @@ void URTSFormationSubsystem::DestroyEntity(UMassAgentComponent* Entity)
 	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	check(EntitySubsystem);
 	
-	EntitySubsystem->Defer().DestroyEntity(Entity->GetEntityHandle());
+	EntitySubsystem->GetEntityManager().Defer().DestroyEntity(Entity->GetEntityHandle());
 }
 
 void URTSFormationSubsystem::CalculateNewPositions(FUnitInfo& Unit, TMap<int, FVector>& NewPositions)
 {
 	// Empty NewPositions Map to make room for new calculations
-	NewPositions.Empty();
-	NewPositions.Reserve(Unit.Entities.Num());
+	NewPositions.Empty(Unit.Entities.Num());
 	
 	// Calculate entity positions for new destination
 	// This is the logic that can change formation types
@@ -71,7 +70,7 @@ void URTSFormationSubsystem::CalculateNewPositions(FUnitInfo& Unit, TMap<int, FV
 		
 		Position = Position.RotateAngleAxis(Unit.InterpRotation.Yaw+180.f, FVector(0.f,0.f,1.f));
 		
-		NewPositions.Emplace(PosIndex, Position);
+		NewPositions.Add(PosIndex, Position);
 		//DrawDebugPoint(GetWorld(), Position+Unit.InterpolatedDestination, 20.f, FColor::Yellow, false, 10.f);
 		PosIndex++;
 	}
@@ -110,8 +109,8 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 	Unit.Entities.Sort([&EntitySubsystem, &Unit](const FMassEntityHandle& A, const FMassEntityHandle& B)
 	{
 		//@todo Find if theres a way to move this logic to a processor, most of the cost is coming from retrieving the location
-		const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(A).GetTransform().GetLocation();
-		const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FTransformFragment>(B).GetTransform().GetLocation();
+		const FVector& LocA = EntitySubsystem->GetEntityManager().GetFragmentDataChecked<FTransformFragment>(A).GetTransform().GetLocation();
+		const FVector& LocB = EntitySubsystem->GetEntityManager().GetFragmentDataChecked<FTransformFragment>(B).GetTransform().GetLocation();
 		return FVector::DistSquared2D(LocA, Unit.FarCorner+Unit.InterpolatedDestination) > FVector::DistSquared2D(LocB, Unit.FarCorner+Unit.InterpolatedDestination);
 	});
 
@@ -122,7 +121,6 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 	});
 
 	// Signal entities to update their position index
-	FMassExecutionContext Context = EntitySubsystem->CreateExecutionContext(GetWorld()->GetDeltaSeconds());
 	if (Unit.Entities.Num())
 	{
 		TArray<FMassEntityHandle> Entities = Unit.Entities.Array();
@@ -132,6 +130,8 @@ void URTSFormationSubsystem::UpdateUnitPosition(const FVector& NewPosition, int 
 
 void URTSFormationSubsystem::MoveEntities(int UnitIndex)
 {
+	SCOPED_NAMED_EVENT(STAT_RTS_MoveEntities, FColor::Green);
+	
 	FUnitInfo& Unit = Units[UnitIndex];
 	UMassEntitySubsystem* EntitySubsystem = UWorld::GetSubsystem<UMassEntitySubsystem>(GetWorld());
 	
@@ -139,15 +139,14 @@ void URTSFormationSubsystem::MoveEntities(int UnitIndex)
 	Unit.Entities.Sort([&EntitySubsystem, &Unit](const FMassEntityHandle& A, const FMassEntityHandle& B)
 	{
 		// Find if theres a way to move this logic to a processor, most of the cost is coming from retrieving the location
-		const FVector& LocA = EntitySubsystem->GetFragmentDataChecked<FRTSFormationAgent>(A).Offset;
-		const FVector& LocB = EntitySubsystem->GetFragmentDataChecked<FRTSFormationAgent>(B).Offset;
+		const FVector& LocA = EntitySubsystem->GetEntityManager().GetFragmentDataChecked<FRTSFormationAgent>(A).Offset;
+		const FVector& LocB = EntitySubsystem->GetEntityManager().GetFragmentDataChecked<FRTSFormationAgent>(B).Offset;
 		return FVector::DistSquared2D(LocA, Unit.FarCorner) > FVector::DistSquared2D(LocB, Unit.FarCorner);
 	});
 	
 	CurrentIndex = 0;
 
 	// Signal entities to begin moving
-	FMassExecutionContext Context = EntitySubsystem->CreateExecutionContext(GetWorld()->GetDeltaSeconds());
 	TArray<FMassEntityHandle> Entities = Unit.Entities.Array();
 	for(int i=0;i<Unit.Entities.Num();++i)
 	{
@@ -157,6 +156,8 @@ void URTSFormationSubsystem::MoveEntities(int UnitIndex)
 
 void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int UnitIndex)
 {
+	if (Units.IsEmpty()) { return; }
+	
 	DrawDebugDirectionalArrow(GetWorld(), NewPosition, NewPosition+((NewPosition-Units[UnitIndex].InterpolatedDestination).GetSafeNormal()*250.f), 150.f, FColor::Red, false, 5.f, 0, 25.f);
 
 	FUnitInfo& Unit = Units[UnitIndex];
@@ -177,10 +178,10 @@ void URTSFormationSubsystem::SetUnitPosition(const FVector& NewPosition, int Uni
 	UMassEntitySubsystem* EntitySubsystem = GetWorld()->GetSubsystem<UMassEntitySubsystem>();
 	for(const FMassEntityHandle& Entity : Unit.Entities)
 	{
-		if (EntitySubsystem->GetFragmentDataPtr<FMassMoveTargetFragment>(Entity))
+		if (EntitySubsystem->GetEntityManager().GetFragmentDataPtr<FMassMoveTargetFragment>(Entity))
 		{
-			EntitySubsystem->GetFragmentDataPtr<FMassMoveTargetFragment>(Entity)->CreateNewAction(EMassMovementAction::Stand, *GetWorld());
-			EntitySubsystem->GetFragmentDataPtr<FMassVelocityFragment>(Entity)->Value = FVector::Zero();
+			EntitySubsystem->GetEntityManager().GetFragmentDataPtr<FMassMoveTargetFragment>(Entity)->CreateNewAction(EMassMovementAction::Stand, *GetWorld());
+			EntitySubsystem->GetEntityManager().GetFragmentDataPtr<FMassVelocityFragment>(Entity)->Value = FVector::Zero();
 		}
 	}
 	
@@ -199,25 +200,25 @@ void URTSFormationSubsystem::SpawnEntitiesForUnit(int UnitIndex, const UMassEnti
 	Units[UnitIndex].Entities.Reserve(Units[UnitIndex].Entities.Num()+Count);
 	
 	TArray<FMassEntityHandle> Entities;
-	const FMassEntityTemplate* EntityTemplate = EntityConfig->GetConfig().GetOrCreateEntityTemplate(*UGameplayStatics::GetPlayerPawn(this, 0), *EntityConfig);
+	auto& EntityTemplate = EntityConfig->GetConfig().GetOrCreateEntityTemplate(*UGameplayStatics::GetPlayerPawn(this, 0)->GetWorld());
 
 	// We are doing a little bit of work here since we are setting the unit index manually
 	// Otherwise, using SpawnEntities would be perfectly fine
 	// @todo find if there is a better way to modify templates in code
 	TArray<FMassEntityHandle> SpawnedEntities;
-	TSharedRef<UMassEntitySubsystem::FEntityCreationContext> CreationContext = EntitySubsystem->BatchCreateEntities(EntityTemplate->GetArchetype(), Count, SpawnedEntities);
+	auto CreationContext = EntitySubsystem->GetMutableEntityManager().BatchCreateEntities(EntityTemplate.GetArchetype(), EntityTemplate.GetSharedFragmentValues(), Count, SpawnedEntities);
 
 	// Set the template default values for the entities
-	TConstArrayView<FInstancedStruct> FragmentInstances = EntityTemplate->GetInitialFragmentValues();
-	EntitySubsystem->BatchSetEntityFragmentsValues(CreationContext->GetChunkCollection(), FragmentInstances);
+	TConstArrayView<FInstancedStruct> FragmentInstances = EntityTemplate.GetInitialFragmentValues();
+	EntitySubsystem->GetEntityManager().BatchSetEntityFragmentsValues(CreationContext->GetEntityCollection(), FragmentInstances);
 
 	// Set unit index for entities
 	FRTSFormationAgent FormationAgent;
 	FormationAgent.UnitIndex = UnitIndex;
 	
 	TArray<FInstancedStruct> Fragments;
-	Fragments.Add(FConstStructView::Make(FormationAgent));
-	EntitySubsystem->BatchSetEntityFragmentsValues(CreationContext->GetChunkCollection(), Fragments);
+	Fragments.Add(FInstancedStruct::Make(FormationAgent));
+	EntitySubsystem->GetEntityManager().BatchSetEntityFragmentsValues(CreationContext->GetEntityCollection(), Fragments);
 }
 
 int URTSFormationSubsystem::SpawnNewUnit(const UMassEntityConfigAsset* EntityConfig, int Count, const FVector& Position)

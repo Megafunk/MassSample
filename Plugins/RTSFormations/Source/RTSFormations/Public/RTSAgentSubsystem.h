@@ -25,3 +25,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false)
 	void LaunchEntities(const FVector& Location, float Radius) const;
 };
+
+template<>
+struct TMassExternalSubsystemTraits<URTSAgentSubsystem>
+{
+	enum
+	{
+		GameThreadOnly = false
+	};
+};

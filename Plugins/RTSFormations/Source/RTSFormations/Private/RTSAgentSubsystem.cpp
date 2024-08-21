@@ -28,8 +28,8 @@ void URTSAgentSubsystem::LaunchEntities(const FVector& Location, float Radius) c
 		
 		for(const FMassEntityHandle& Entity : Entities)
 		{
-			EntitySubsystem->Defer().PushCommand(FCommandAddFragmentInstance(Entity,
-				FConstStructView::Make(LaunchEntityFragment)));
+			EntitySubsystem->GetEntityManager().Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity,
+				LaunchEntityFragment);
 		}
 		// hacky fix since I couldnt get observer working for the life of me
 		if (Entities.Num())

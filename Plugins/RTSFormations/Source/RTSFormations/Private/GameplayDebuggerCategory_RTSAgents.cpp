@@ -4,6 +4,7 @@
 #include "GameplayDebuggerCategory_RTSAgents.h"
 
 #include "DrawDebugHelpers.h"
+#include "MassEntitySubsystem.h"
 #include "MassNavigationFragments.h"
 #include "Engine/World.h"
 
@@ -31,7 +32,7 @@ void FGameplayDebuggerCategory_RTSAgents::CollectData(APlayerController* OwnerPC
 		
 		for(auto& Entity : FormationSubsystem->Units[0].Entities)
 		{
-			const FVector& Pos = EntitySubsystem->GetFragmentDataChecked<FMassMoveTargetFragment>(Entity).Center;
+			const FVector& Pos = EntitySubsystem->GetEntityManager().GetFragmentDataChecked<FMassMoveTargetFragment>(Entity).Center;
 			DataPack.Positions.Add(Pos);
 		}
 	}

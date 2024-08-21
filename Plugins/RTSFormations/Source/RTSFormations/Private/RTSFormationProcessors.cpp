@@ -23,6 +23,7 @@ URTSFormationInitializer::URTSFormationInitializer()
 void URTSFormationInitializer::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);
 }
 
 void URTSFormationInitializer::Initialize(UObject& Owner)
@@ -33,10 +34,10 @@ void URTSFormationInitializer::Initialize(UObject& Owner)
 	FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(Owner.GetWorld());
 }
 
-void URTSFormationInitializer::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void URTSFormationInitializer::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	// First query is to give all units an appropriate unit index.
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		TArrayView<FRTSFormationAgent> RTSFormationAgents = Context.GetMutableFragmentView<FRTSFormationAgent>();
 
@@ -79,38 +80,41 @@ URTSFormationDestroyer::URTSFormationDestroyer()
 void URTSFormationDestroyer::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddSubsystemRequirement<UMassSignalSubsystem>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddSubsystemRequirement<URTSFormationSubsystem>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);
 }
 
 void URTSFormationDestroyer::Initialize(UObject& Owner)
 {
-	SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
-	FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(Owner.GetWorld());
+	Super::Initialize(Owner);
 }
 
-void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void URTSFormationDestroyer::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this, &EntitySubsystem](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this, &EntityManager](FMassExecutionContext& Context)
 	{
+		auto& FormationSubsystem = Context.GetMutableSubsystemChecked<URTSFormationSubsystem>();
 		TConstArrayView<FRTSFormationAgent> FormationAgents = Context.GetFragmentView<FRTSFormationAgent>();
 
 		// Signal affected units/entities at the end
 		TArray<int> UnitSignals;
-		UnitSignals.Reserve(FormationSubsystem->Units.Num());
+		UnitSignals.Reserve(FormationSubsystem.Units.Num());
 		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
 			const FRTSFormationAgent& FormationAgent = FormationAgents[EntityIndex];
 			
 			// Remove entity from units array
-			if (FormationSubsystem->Units.IsValidIndex(FormationAgent.UnitIndex))
+			if (FormationSubsystem.Units.IsValidIndex(FormationAgent.UnitIndex))
 			{
-				const FMassEntityHandle* ItemIndex = FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.Find(Context.GetEntity(EntityIndex));
+				const FMassEntityHandle* ItemIndex = FormationSubsystem.Units[FormationAgent.UnitIndex].Entities.Find(Context.GetEntity(EntityIndex));
 				if (ItemIndex)
 				{
 					// Since we are caching the index, we need to fix the entity index that replaces the destroyed one
 					// Not sure if this is the 'correct' way to handle this, but it works for now
 					
-					FormationSubsystem->Units[FormationAgent.UnitIndex].Entities.Remove(*ItemIndex);
+					FormationSubsystem.Units[FormationAgent.UnitIndex].Entities.Remove(*ItemIndex);
 					UnitSignals.AddUnique(FormationAgent.UnitIndex);
 				}
 			}
@@ -119,19 +123,19 @@ void URTSFormationDestroyer::Execute(UMassEntitySubsystem& EntitySubsystem, FMas
 		// Signal affected units/entities
 		for(const int& Unit : UnitSignals)
 		{
-			if (FormationSubsystem->Units.IsValidIndex(Unit))
+			if (FormationSubsystem.Units.IsValidIndex(Unit))
 			{
 				//@todo add a consistent way to reference units since the index isn't reliable
-				if (FormationSubsystem->Units[Unit].Entities.Num() == 0)
+				if (FormationSubsystem.Units[Unit].Entities.Num() == 0)
 				{
-					FormationSubsystem->Units.RemoveAtSwap(Unit);
+					FormationSubsystem.Units.RemoveAtSwap(Unit);
 					continue;
 				}
 
 				// Really the only time we should notify every entity in the unit is when the center point changes
 				// Every other time we just have to notify the entity that is replacing the destroyed one
-				FormationSubsystem->Units[Unit].Entities.Shrink();
-				FormationSubsystem->UpdateUnitPosition(FormationSubsystem->Units[Unit].UnitPosition, Unit);
+				FormationSubsystem.Units[Unit].Entities.Shrink();
+				FormationSubsystem.UpdateUnitPosition(FormationSubsystem.Units[Unit].UnitPosition, Unit);
 			}
 		}
 	});
@@ -146,35 +150,37 @@ void URTSAgentMovement::ConfigureQueries()
 	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	EntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddConstSharedRequirement<FMassMovementParameters>(EMassFragmentPresence::All);
 	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadOnly);
+	
 	EntityQuery.AddChunkRequirement<FMassSimulationVariableTickChunkFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
 	EntityQuery.SetChunkFilter(&FMassSimulationVariableTickChunkFragment::ShouldTickChunkThisFrame);
+
+	EntityQuery.AddSubsystemRequirement<URTSFormationSubsystem>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);
 }
 
-void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void URTSAgentMovement::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		TArrayView<FMassMoveTargetFragment> MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
 		TConstArrayView<FTransformFragment> TransformFragments = Context.GetFragmentView<FTransformFragment>();
-		TArrayView<FMassVelocityFragment> VelocityFragments = Context.GetMutableFragmentView<FMassVelocityFragment>();
 		TConstArrayView<FRTSFormationAgent> RTSFormationAgents = Context.GetFragmentView<FRTSFormationAgent>();
 
 		const FRTSFormationSettings& FormationSettings = Context.GetSharedFragment<FRTSFormationSettings>();
 		const FMassMovementParameters& MovementParameters = Context.GetConstSharedFragment<FMassMovementParameters>();
 
-		URTSFormationSubsystem* FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(GetWorld());
+		auto& FormationSubsystem = Context.GetMutableSubsystemChecked<URTSFormationSubsystem>();
 		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 		{
 			FMassMoveTargetFragment& MoveTarget = MoveTargetFragments[EntityIndex];
 			const FTransform& Transform = TransformFragments[EntityIndex].GetTransform();
-			FVector& Velocity = VelocityFragments[EntityIndex].Value;
+			
 			const FRTSFormationAgent& RTSFormationAgent = RTSFormationAgents[EntityIndex];
 
-			const FUnitInfo& Unit = FormationSubsystem->Units[RTSFormationAgent.UnitIndex];
+			const FUnitInfo& Unit = FormationSubsystem.Units[RTSFormationAgent.UnitIndex];
 
 			if(MoveTarget.GetCurrentAction() == EMassMovementAction::Stand)
 				MoveTarget.CreateNewAction(EMassMovementAction::Move, *GetWorld());
@@ -207,7 +213,8 @@ void URTSAgentMovement::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExec
 void URTSFormationUpdate::Initialize(UObject& Owner)
 {
 	Super::Initialize(Owner);
-	SubscribeToSignal(FormationUpdated);
+	auto SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
+	SubscribeToSignal(*SignalSubsystem, FormationUpdated);
 }
 
 void URTSFormationUpdate::ConfigureQueries()
@@ -217,13 +224,14 @@ void URTSFormationUpdate::ConfigureQueries()
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddConstSharedRequirement<FMassMovementParameters>(EMassFragmentPresence::All);
 	EntityQuery.AddSharedRequirement<FRTSFormationSettings>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.RegisterWithProcessor(*this);
 }
 
-void URTSFormationUpdate::SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context,
+void URTSFormationUpdate::SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context,
 	FMassSignalNameLookup& EntitySignals)
 {
 	// Query to calculate move target for entities based on unit index
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		TArrayView<FMassMoveTargetFragment> MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
 		TConstArrayView<FTransformFragment> TransformFragments = Context.GetFragmentView<FTransformFragment>();
@@ -253,23 +261,26 @@ void URTSFormationUpdate::SignalEntities(UMassEntitySubsystem& EntitySubsystem, 
 void URTSUpdateEntityIndex::Initialize(UObject& Owner)
 {
 	Super::Initialize(Owner);
-	SubscribeToSignal(UpdateIndex);
-	FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(Owner.GetWorld());
+	auto SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
+	SubscribeToSignal(*SignalSubsystem, UpdateIndex);
 }
 
 void URTSUpdateEntityIndex::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddSubsystemRequirement<URTSFormationSubsystem>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.RegisterWithProcessor(*this);
 }
 
-void URTSUpdateEntityIndex::SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context,
+void URTSUpdateEntityIndex::SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context,
 	FMassSignalNameLookup& EntitySignals)
 {
 	// Update entity index so that they go to the closest possible position
 	// Entities are signaled in order of distance to destination, this allows the NewPosition array to be sorted once
 	// and cut down on iterations significantly
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
+		auto& FormationSubsystem = Context.GetMutableSubsystemChecked<URTSFormationSubsystem>();
 		TArrayView<FRTSFormationAgent> FormationAgents = Context.GetMutableFragmentView<FRTSFormationAgent>();
 		
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
@@ -280,31 +291,38 @@ void URTSUpdateEntityIndex::SignalEntities(UMassEntitySubsystem& EntitySubsystem
 			TPair<int, FVector> ClosestPos;
 			float ClosestDistance = -1;
 			int i=0;
-			for(const TPair<int, FVector>& NewPos : FormationSubsystem->Units[FormationAgent.UnitIndex].NewPositions)
+
 			{
-				float Dist = FVector::DistSquared2D(NewPos.Value, FormationAgent.Offset);
-				if (ClosestDistance == -1 || Dist < ClosestDistance)
+				SCOPED_NAMED_EVENT(STAT_RTS_FindClosestPoint, FColor::Green);
+				for(const TPair<int, FVector>& NewPos : FormationSubsystem.Units[FormationAgent.UnitIndex].NewPositions)
 				{
-					ClosestPos = NewPos;
-					ClosestDistance = Dist;
+					float Dist = FVector::DistSquared2D(NewPos.Value, FormationAgent.Offset);
+					if (ClosestDistance == -1 || Dist < ClosestDistance)
+					{
+						ClosestPos = NewPos;
+						ClosestDistance = Dist;
 					
-					// While its not perfect, this adds a hard cap to how many positions to check
-					//if (++i > FormationSubsystem->Units[FormationAgent.UnitIndex].FormationLength*2)
-					//	break;
+						// While its not perfect, this adds a hard cap to how many positions to check
+						//if (++i > FormationSubsystem->Units[FormationAgent.UnitIndex].FormationLength*2)
+						//	break;
+					}
 				}
 			}
 
 			// Basically scoot up entities if there is space in the front
 			int& Index = ClosestPos.Key;
-			
-			FormationAgent.EntityIndex = Index;
-			FormationAgent.Offset = ClosestPos.Value;
-			FormationSubsystem->Units[FormationAgent.UnitIndex].NewPositions.Remove(Index);
+
+			{
+				SCOPED_NAMED_EVENT(STAT_RTS_RemoveClaimedPosition, FColor::Green);
+				FormationAgent.EntityIndex = Index;
+				FormationAgent.Offset = ClosestPos.Value;
+				FormationSubsystem.Units[FormationAgent.UnitIndex].NewPositions.Remove(Index);
+			}
 
 			// Call subsystem function to get entities to move
-			if (FormationSubsystem->Units[FormationAgent.UnitIndex].NewPositions.Num() == 0)
+			if (FormationSubsystem.Units[FormationAgent.UnitIndex].NewPositions.Num() == 0)
 			{
-				FormationSubsystem->MoveEntities(FormationAgent.UnitIndex);
+				FormationSubsystem.MoveEntities(FormationAgent.UnitIndex);
 			}
 		}
 	});

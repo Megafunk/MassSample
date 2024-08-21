@@ -7,6 +7,13 @@
 #include "MassProcessor.h"
 #include "RTSAgentProcessors.generated.h"
 
+// Defines that an entity is managed by the RTSHashGrid
+USTRUCT()
+struct FRTSAgentHashTag : public FMassTag
+{
+	GENERATED_BODY();
+};
+
 // Update hash grid position of entities
 UCLASS()
 class RTSFORMATIONS_API URTSUpdateHashPosition : public UMassProcessor
@@ -14,11 +21,10 @@ class RTSFORMATIONS_API URTSUpdateHashPosition : public UMassProcessor
 	GENERATED_BODY()
 	
 	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 	virtual void Initialize(UObject& Owner) override;
 
 	FMassEntityQuery EntityQuery;
-	TObjectPtr<class URTSAgentSubsystem> AgentSubsystem;
 };
 
 // Initialize the hash grid position of RTS agents
@@ -29,11 +35,10 @@ class RTSFORMATIONS_API URTSInitializeHashPosition : public UMassObserverProcess
 
 	URTSInitializeHashPosition();
 	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 	virtual void Initialize(UObject& Owner) override;
 
 	FMassEntityQuery EntityQuery;
-	TObjectPtr<class URTSAgentSubsystem> AgentSubsystem;
 };
 
 // Remove the entities from the hash grid when destroyed/no longer an RTSAgent
@@ -44,9 +49,8 @@ class RTSFORMATIONS_API URTSRemoveHashPosition : public UMassObserverProcessor
 
 	URTSRemoveHashPosition();
 	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 	virtual void Initialize(UObject& Owner) override;
 
 	FMassEntityQuery EntityQuery;
-	TObjectPtr<URTSAgentSubsystem> AgentSubsystem;
 };

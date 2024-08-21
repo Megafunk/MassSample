@@ -3,6 +3,7 @@
 
 #include "DrawDebugHelpers.h"
 #include "MassCommonFragments.h"
+#include "MassExecutionContext.h"
 #include "MassMovementFragments.h"
 #include "MassNavigationFragments.h"
 #include "TimerManager.h"
@@ -25,13 +26,13 @@ void ULaunchEntityProcessor::Initialize(UObject& Owner)
 	Super::Initialize(Owner);
 	SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
 	FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(Owner.GetWorld());
-	SubscribeToSignal(LaunchEntity);
+	SubscribeToSignal(*SignalSubsystem, LaunchEntity);
 }
 
-void ULaunchEntityProcessor::SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context,
-	FMassSignalNameLookup& EntitySignals)
+void ULaunchEntityProcessor::SignalEntities(FMassEntityManager& EntityManager,
+                                            FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals)
 {
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this, &EntitySubsystem](FMassExecutionContext& Context)
+	EntityQuery.ParallelForEachEntityChunk(EntityManager, Context, [this, &EntityManager](FMassExecutionContext& Context)
 	{
 		TArrayView<FLaunchEntityFragment> LaunchEntityFragments = Context.GetMutableFragmentView<FLaunchEntityFragment>();
 		TArrayView<FMassMoveTargetFragment> MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
@@ -69,9 +70,9 @@ void UMoveForceProcessor::ConfigureQueries()
 	
 }
 
-void UMoveForceProcessor::Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context)
+void UMoveForceProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ParallelForEachEntityChunk(EntitySubsystem, Context, [this, &EntitySubsystem](FMassExecutionContext& Context)
+	EntityQuery.ParallelForEachEntityChunk(EntityManager, Context, [this, &EntityManager](FMassExecutionContext& Context)
 	{
 		TConstArrayView<FLaunchEntityFragment> LaunchEntityFragments = Context.GetFragmentView<FLaunchEntityFragment>();
 		TArrayView<FMassMoveTargetFragment> MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();

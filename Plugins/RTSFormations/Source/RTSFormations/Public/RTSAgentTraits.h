@@ -46,7 +46,7 @@ class RTSFORMATIONS_API URTSFormationAgentTrait : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
 	
-	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, UWorld& World) const override;
+	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere)
 	FRTSFormationSettings FormationSettings;

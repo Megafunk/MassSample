@@ -18,7 +18,7 @@ class RTSFORMATIONS_API ULaunchEntityProcessor : public UMassSignalProcessorBase
 	
 	virtual void ConfigureQueries() override;
 	virtual void Initialize(UObject& Owner) override;
-	virtual void SignalEntities(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals) override;
+	virtual void SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals) override;
 
 	TObjectPtr<UMassSignalSubsystem> SignalSubsystem;
 	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
@@ -31,7 +31,7 @@ class RTSFORMATIONS_API UMoveForceProcessor : public UMassProcessor
 	GENERATED_BODY()
 	
 	virtual void ConfigureQueries() override;
-	virtual void Execute(UMassEntitySubsystem& EntitySubsystem, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 	FMassEntityQuery EntityQuery;
 };
