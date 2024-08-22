@@ -22,9 +22,6 @@ class RTSFORMATIONS_API URTSFormationInitializer : public UMassObserverProcessor
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 	FMassEntityQuery EntityQuery;
-
-	TObjectPtr<UMassSignalSubsystem> SignalSubsystem;
-	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
 };
 
 // Observer that runs when an entity is destroyed. Cleans up the unit array and tells the last unit to take their place
@@ -65,8 +62,6 @@ class RTSFORMATIONS_API URTSFormationUpdate : public UMassSignalProcessorBase
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
 	virtual void SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals) override;
-
-	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
 };
 
 // Signal Processor that updates the agents index in the unit based on values in the FormationSubsystem Unit Array
@@ -78,6 +73,4 @@ class RTSFORMATIONS_API URTSUpdateEntityIndex : public UMassSignalProcessorBase
 	virtual void Initialize(UObject& Owner) override;
 	virtual void ConfigureQueries() override;
 	virtual void SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals) override;
-
-	TObjectPtr<URTSFormationSubsystem> FormationSubsystem;
 };

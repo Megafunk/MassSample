@@ -23,15 +23,14 @@ URTSFormationInitializer::URTSFormationInitializer()
 void URTSFormationInitializer::ConfigureQueries()
 {
 	EntityQuery.AddRequirement<FRTSFormationAgent>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddSubsystemRequirement<UMassSignalSubsystem>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddSubsystemRequirement<URTSFormationSubsystem>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.RegisterWithProcessor(*this);
 }
 
 void URTSFormationInitializer::Initialize(UObject& Owner)
 {
 	Super::Initialize(Owner);
-
-	SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
-	FormationSubsystem = UWorld::GetSubsystem<URTSFormationSubsystem>(Owner.GetWorld());
 }
 
 void URTSFormationInitializer::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
@@ -40,10 +39,12 @@ void URTSFormationInitializer::Execute(FMassEntityManager& EntityManager, FMassE
 	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		TArrayView<FRTSFormationAgent> RTSFormationAgents = Context.GetMutableFragmentView<FRTSFormationAgent>();
+		auto& SignalSubsystem = Context.GetMutableSubsystemChecked<UMassSignalSubsystem>();
+		auto& FormationSubsystem = Context.GetMutableSubsystemChecked<URTSFormationSubsystem>();
 
 		// Signal affected units/entities at the end
 		TArray<int> UnitSignals;
-		UnitSignals.Reserve(FormationSubsystem->Units.Num());
+		UnitSignals.Reserve(FormationSubsystem.Units.Num());
 
 		// Since we can have multiple units, reserving is only done in the formation subsystem
 		// This is because it might be possible that a batch of spawned entities should go to different units
@@ -53,18 +54,18 @@ void URTSFormationInitializer::Execute(FMassEntityManager& EntityManager, FMassE
 
 			// If for some reason the unit hasnt been created, we should create it now
 			// Unfortunately, with the nature of an array, this might cause a crash if the unit index is not next in line, need to handle this somehow
-			if (!FormationSubsystem->Units.IsValidIndex(RTSFormationAgent.UnitIndex))
-				FormationSubsystem->Units.AddDefaulted(1);
+			if (!FormationSubsystem.Units.IsValidIndex(RTSFormationAgent.UnitIndex))
+				FormationSubsystem.Units.AddDefaulted(1);
 			
-			RTSFormationAgent.EntityIndex = FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Num();
-			FormationSubsystem->Units[RTSFormationAgent.UnitIndex].Entities.Emplace(Context.GetEntity(EntityIndex));
+			RTSFormationAgent.EntityIndex = FormationSubsystem.Units[RTSFormationAgent.UnitIndex].Entities.Num();
+			FormationSubsystem.Units[RTSFormationAgent.UnitIndex].Entities.Emplace(Context.GetEntity(EntityIndex));
 
 			UnitSignals.AddUnique(RTSFormationAgent.UnitIndex);
 		}
 		// Signal entities in the unit that their position is updated
 		// @todo only notify affected entities
 		for(const int& Unit : UnitSignals)
-			FormationSubsystem->SetUnitPosition(FormationSubsystem->Units[Unit].UnitPosition, Unit);
+			FormationSubsystem.SetUnitPosition(FormationSubsystem.Units[Unit].UnitPosition, Unit);
 	});
 }
 
