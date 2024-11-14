@@ -25,10 +25,6 @@
 
 	"Plugins": [
 		{
-			"Name": "MassEntity",
-			"Enabled": true
-		},
-		{
 			"Name": "MassGameplay",
 			"Enabled": true
 		},
@@ -38,10 +34,6 @@
 		},
 		{
 			"Name": "MassCrowd",
-			"Enabled": true
-		},
-		{
-			"Name":"StructUtils",
 			"Enabled": true
 		},
 		{
