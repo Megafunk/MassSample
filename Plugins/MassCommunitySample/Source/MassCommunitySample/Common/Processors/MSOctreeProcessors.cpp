@@ -147,10 +147,12 @@ void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& Entit
 	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MSHashGridMemberInitialization)
-		const auto TransformList = Context.GetFragmentView<FTransformFragment>();
-		const auto OctreeList = Context.GetMutableFragmentView<FMSOctreeFragment>();
-		const auto RadiusList = Context.GetMutableFragmentView<FAgentRadiusFragment>();
-		const auto SharedBaseBounds = Context.GetConstSharedFragmentPtr<FMSSharedBaseBounds>();
+		TConstArrayView<FTransformFragment> TransformList = Context.GetFragmentView<FTransformFragment>();
+		TArrayView<FMSOctreeFragment> OctreeList = Context.GetMutableFragmentView<FMSOctreeFragment>();
+		TConstArrayView<FAgentRadiusFragment> RadiusList = Context.GetFragmentView<FAgentRadiusFragment>();
+
+		// Using a ptr here as it is optional
+		const FMSSharedBaseBounds* SharedBaseBounds = Context.GetConstSharedFragmentPtr<FMSSharedBaseBounds>();
 
 		const int32 NumEntities = Context.GetNumEntities();
 

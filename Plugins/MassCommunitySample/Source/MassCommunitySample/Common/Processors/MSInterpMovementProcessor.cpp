@@ -28,14 +28,14 @@ void UMSInterpMovementProcessor::Execute(FMassEntityManager& EntityManager, FMas
 	{
 		const int32 QueryLength = Context.GetNumEntities();
 
-		auto InterpLocations = Context.GetMutableFragmentView<FInterpLocationFragment>();
-		auto Transforms = Context.GetMutableFragmentView<FTransformFragment>();
-		auto OriginalTransforms = Context.GetMutableFragmentView<FOriginalTransformFragment>();
+		TArrayView<FInterpLocationFragment> InterpLocations = Context.GetMutableFragmentView<FInterpLocationFragment>();
+		TArrayView<FTransformFragment> Transforms = Context.GetMutableFragmentView<FTransformFragment>();
+		TConstArrayView<FOriginalTransformFragment> OriginalTransforms = Context.GetFragmentView<FOriginalTransformFragment>();
 
 		for (int32 i = 0; i < QueryLength; ++i)
 		{
-			auto& InterpFragment = InterpLocations[i];
-			auto& Transform = Transforms[i].GetMutableTransform();
+			FInterpLocationFragment& InterpFragment = InterpLocations[i];
+			FTransform& Transform = Transforms[i].GetMutableTransform();
 
 			const float DeltaTime = Context.GetDeltaTimeSeconds();
 			
