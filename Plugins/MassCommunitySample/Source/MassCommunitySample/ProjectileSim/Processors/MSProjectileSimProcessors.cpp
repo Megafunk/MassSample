@@ -76,7 +76,9 @@ void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntityManager, FMas
 			//todo-perf: somehow keep the query params around as this is fairly evil to do
 			if (IgnoredActorsFragments.Num() > 0)
 			{
-				QueryParams.AddIgnoredActors(static_cast<TArray<AActor*>>(IgnoredActorsFragments[i].IgnoredActors));
+				for (const AActor* IgnoredActor : IgnoredActorsFragments[i].IgnoredActors) {
+					QueryParams.AddIgnoredActor(IgnoredActor);
+				}
 			}
 
 
