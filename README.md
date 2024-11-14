@@ -5,19 +5,15 @@
 - Karl Mavko - [@Megafunk](https://github.com/Megafunk)
 - Alvaro Jover - [@vorixo](https://github.com/vorixo)
 
-Our **very WIP** understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are **not** affiliated with Epic Games and this system is actively being changed often so this information might not be totally accurate.
+Our **somewhat WIP** understanding of Unreal Engine 5's experimental Entity Component System (ECS) plugin with a small sample project. We are **not** affiliated with Epic Games and this system is actively being changed often so this information might not be totally accurate.
 
 We are totally open to contributions, If something is wrong or you think it could be improved, feel free to [open an issue](https://github.com/Megafunk/MassSample/issues) or submit a [pull request](https://github.com/Megafunk/MassSample/pulls).
 
 Currently built for the Unreal Engine 5 latest version binary from the Epic Games launcher.
 This documentation will be updated often!
 
-# ⚠ 5.2 Bugfix ⚠
-There is a bug in 5.2 for setting Execution Flags for the world and Mass processors that can be resolved either in the Mass config or engine changes 
-[here!](https://dev.epicgames.com/community/learning/tutorials/JXMl/unreal-engine-your-first-60-minutes-with-mass#**massprocessorbugin5.2)
-
 #### **Requirements:**
-- Unreal Engine 5.3 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- Unreal Engine 5.5 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - `Git` version control:
   - [Windows](https://gitforwindows.org/)
   - [Linux/Unix & macOS](https://git-scm.com/downloads)
@@ -884,27 +880,16 @@ void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecution
 It's getting to the point where the only things that don't trigger them would be easier to list out. I really think Epic should mark the API calls that don't do this with _Internal or something -->
 <a name="mass-o-n"></a>
 #### 4.9.1 Entity Manager Observer calls
-At the time of writing, Observers are only triggered by the Mass Manager directly during these specific Entity actions. This mainly comes up due to some of the specific single-entity modifying functions like
-`addfragmenttoentity`
-<!-- FIXMEVORI: Maybe this isn't the case because we are not following the recommended practices!! Should ensure not skipping the appropriate exec path-->
-<!--  REVIEWMEFUNK starting to feel pointless but I still think it's a good thing to know-->
-- Entity changes in the entity manager:
-  - `FMassEntityManager::BatchBuildEntities`
-  - `FMassEntityManager::BatchCreateEntities`
-  - `FMassEntityManager::BatchDestroyEntityChunks` 
-  - `FMassEntityManager::AddCompositionToEntity_GetDelta`
-  - `FMassEntityManager::RemoveCompositionFromEntity`
-  - `FMassEntityManager::BatchChangeTagsForEntities`
-  - `FMassEntityManager::BatchChangeFragmentCompositionForEntities`
-  - `FMassEntityManager::BatchAddFragmentInstancesForEntities`
-- The [deferred commands](#mass-queries-mq) that change entity should all call one of the above. 
+ - In order for observers to fire, something must call alert the observer manager to the change in composition.
+- [Deferred commands](#mass-queries-mq) that change entities will trigger observers.
 
-This covers processors and spawners but not single Entity changes from C++.
+If your code relies on observers firing immediately you should make sure the Mass function calls you are making actually alert observers to changes. 
+In earlier versions there were some functions that skipped calling observers but as of 5.5 nearly all ways of changing entity composition are covered.
 
-Thankfully a [recent commit](https://github.com/EpicGames/UnrealEngine/commit/2b883dec5f6c821648f2d6005ac06e704099dbd9
-) on ue5-main has rectified this issue.
+[This commit](https://github.com/EpicGames/UnrealEngine/commit/2b883dec5f6c821648f2d6005ac06e704099dbd9
+) on ue5-main has rectified this issue for most mass subsystem-level calls. 
 
-If you need to, asking the observer manager to check for changes should only require calling `OnCompositionChanged()` with the delta of newly added or removed components.
+If you need to, asking the observer manager to trigger changes should only require calling `OnCompositionChanged()` with the delta of newly added or removed components.
 <!-- FIXMEFUNK: This is kind of a wacky example. I assume most people who need this might 
 ```c++
 EntityManager.GetObserverManager().OnCompositionChanged(
@@ -970,7 +955,10 @@ MyQuery.ParallelForEachEntityChunk(EntityManager, Context, [](FMassExecutionCont
 	}
 }, FMassEntityQuery::ForceParallelExecution);
 ```
-Note that ParallelForEachEntityChunk will create a dedicated command buffer for each job by default.
+Notes:
+- ParallelForEachEntityChunk will create a dedicated command buffer for each job by default.
+- the Cvar `mass.AllowQueryParallelFor` must be enabled.
+
 
 
 <a name="mass-cm"></a>
