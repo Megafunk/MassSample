@@ -15,7 +15,9 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	const UWorld* World = GetWorld();
 	
-	Collection.InitializeDependency<UMassEntitySubsystem>();
+	if (!ensure(Collection.InitializeDependency<UMassEntitySubsystem>())) {
+		return;
+	}
 	
 	EntityManager = World->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager().AsShared();
 
@@ -29,6 +31,12 @@ void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 int32 UMSSubsystem::SampleSpawnEntityExamples()
 {
+	/** NOTE: It should be noted that this is a very "raw" way to build entities,
+	* it serves to show how they can be manipulated with direct calls to the mass entity manager
+	*
+	* In most cases you will be changing entities by deferred commands and processors, rather than raw calls like this
+	*/ 
+	
 	//To spawn entities raw from C++ we can make a new archetype like so:
 	MoverArchetype =  EntityManager->CreateArchetype(
 	{
