@@ -83,8 +83,12 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 	EntityManager->Defer().PushCommand<FMassCommandBuildEntity>(ReserverdEntity,MyColorFragment);
 
 
-	// Flush the commands so this new entity is actually around
-	EntityManager->FlushCommands();
+	// Flush the commands so this new entity is actually around, but not during processing
+	if (!EntityManager->IsProcessing())
+	{
+		// This is an example because Mass will generally call FlushCommands commands for you during the frame, but sometimes immediate results are needed
+		EntityManager->FlushCommands();
+	}
 
 	
 	// Sets fragment data on an existing entity
