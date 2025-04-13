@@ -19,9 +19,9 @@ UMSEntityViewBenchMark::UMSEntityViewBenchMark()
 	};
 }
 
-void UMSEntityViewBenchMark::Initialize(UObject& Owner)
+void UMSEntityViewBenchMark::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, Manager);
 
 	FEntityViewBenchmarkFragment Fragment;
 
@@ -59,8 +59,10 @@ void UMSEntityViewBenchMark::Initialize(UObject& Owner)
 	}
 }
 
-void UMSEntityViewBenchMark::ConfigureQueries()
+void UMSEntityViewBenchMark::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityViewQuery.Initialize(EntityManager);
+
 	EntityViewQuery.AddRequirement<FEntityViewBenchmarkFragment>(EMassFragmentAccess::ReadOnly);
 	EntityViewQuery.RegisterWithProcessor(*this);
 

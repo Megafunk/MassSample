@@ -48,9 +48,9 @@ UMSPathologicalBenchmarkProcessor::UMSPathologicalBenchmarkProcessor()
 
 
 
-void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
+void UMSPathologicalBenchmarkProcessor::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
  {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, Manager);
 
 	 FMassEntityManager& EntityManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
 
@@ -98,11 +98,13 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
 
 
 
- void UMSPathologicalBenchmarkProcessor::ConfigureQueries()
+ void UMSPathologicalBenchmarkProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
  {
 	//quick and dirty way to disable this for now if you want
  	if constexpr (benchmark)
  	{
+ 		PathologicQuery9.Initialize(EntityManager);
+
  		PathologicQuery9.AddRequirement<FPathologicFragment>(EMassFragmentAccess::ReadWrite);
  		
  		PathologicQuery9.AddRequirement(FAlberta::StaticStruct(),EMassFragmentAccess::ReadWrite);
@@ -117,6 +119,7 @@ void UMSPathologicalBenchmarkProcessor::Initialize(UObject& Owner)
  		
  		PathologicQuery9.RegisterWithProcessor(*this);
 
+ 		PathologicQuery3.Initialize(EntityManager);
  		PathologicQuery3.AddRequirement<FPathologicFragment>(EMassFragmentAccess::ReadWrite);
  		
  		PathologicQuery3.AddRequirement(FAlberta::StaticStruct(),EMassFragmentAccess::ReadWrite);

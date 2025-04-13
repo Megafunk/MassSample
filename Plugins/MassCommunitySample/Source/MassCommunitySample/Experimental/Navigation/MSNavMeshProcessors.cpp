@@ -18,8 +18,10 @@ UMSNavMeshProcessors::UMSNavMeshProcessors()
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
 }
 
-void UMSNavMeshProcessors::ConfigureQueries()
+void UMSNavMeshProcessors::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityQuery.Initialize(EntityManager);
+
 	EntityQuery.AddRequirement<FNavMeshAIFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 

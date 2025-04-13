@@ -19,8 +19,9 @@ UMSTransformToSceneCompTranslatorFastPath::UMSTransformToSceneCompTranslatorFast
 	bRequiresGameThreadExecution = true;
 }
 
-void UMSTransformToSceneCompTranslatorFastPath::ConfigureQueries()
+void UMSTransformToSceneCompTranslatorFastPath::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityQuery.Initialize(EntityManager);
 	AddRequiredTagsToQuery(EntityQuery);
 	EntityQuery.AddRequirement<FMassSceneComponentWrapperFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
@@ -55,8 +56,9 @@ UMSSceneCompTransformToMassTranslator::UMSSceneCompTransformToMassTranslator() :
 	RequiredTags.Add<FMSSceneComponentTransformToMassTag>();
 }
 
-void UMSSceneCompTransformToMassTranslator::ConfigureQueries()
+void UMSSceneCompTransformToMassTranslator::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityQuery.Initialize(EntityManager);
 	AddRequiredTagsToQuery(EntityQuery);
 	EntityQuery.AddRequirement<FMassSceneComponentWrapperFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);

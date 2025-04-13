@@ -24,13 +24,15 @@ UMSProjectileHitObservers::UMSProjectileHitObservers()
 	bRequiresGameThreadExecution = true;
 }
 
-void UMSProjectileHitObservers::ConfigureQueries()
+void UMSProjectileHitObservers::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	CollisionHitEventQuery.Initialize(EntityManager);
 	CollisionHitEventQuery.AddTagRequirement<FMSProjectileFireHitEventTag>(EMassFragmentPresence::All);
 	CollisionHitEventQuery.AddRequirement<FMSHitResultFragment>(EMassFragmentAccess::ReadOnly);
 	CollisionHitEventQuery.RegisterWithProcessor(*this);
 
 	//You can always add another query for different things in the same observer processor!
+	ResolveHitsQuery.Initialize(EntityManager);
 	ResolveHitsQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 	ResolveHitsQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	ResolveHitsQuery.AddRequirement<FMSHitResultFragment>(EMassFragmentAccess::ReadOnly);
@@ -143,16 +145,16 @@ UMSEntityWasHitSignalProcessor::UMSEntityWasHitSignalProcessor()
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Behavior;
 }
 
-void UMSEntityWasHitSignalProcessor::ConfigureQueries()
+void UMSEntityWasHitSignalProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	// 
 	EntityQuery.AddTagRequirement<FMSInOctreeGridTag>(EMassFragmentPresence::All);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 }
 
-void UMSEntityWasHitSignalProcessor::Initialize(UObject& Owner)
+void UMSEntityWasHitSignalProcessor::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, Manager);
 	UMassSignalSubsystem* SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());;
 
 	SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnGetHit);

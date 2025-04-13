@@ -53,10 +53,10 @@ namespace MSMassUtils
 	 * If you need the other kinds, just add them to the query later I suppose.
 	 */
 	template <typename... TFragments>
-	FMassEntityQuery Query()
+	FMassEntityQuery Query(const TSharedRef<FMassEntityManager>& EntityManager)
 	{
 		FMassEntityQuery Query;
-
+		Query.Initialize(EntityManager);
 		(MSMassUtils::AddAnyFragment<TFragments>(Query, *TFragments::StaticStruct()), ...);
 		return Query;
 	}

@@ -19,18 +19,21 @@ UMSOctreeProcessor::UMSOctreeProcessor()
 	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 }
 
-void UMSOctreeProcessor::Initialize(UObject& Owner)
+void UMSOctreeProcessor::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
 {
-	Super::Initialize(Owner);
-	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
+	Super::InitializeInternal(Owner, Manager);
+	if (auto World = GetWorld()) {
+		MassSampleSystem = World->GetSubsystem<UMSSubsystem>();
+	}
 #if CHAOS_DEBUG_DRAW
 	Chaos::FDebugDrawQueue::GetInstance().SetConsumerActive(this, true);
 #endif
 }
 
-void UMSOctreeProcessor::ConfigureQueries()
+void UMSOctreeProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	// Ideally we only do this for meshes that actually moved
+	UpdateOctreeElementsQuery.Initialize(EntityManager);
 
 	UpdateOctreeElementsQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	UpdateOctreeElementsQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
@@ -125,14 +128,16 @@ UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcess
 	Operation = EMassObservedOperation::Add;
 }
 
-void UMSHashGridMemberInitializationProcessor::Initialize(UObject& Owner)
+void UMSHashGridMemberInitializationProcessor::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, Manager);
 	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
 }
 
-void UMSHashGridMemberInitializationProcessor::ConfigureQueries()
+void UMSHashGridMemberInitializationProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityQuery.Initialize(EntityManager);
+
 	EntityQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FAgentRadiusFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
@@ -200,14 +205,16 @@ UMSOctreeMemberCleanupProcessor::UMSOctreeMemberCleanupProcessor()
 	Operation = EMassObservedOperation::Remove;
 }
 
-void UMSOctreeMemberCleanupProcessor::Initialize(UObject& Owner)
+void UMSOctreeMemberCleanupProcessor::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, Manager);
 	MassSampleSystem = GetWorld()->GetSubsystem<UMSSubsystem>();
 }
 
-void UMSOctreeMemberCleanupProcessor::ConfigureQueries()
+void UMSOctreeMemberCleanupProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityQuery.Initialize(EntityManager);
+
 	EntityQuery.AddRequirement<FMSOctreeFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.RegisterWithProcessor(*this);
 }

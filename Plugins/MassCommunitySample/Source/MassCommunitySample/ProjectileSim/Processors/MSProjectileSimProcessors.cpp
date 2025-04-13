@@ -4,6 +4,7 @@
 #include "MSProjectileSimProcessors.h"
 
 #include "MassCommonFragments.h"
+#include "MassCommonTypes.h"
 #include "MassCommonUtils.h"
 #include "MassExecutionContext.h"
 #include "MassMovementFragments.h"
@@ -13,9 +14,9 @@
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
 
-void UMSProjectileSimProcessors::Initialize(UObject& Owner)
+void UMSProjectileSimProcessors::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, Manager);
 }
 
 
@@ -26,8 +27,9 @@ UMSProjectileSimProcessors::UMSProjectileSimProcessors()
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }
 
-void UMSProjectileSimProcessors::ConfigureQueries()
+void UMSProjectileSimProcessors::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	LineTraceFromPreviousPosition.Initialize(EntityManager);
 	LineTraceFromPreviousPosition.AddRequirement<FMSCollisionIgnoredActorsFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 
 	LineTraceFromPreviousPosition.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);

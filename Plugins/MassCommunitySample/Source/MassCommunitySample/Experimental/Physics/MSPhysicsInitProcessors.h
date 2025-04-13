@@ -14,7 +14,7 @@ class MASSCOMMUNITYSAMPLE_API UMSPhysicsInitProcessor : public UMassObserverProc
 {
 	GENERATED_BODY()
 	UMSPhysicsInitProcessor();
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext) override;
 
 	FMassEntityQuery EntityQuery;
@@ -24,7 +24,7 @@ class MASSCOMMUNITYSAMPLE_API UMSPhysicsCleanupProcessor : public UMassObserverP
 {
 	GENERATED_BODY()
 	UMSPhysicsCleanupProcessor();
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext) override;
 
 	FMassEntityQuery EntityQuery;

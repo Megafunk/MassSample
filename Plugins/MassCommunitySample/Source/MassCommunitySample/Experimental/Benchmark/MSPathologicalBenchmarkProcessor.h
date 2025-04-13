@@ -111,10 +111,10 @@ protected:
 public:
 
 	void CombinationsRecursive(FMassEntityManager& EntityManager, int32 length, int32 offset);
-	virtual void Initialize(UObject& Owner) override;
+	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
 
 protected:
 
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 };

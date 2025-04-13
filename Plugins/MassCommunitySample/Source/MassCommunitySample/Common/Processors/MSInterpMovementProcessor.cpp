@@ -13,8 +13,10 @@ UMSInterpMovementProcessor::UMSInterpMovementProcessor()
     	ExecutionFlags = (int32)EProcessorExecutionFlags::All;
 }
 
-void UMSInterpMovementProcessor::ConfigureQueries()
+void UMSInterpMovementProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityQuery.Initialize(EntityManager);
+
 	EntityQuery.AddRequirement<FInterpLocationFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FOriginalTransformFragment>(EMassFragmentAccess::ReadOnly);

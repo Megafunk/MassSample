@@ -8,7 +8,11 @@
 #include "MassProcessor.h"
 #include "MSMassUtils.h"
 #include "MassSimulationSubsystem.h"
+#include "Misc/DefinePrivateMemberPtr.h"
 #include "LambdaBasedMassProcessor.generated.h"
+
+// EVIL MACRO BECAUSE EPIC REFUSES TO MAKE ANYTHING PUBLIC EVEN THOUGH IT IS A POINTE
+UE_DEFINE_PRIVATE_MEMBER_PTR(TSharedPtr<FMassEntityManager>, GPrivateEntityManagerPointer, UMassSimulationSubsystem, EntityManager);
 
 
 /**
@@ -60,18 +64,18 @@ protected:
 		bAutoRegisterWithProcessingPhases = false;
 		
 	};
-	virtual void Initialize(UObject& Owner) override
+	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override
 	{
-		Super::Initialize(Owner);
+		Super::InitializeInternal(Owner, Manager);
 	}
 
-	virtual void ConfigureQueries() override
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override
 	{
 		Query.RegisterWithProcessor(*this);
 	};
 	FORCEINLINE_DEBUGGABLE virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override
 	{
-		Query.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& InnerContext)
+		Query.ForEachEntityChunk(Context, [&](FMassExecutionContext& InnerContext)
 		{
 			ChunkExecuteFunction(InnerContext);
 		});
@@ -191,7 +195,10 @@ namespace MSMassUtils
 	ULambdaMassProcessor& Processor(UMassSimulationSubsystem* EntitySim, const FName Name = NAME_None, bool bRequiresGameThread = false,
 									const EProcessorExecutionFlags ExecutionFlags = EProcessorExecutionFlags::All)
 	{
-		FMassEntityQuery Query = MSMassUtils::Query<TFragments...>();
+		
+		UMassEntitySubsystem* EntitySubsystem = EntitySim->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+		TSharedRef<FMassEntityManager> Manager = EntitySubsystem->GetMutableEntityManager().AsShared();
+		FMassEntityQuery Query = MSMassUtils::Query<TFragments...>(Manager);
 		return MSMassUtils::Processor(EntitySim,Query, bRequiresGameThread,Name,ExecutionFlags);
 	}
 }

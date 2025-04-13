@@ -7,7 +7,7 @@
 #include "MassStateTreeExecutionContext.h"
 #include "NavMesh/NavMeshRenderingComponent.h"
 
-bool FMassNavMeshPathFollowTask::Link(FStateTreeLinker& Linker)
+bool FMSMassNavMeshPathFollowTask::Link(FStateTreeLinker& Linker)
 {
 	Linker.LinkExternalData(TransformHandle);
 	Linker.LinkExternalData(MoveTargetHandle);
@@ -19,14 +19,14 @@ bool FMassNavMeshPathFollowTask::Link(FStateTreeLinker& Linker)
 	return true;
 }
 
-EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
+EStateTreeRunStatus FMSMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	FMassStateTreeExecutionContext& MassContext = static_cast<FMassStateTreeExecutionContext&>(Context);
 
 	const FAgentRadiusFragment& AgentRadius = Context.GetExternalData(AgentRadiusHandle);
 	FMassMoveTargetFragment& MoveTarget = Context.GetExternalData(MoveTargetHandle);
-	FMassNavMeshPathFollowTaskInstanceData& InstanceData = Context.GetInstanceData<
-		FMassNavMeshPathFollowTaskInstanceData>(*this);
+	FMSNavMeshPathFollowTaskInstanceData& InstanceData = Context.GetInstanceData<
+		FMSNavMeshPathFollowTaskInstanceData>(*this);
 
 
 	FNavMeshAIFragment& NavMeshAIFragment = Context.GetExternalData(NavMeshAIFragmentHandle);
@@ -101,7 +101,7 @@ EStateTreeRunStatus FMassNavMeshPathFollowTask::Tick(FStateTreeExecutionContext&
 	return EStateTreeRunStatus::Running;
 }
 
-EStateTreeRunStatus FMassFindNavMeshPathWanderTargetInRadius::EnterState(FStateTreeExecutionContext& Context,
+EStateTreeRunStatus FMSMassFindNavMeshPathWanderTargetInRadius::EnterState(FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
 {
 
@@ -113,7 +113,7 @@ EStateTreeRunStatus FMassFindNavMeshPathWanderTargetInRadius::EnterState(FStateT
 	// todo-navigation pass in nav property stuff
 	NavSystem->GetRandomReachablePointInRadius(Origin,Radius,NavLocation);
 
-	FMassFindNavMeshPathTargetInstanceData& InstanceData = Context.GetInstanceData<FMassFindNavMeshPathTargetInstanceData>(*this);
+	FMSMassFindNavMeshPathTargetInstanceData& InstanceData = Context.GetInstanceData<FMSMassFindNavMeshPathTargetInstanceData>(*this);
 
 	InstanceData.MoveTargetLocation = NavLocation.Location;
 

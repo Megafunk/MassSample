@@ -16,7 +16,7 @@ public:
 	
 	UMSNiagaraRepresentationProcessors();
 	
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
@@ -33,10 +33,10 @@ public:
 	
 	UMSNiagaraRepresentationSpawnProcs();
 	
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	
 	virtual void SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context,
 		FMassSignalNameLookup& EntitySignals) override;
 protected:
-	virtual void Initialize(UObject& Owner) override;
+	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
 };

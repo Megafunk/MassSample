@@ -23,8 +23,9 @@ UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
 	// ProcessingPhase = EMassProcessingPhase::PostUpdate;
 }
 
-void UMSNiagaraRepresentationProcessors::ConfigureQueries()
+void UMSNiagaraRepresentationProcessors::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	PositionToNiagaraFragmentQuery.Initialize(EntityManager);
 	PositionToNiagaraFragmentQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	PositionToNiagaraFragmentQuery.AddSharedRequirement<FSharedNiagaraSystemFragment>(EMassFragmentAccess::ReadWrite);
 	PositionToNiagaraFragmentQuery.RegisterWithProcessor(*this);
@@ -107,7 +108,7 @@ UMSNiagaraRepresentationSpawnProcs::UMSNiagaraRepresentationSpawnProcs()
 	ExecutionOrder.ExecuteAfter.Add(TEXT("MSNiagaraRepresentationProcessors"));
 }
 
-void UMSNiagaraRepresentationSpawnProcs::ConfigureQueries()
+void UMSNiagaraRepresentationSpawnProcs::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddSharedRequirement<FSharedNiagaraSystemSpawnFragment>(EMassFragmentAccess::ReadOnly);
@@ -147,9 +148,9 @@ void UMSNiagaraRepresentationSpawnProcs::SignalEntities(FMassEntityManager& Enti
 	});
 }
 
-void UMSNiagaraRepresentationSpawnProcs::Initialize(UObject& Owner)
+void UMSNiagaraRepresentationSpawnProcs::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, Manager);
 	
 	UMassSignalSubsystem* SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
 	if (SignalSubsystem)

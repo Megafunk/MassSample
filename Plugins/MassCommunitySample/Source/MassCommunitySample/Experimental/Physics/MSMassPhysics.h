@@ -15,7 +15,7 @@ class MASSCOMMUNITYSAMPLE_API UMSChaosMassTranslationProcessorsProcessors : publ
 	GENERATED_BODY()
 	UMSChaosMassTranslationProcessorsProcessors();
 
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 	FMassEntityQuery ChaosSimToMass;

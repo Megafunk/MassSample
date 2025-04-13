@@ -12,9 +12,10 @@ UMSObserverOnAdd::UMSObserverOnAdd()
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }
 
-void UMSObserverOnAdd::ConfigureQueries()
+void UMSObserverOnAdd::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
-	// We still make a query here. You can add other things to query for besides the observed fragments 
+	// We still make a query here. You can add other things to query for besides the observed fragments
+	EntityQuery.Initialize(EntityManager);
 	EntityQuery.AddRequirement<FSampleColorFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.RegisterWithProcessor(*this);

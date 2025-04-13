@@ -24,15 +24,20 @@ UMSEntityCollisionQueryProcessors::UMSEntityCollisionQueryProcessors()
 }
 
 
-void UMSEntityCollisionQueryProcessors::Initialize(UObject& Owner)
+void UMSEntityCollisionQueryProcessors::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, Manager);
 
-	MSSubsystem = Owner.GetWorld()->GetSubsystem<UMSSubsystem>();
+	if (auto World = Owner.GetWorld())
+	{
+		MSSubsystem = Owner.GetWorld()->GetSubsystem<UMSSubsystem>();
+	}
 }
 
-void UMSEntityCollisionQueryProcessors::ConfigureQueries()
+void UMSEntityCollisionQueryProcessors::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	OctreeQueryQuery.Initialize(EntityManager);
+
 	OctreeQueryQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadOnly);
 	OctreeQueryQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	OctreeQueryQuery.AddTagRequirement<FMSLineTraceTag>(EMassFragmentPresence::All);

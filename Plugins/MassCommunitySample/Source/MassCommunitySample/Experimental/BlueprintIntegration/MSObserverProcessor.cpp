@@ -17,8 +17,10 @@ UMSObserverProcessorBP::UMSObserverProcessorBP()
 }
 
 
-void UMSObserverProcessorBP::ConfigureQueries()
+void UMSObserverProcessorBP::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityQuery.Initialize(EntityManager);
+
 	for (auto Fragment : FragmentRequirements)
 	{
 		if(Fragment.IsValid())

@@ -169,7 +169,7 @@ UMSPhysicsInitProcessor::UMSPhysicsInitProcessor() : EntityQuery(*this)
 	bRequiresGameThreadExecution = true;
 }
 
-void UMSPhysicsInitProcessor::ConfigureQueries()
+void UMSPhysicsInitProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FMSMassPhysicsFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
@@ -321,7 +321,7 @@ UMSPhysicsCleanupProcessor::UMSPhysicsCleanupProcessor() : EntityQuery(*this)
 	bRequiresGameThreadExecution = true;
 }
 
-void UMSPhysicsCleanupProcessor::ConfigureQueries()
+void UMSPhysicsCleanupProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FMSMassPhysicsFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.RegisterWithProcessor(*this);

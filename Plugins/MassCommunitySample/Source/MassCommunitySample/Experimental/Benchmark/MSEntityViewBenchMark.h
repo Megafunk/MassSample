@@ -72,9 +72,9 @@ class MASSCOMMUNITYSAMPLE_API UMSEntityViewBenchMark : public UMassProcessor
 	GENERATED_BODY()
 public:
 	UMSEntityViewBenchMark();
-	virtual void Initialize(UObject& Owner) override;
+	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
 protected:
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager) override;
 	void BenchA(FMassEntityHandle Entity);
 	void BenchB(FMassEntityHandle Entity);
 

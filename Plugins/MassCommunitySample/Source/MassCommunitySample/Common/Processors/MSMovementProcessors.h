@@ -26,7 +26,7 @@ protected:
 	//Note that we declare this ourselves! You can have many queries if need be.
 	FMassEntityQuery GravityEntityQuery;
 
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 };
@@ -50,7 +50,7 @@ public:
 	
 	FMassEntityQuery RotationFollowsVelocity;
 	
-	virtual void ConfigureQueries() override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 };

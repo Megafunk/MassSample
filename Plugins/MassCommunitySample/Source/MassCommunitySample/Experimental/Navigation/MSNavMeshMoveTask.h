@@ -16,7 +16,7 @@
 #include "MSNavMeshMoveTask.generated.h"
 
 USTRUCT()
-struct MASSCOMMUNITYSAMPLE_API FMassNavMeshPathFollowTaskInstanceData
+struct MASSCOMMUNITYSAMPLE_API FMSNavMeshPathFollowTaskInstanceData
 { 
 	GENERATED_BODY()
 	
@@ -33,13 +33,13 @@ struct MASSCOMMUNITYSAMPLE_API FMassNavMeshPathFollowTaskInstanceData
  * 
  */
 USTRUCT(meta = (DisplayName = "NavMesh Path Follow"))
-struct MASSCOMMUNITYSAMPLE_API FMassNavMeshPathFollowTask : public FMassStateTreeTaskBase
+struct MASSCOMMUNITYSAMPLE_API FMSMassNavMeshPathFollowTask : public FMassStateTreeTaskBase
 {
 	GENERATED_BODY()
 
 protected:
 	virtual bool Link(FStateTreeLinker& Linker) override;
-	virtual const UStruct* GetInstanceDataType() const override { return FMassNavMeshPathFollowTaskInstanceData::StaticStruct(); };
+	virtual const UStruct* GetInstanceDataType() const override { return FMSNavMeshPathFollowTaskInstanceData::StaticStruct(); };
 	
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 
@@ -55,7 +55,7 @@ protected:
 
 
 USTRUCT()
-struct MASSCOMMUNITYSAMPLE_API FMassFindNavMeshPathTargetInstanceData
+struct MASSCOMMUNITYSAMPLE_API FMSMassFindNavMeshPathTargetInstanceData
 {
 	GENERATED_BODY()
 
@@ -66,7 +66,7 @@ struct MASSCOMMUNITYSAMPLE_API FMassFindNavMeshPathTargetInstanceData
 
 // Super quick task to get a random nav point for testing
 USTRUCT(meta = (DisplayName = "Find NavMesh Wander Target In Radius"))
-struct MASSCOMMUNITYSAMPLE_API FMassFindNavMeshPathWanderTargetInRadius : public FMassStateTreeTaskBase
+struct MASSCOMMUNITYSAMPLE_API FMSMassFindNavMeshPathWanderTargetInRadius : public FMassStateTreeTaskBase
 {
 	GENERATED_BODY()
 
@@ -77,7 +77,7 @@ protected:
 		Linker.LinkExternalData(TransformHandle);
 		return true;
 	};
-	virtual const UStruct* GetInstanceDataType() const override { return FMassFindNavMeshPathTargetInstanceData::StaticStruct(); };
+	virtual const UStruct* GetInstanceDataType() const override { return FMSMassFindNavMeshPathTargetInstanceData::StaticStruct(); };
 
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;;
 

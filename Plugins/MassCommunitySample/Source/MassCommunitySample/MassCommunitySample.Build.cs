@@ -34,7 +34,7 @@ public class MassCommunitySample : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[] {
 				"MassEntity",
-				"StructUtils",
+				//"StructUtils", StructUtils is now in the base engine coreuobject module! yay
 				"MassCommon",
 				"MassMovement",
 				"MassActors",

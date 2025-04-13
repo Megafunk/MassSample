@@ -64,13 +64,14 @@ UMSChaosMassTranslationProcessorsProcessors::UMSChaosMassTranslationProcessorsPr
 	bRequiresGameThreadExecution = true;
 }
 
-void UMSChaosMassTranslationProcessorsProcessors::ConfigureQueries()
+void UMSChaosMassTranslationProcessorsProcessors::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	
 	// using our fancy MSMassUtils template here
-	ChaosSimToMass = MSMassUtils::Query<FMSChaosToMassTag, const FMSMassPhysicsFragment, FTransformFragment>();
+	ChaosSimToMass = MSMassUtils::Query<FMSChaosToMassTag, const FMSMassPhysicsFragment, FTransformFragment>(EntityManager);
 	ChaosSimToMass.RegisterWithProcessor(*this);
 	
-	MassTransformsToChaosBodies = MSMassUtils::Query<FMSMassToChaosTag, FMSMassPhysicsFragment, const FTransformFragment>();
+	MassTransformsToChaosBodies = MSMassUtils::Query<FMSMassToChaosTag, FMSMassPhysicsFragment, const FTransformFragment>(EntityManager);
 	MassTransformsToChaosBodies.RegisterWithProcessor(*this);
 
 	UpdateChaosKinematicTargets = MassTransformsToChaosBodies;

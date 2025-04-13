@@ -27,8 +27,8 @@ public:
 	UPROPERTY()
 	TObjectPtr<UMSSubsystem> MassSampleSystem;
 
-	virtual void Initialize(UObject& Owner) override;
-	virtual void ConfigureQueries() override;
+	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 	virtual void BeginDestroy() override;
 };
@@ -47,8 +47,8 @@ public:
 	UPROPERTY()
 	TObjectPtr<UMSSubsystem> MassSampleSystem = nullptr;
 	
-	virtual void Initialize(UObject& Owner) override;
-	virtual void ConfigureQueries() override;
+	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 };
@@ -68,8 +68,8 @@ public:
 	UPROPERTY()
 	TObjectPtr<UMSSubsystem> MassSampleSystem;
 	
-	virtual void Initialize(UObject& Owner) override;
-	virtual void ConfigureQueries() override;
+	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
 };
