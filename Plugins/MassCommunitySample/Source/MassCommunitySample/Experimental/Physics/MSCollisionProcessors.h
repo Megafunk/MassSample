@@ -23,8 +23,8 @@ class MASSCOMMUNITYSAMPLE_API UMSEntityCollisionQueryProcessors : public UMassPr
 	
 	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
 
-	// Yeah... I know
-	FMassEntityQuery OctreeQueryQuery;
+	// A mass query that... queries an octree!
+	FMassEntityQuery OctreeQueryQuery = FMassEntityQuery();
 
 	UPROPERTY()
 	 TObjectPtr<class UMSSubsystem> MSSubsystem;

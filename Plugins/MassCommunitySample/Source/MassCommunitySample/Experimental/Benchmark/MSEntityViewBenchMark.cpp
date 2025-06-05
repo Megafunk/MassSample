@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSEntityViewBenchMark.h"
@@ -7,6 +7,8 @@
 
 #include "MassEntityView.h"
 #include "MassExecutionContext.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSEntityViewBenchMark)
 
 
 UMSEntityViewBenchMark::UMSEntityViewBenchMark()
@@ -129,7 +131,7 @@ void UMSEntityViewBenchMark::Execute(FMassEntityManager& EntityManager, FMassExe
 {
 	TArray<FMassEntityHandle> AllEntitiesList;
 	
-	EntityViewQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	EntityViewQuery.ForEachEntityChunk( Context, [&,this](FMassExecutionContext& Context)
 	{
 		AllEntitiesList.Append(TArray<FMassEntityHandle>(Context.GetEntities()));
 	});

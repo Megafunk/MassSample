@@ -15,6 +15,8 @@
 #include "Common/Processors/MSOctreeProcessors.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSCollisionProcessors)
+
 
 UMSEntityCollisionQueryProcessors::UMSEntityCollisionQueryProcessors()
 {
@@ -55,7 +57,7 @@ void UMSEntityCollisionQueryProcessors::Execute(FMassEntityManager& EntityManage
 	std::atomic<int32> EntitiesThatWereHitNum(0);
 	
 	TArray<FMassExecutionContext> Contexts;
-	OctreeQueryQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
+	OctreeQueryQuery.ForEachEntityChunk( Context, [&](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASSSAMPLE_OctreeQueryQuery);
 

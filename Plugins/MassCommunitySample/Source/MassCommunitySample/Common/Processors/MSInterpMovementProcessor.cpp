@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSInterpMovementProcessor.h"
@@ -6,6 +6,8 @@
 #include "MassCommonTypes.h"
 #include "MassExecutionContext.h"
 #include "Common/Fragments/MSFragments.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSInterpMovementProcessor)
 
 UMSInterpMovementProcessor::UMSInterpMovementProcessor()
 {
@@ -26,7 +28,7 @@ void UMSInterpMovementProcessor::ConfigureQueries(const TSharedRef<FMassEntityMa
 
 void UMSInterpMovementProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( Context, [&,this](FMassExecutionContext& Context)
 	{
 		const int32 QueryLength = Context.GetNumEntities();
 

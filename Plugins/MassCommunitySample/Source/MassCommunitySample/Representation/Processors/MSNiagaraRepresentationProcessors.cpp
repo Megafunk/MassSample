@@ -9,6 +9,8 @@
 #include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "Representation/Fragments/MSRepresentationFragments.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSNiagaraRepresentationProcessors)
+
 UMSNiagaraRepresentationProcessors::UMSNiagaraRepresentationProcessors()
 {
 	//We don't care about rendering on the dedicated server!
@@ -35,7 +37,7 @@ void UMSNiagaraRepresentationProcessors::ConfigureQueries(const TSharedRef<FMass
 void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	// Query mass for transform data
-	PositionToNiagaraFragmentQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	PositionToNiagaraFragmentQuery.ForEachEntityChunk( Context, [&,this](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_PositionToNiagara);
 		const int32 QueryLength = Context.GetNumEntities();
@@ -119,7 +121,7 @@ void UMSNiagaraRepresentationSpawnProcs::SignalEntities(FMassEntityManager& Enti
                                                         FMassSignalNameLookup& EntitySignals)
 {
 	//query mass for transform data
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( Context, [&,this](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_SpawnPositionToNiagara);
 

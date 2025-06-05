@@ -1,9 +1,11 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSAssortedTags.h"
 
 #include "MassEntityTemplateRegistry.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSAssortedTags)
 
 void UDEPRECATED_UMSAssortedTags::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {

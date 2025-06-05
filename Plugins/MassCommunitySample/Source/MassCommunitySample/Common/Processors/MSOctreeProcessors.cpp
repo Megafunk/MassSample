@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MSOctreeProcessors.h"
 
@@ -7,6 +7,8 @@
 #include "MassExecutionContext.h"
 #include "Chaos/DebugDrawQueue.h"
 #include "Common/Fragments/MSOctreeFragments.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSOctreeProcessors)
 
 static TAutoConsoleVariable<bool> CVarMSDrawOctree(
 	TEXT("masssample.debugoctree"), false,
@@ -46,7 +48,7 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 {
 
 
-	UpdateOctreeElementsQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
+	UpdateOctreeElementsQuery.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_UMSOctreeUpdate)
 		FMSOctree2& Octree = MassSampleSystem->Octree2;
@@ -149,7 +151,7 @@ void UMSHashGridMemberInitializationProcessor::ConfigureQueries(const TSharedRef
 
 void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(Context, [&](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MSHashGridMemberInitialization)
 		TConstArrayView<FTransformFragment> TransformList = Context.GetFragmentView<FTransformFragment>();
@@ -223,7 +225,7 @@ void UMSOctreeMemberCleanupProcessor::Execute(FMassEntityManager& EntityManager,
 {
 	auto& Octree = MassSampleSystem->Octree2;
 
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( Context, [&](FMassExecutionContext& Context)
 	{
 		const auto NavigationObstacleCellLocationList = Context.GetMutableFragmentView<FMSOctreeFragment>();
 

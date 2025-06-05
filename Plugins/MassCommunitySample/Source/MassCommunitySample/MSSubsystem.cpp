@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSSubsystem.h"
@@ -9,6 +9,8 @@
 #include "MassReplicationTypes.h"
 #include "Common/Fragments/MSFragments.h"
 #include "Example/MassVelocityRandomizerTrait.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSSubsystem)
 
 
 void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -112,7 +114,7 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 	
 	// This is what traits use to create their shared fragment info as well
 	const FConstSharedStruct& SharedFragmentSharedStruct = EntityManager->GetOrCreateConstSharedFragment(SharedFragmentExample);
-	SharedFragmentValues.AddConstSharedFragment(SharedFragmentSharedStruct);
+	SharedFragmentValues.Add(SharedFragmentSharedStruct);
 
 	EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(ReserverdEntity, MoveTemp(SharedFragmentValues), MyTransformFragment, MyColorFragment);
 	

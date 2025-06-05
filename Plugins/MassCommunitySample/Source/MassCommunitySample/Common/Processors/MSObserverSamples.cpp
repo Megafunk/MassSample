@@ -1,9 +1,11 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MSObserverSamples.h"
 #include "MassCommonFragments.h"
 #include "MassExecutionContext.h"
 #include "Common/Fragments/MSFragments.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSObserverSamples)
 
 UMSObserverOnAdd::UMSObserverOnAdd()
 {
@@ -24,7 +26,7 @@ void UMSObserverOnAdd::ConfigureQueries(const TSharedRef<FMassEntityManager>& En
 
 void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(Context, [&,this](FMassExecutionContext& Context)
 	{
 		auto OriginalTransforms = Context.GetMutableFragmentView<FOriginalTransformFragment>();
 		auto Transforms = Context.GetFragmentView<FTransformFragment>();

@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSSceneCompTransformToActorTranslators.h"
@@ -6,6 +6,8 @@
 #include "MassCommonTypes.h"
 #include "MassExecutionContext.h"
 #include "Translators/MassSceneComponentLocationTranslator.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSSceneCompTransformToActorTranslators)
 
 UMSTransformToSceneCompTranslatorFastPath::UMSTransformToSceneCompTranslatorFastPath()
 	: EntityQuery(*this)
@@ -31,7 +33,7 @@ void UMSTransformToSceneCompTranslatorFastPath::ConfigureQueries(const TSharedRe
 void UMSTransformToSceneCompTranslatorFastPath::Execute(FMassEntityManager& EntityManager,
                                                         FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
 	{
 		const auto ComponentList = Context.GetFragmentView<FMassSceneComponentWrapperFragment>();
 		const auto LocationList = Context.GetMutableFragmentView<FTransformFragment>();
@@ -66,7 +68,7 @@ void UMSSceneCompTransformToMassTranslator::ConfigureQueries(const TSharedRef<FM
 
 void UMSSceneCompTransformToMassTranslator::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
 	{
 		const auto ComponentList = Context.GetFragmentView<FMassSceneComponentWrapperFragment>();
 		const auto LocationList = Context.GetMutableFragmentView<FTransformFragment>();

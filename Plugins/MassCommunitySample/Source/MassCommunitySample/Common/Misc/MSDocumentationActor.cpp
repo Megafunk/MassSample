@@ -1,8 +1,11 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSDocumentationActor.h"
 #include "Modules/ModuleManager.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSDocumentationActor)
+
 // todo let's make an editor module for this actor because this sucks
 #if WITH_EDITOR
 #include "SourceCodeNavigation.h"

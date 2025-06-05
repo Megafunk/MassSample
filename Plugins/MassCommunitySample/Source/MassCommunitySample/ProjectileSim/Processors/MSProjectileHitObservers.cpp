@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSProjectileHitObservers.h"
@@ -14,6 +14,8 @@
 #include "Experimental/Physics/MSMassCollision.h"
 #include "VisualLogger/VisualLogger.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSProjectileHitObservers)
 
 UMSProjectileHitObservers::UMSProjectileHitObservers()
 {
@@ -42,7 +44,7 @@ void UMSProjectileHitObservers::ConfigureQueries(const TSharedRef<FMassEntityMan
 void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	
-	CollisionHitEventQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
+	CollisionHitEventQuery.ForEachEntityChunk( Context, [&](FMassExecutionContext& Context)
 	{
 	
 		auto HitResults = Context.GetFragmentView<FMSHitResultFragment>();
@@ -65,7 +67,7 @@ void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMass
 	});
 
 
-	ResolveHitsQuery.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& Context)
+	ResolveHitsQuery.ForEachEntityChunk( Context, [&](FMassExecutionContext& Context)
 	{
 		auto Transforms = Context.GetMutableFragmentView<FTransformFragment>();
 		auto Velocities = Context.GetMutableFragmentView<FMassVelocityFragment>();
@@ -163,7 +165,7 @@ void UMSEntityWasHitSignalProcessor::InitializeInternal(UObject& Owner, const TS
 void UMSEntityWasHitSignalProcessor::SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context,
                                                     FMassSignalNameLookup& EntitySignals)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( Context, [&,this](FMassExecutionContext& Context)
 	{
 		auto Transforms = Context.GetFragmentView<FTransformFragment>();
 

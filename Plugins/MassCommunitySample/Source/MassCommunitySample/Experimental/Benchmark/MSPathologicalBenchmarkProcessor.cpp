@@ -1,10 +1,12 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSPathologicalBenchmarkProcessor.h"
 
 #include "MassEntitySubsystem.h"
 #include "MassExecutionContext.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSPathologicalBenchmarkProcessor)
 
 //make this true to try the benchmark!
 constexpr bool benchmark = false;
@@ -133,11 +135,11 @@ void UMSPathologicalBenchmarkProcessor::InitializeInternal(UObject& Owner, const
 
  void UMSPathologicalBenchmarkProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark9: %i entities found"),PathologicQuery9.GetNumMatchingEntities(EntityManager));
-	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark3: %i entities found"),PathologicQuery3.GetNumMatchingEntities(EntityManager));
+	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark9: %i entities found"),PathologicQuery9.GetNumMatchingEntities());
+	UE_LOG( LogTemp, Warning, TEXT("PathologicalBenchmark3: %i entities found"),PathologicQuery3.GetNumMatchingEntities());
 
 	{
-		PathologicQuery9.ForEachEntityChunk(EntityManager,Context,
+		PathologicQuery9.ForEachEntityChunk(Context,
 		[&,this](FMassExecutionContext& Context)
 		{
 			QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark9Loop);
@@ -170,7 +172,7 @@ void UMSPathologicalBenchmarkProcessor::InitializeInternal(UObject& Owner, const
 		});
 	}
 	{
-		PathologicQuery3.ForEachEntityChunk(EntityManager,Context,
+		PathologicQuery3.ForEachEntityChunk(Context,
 		[&,this](FMassExecutionContext& Context)
 		{
 			QUICK_SCOPE_CYCLE_COUNTER(PathologicalBenchmark3Loop);

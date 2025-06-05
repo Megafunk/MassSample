@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "MSMovementProcessors.h"
@@ -8,6 +8,8 @@
 #include "MassExecutionContext.h"
 #include "MassMovementFragments.h"
 #include "Common/Fragments/MSFragments.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSMovementProcessors)
 
 
 UMSGravityProcessor::UMSGravityProcessor()
@@ -46,7 +48,7 @@ void UMSGravityProcessor::Execute(FMassEntityManager& EntityManager, FMassExecut
 	
 
 	//Note that this is a lambda! If you want extra data you may need to pass something into the [] (or just be lazy and use &)
-	GravityEntityQuery.ForEachEntityChunk(EntityManager, Context, [GravityZ](FMassExecutionContext& Context)
+	GravityEntityQuery.ForEachEntityChunk(Context, [GravityZ](FMassExecutionContext& Context)
 	{
 		//Get the length of the entities in our current ExecutionContext
 		const int32 NumEntities = Context.GetNumEntities();
@@ -93,7 +95,7 @@ void UMSBasicMovementProcessor::ConfigureQueries(const TSharedRef<FMassEntityMan
 
 void UMSBasicMovementProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	MovementEntityQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
+	MovementEntityQuery.ForEachEntityChunk( Context, [](FMassExecutionContext& Context)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_MovementEntityQuery);
 
@@ -127,7 +129,7 @@ void UMSBasicMovementProcessor::Execute(FMassEntityManager& EntityManager, FMass
 	});
 
 	// This is a second query that is ran right after the first
-	RotationFollowsVelocity.ForEachEntityChunk(EntityManager, Context, [&](FMassExecutionContext& ExecContext)
+	RotationFollowsVelocity.ForEachEntityChunk( Context, [&](FMassExecutionContext& ExecContext)
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_RotationFollowsVelocity);
 

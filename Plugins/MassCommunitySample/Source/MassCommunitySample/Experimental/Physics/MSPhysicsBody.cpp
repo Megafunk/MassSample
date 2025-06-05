@@ -9,6 +9,8 @@
 #include "MSMassPhysicsTypes.h"
 #include "Common/Fragments/MSFragments.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSPhysicsBody)
+
 void UMSPhysicsBody::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
 	BuildContext.AddFragment<FMSMassPhysicsFragment>();

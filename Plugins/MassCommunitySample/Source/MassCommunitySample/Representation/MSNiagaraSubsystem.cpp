@@ -1,10 +1,12 @@
-﻿#include "MSNiagaraSubsystem.h"
+#include "MSNiagaraSubsystem.h"
 
 #include "MassEntitySubsystem.h"
 #include "MSNiagaraActor.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 #include "Fragments/MSRepresentationFragments.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSNiagaraSubsystem)
 
 
 void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)

@@ -13,6 +13,8 @@
 #include "Physics/Experimental/PhysScene_Chaos.h"
 #include "PhysicsProxy/SingleParticlePhysicsProxy.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSMassPhysics)
+
 #if CHAOS_DEBUG_DRAW
 Chaos::DebugDraw::FChaosDebugDrawSettings ChaosMassPhysDebugDebugDrawSettings(
 	/* ArrowSize =					*/ 1.5f,
@@ -81,7 +83,7 @@ void UMSChaosMassTranslationProcessorsProcessors::ConfigureQueries(const TShared
 
 void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	ChaosSimToMass.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
+	ChaosSimToMass.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
 	{
 		auto PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
 		auto Transforms = Context.GetMutableFragmentView<FTransformFragment>();
@@ -98,7 +100,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 	});
 
 	// mass forces to kinematic targets
-	UpdateChaosKinematicTargets.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
+	UpdateChaosKinematicTargets.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
 	{
 		const auto& PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
 		const auto& Transforms = Context.GetMutableFragmentView<FTransformFragment>();
@@ -130,7 +132,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 			}
 		}
 	});
-	MassTransformsToChaosBodies.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
+	MassTransformsToChaosBodies.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
 	{
 		// This one is by value as we do an evil reinterpret cast later?
 		TConstArrayView<FMSMassPhysicsFragment> PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();

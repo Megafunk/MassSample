@@ -6,6 +6,9 @@
 #include "MassCommonFragments.h"
 #include "Chaos/Convex.h"
 #include "PhysicsEngine/BodySetup.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSMassCollision)
+
 // This is for queries against FMSSharedStaticMeshs... Now that we have true mass physics this is a tad pointless
 namespace MassSample::Collision
 {

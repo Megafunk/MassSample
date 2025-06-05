@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 #include "MSNiagaraRepresentationTraits.h"
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
@@ -7,6 +7,8 @@
 #include "Experimental/Physics/MSMassCollision.h"
 #include "Representation/MSNiagaraSubsystem.h"
 #include "Representation/Fragments/MSRepresentationFragments.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(MSNiagaraRepresentationTraits)
 
 void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
@@ -31,12 +33,15 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 
 	UMaterial* Material = nullptr;
 
+	// @todo support material overrides
 	if(MaterialOverride)
 	{
 	}
 
-	FSharedStruct SharedFragment =
-		NiagaraSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem.Get(),StaticMesh.Get(),MaterialOverride.Get());
+	if (NiagaraSubsystem)
+	{
+		FSharedStruct SharedFragment = NiagaraSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem.Get(),StaticMesh.Get(),MaterialOverride.Get());
+		BuildContext.AddSharedFragment(SharedFragment);
+	}
 
-	BuildContext.AddSharedFragment(SharedFragment);
 }

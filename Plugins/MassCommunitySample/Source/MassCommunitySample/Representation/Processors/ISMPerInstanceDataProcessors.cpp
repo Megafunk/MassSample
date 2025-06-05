@@ -1,9 +1,11 @@
-﻿#include "ISMPerInstanceDataProcessors.h"
+#include "ISMPerInstanceDataProcessors.h"
 #include "MassRepresentationFragments.h"
 #include "MassRepresentationTypes.h"
 #include "Misc/EngineVersionComparison.h"
 #include "Representation/Fragments/MSRepresentationFragments.h"
 #include "MassRepresentationSubsystem.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(ISMPerInstanceDataProcessors)
 
 UismPerInstanceDataUpdater::UismPerInstanceDataUpdater()
 {
@@ -24,7 +26,7 @@ void UismPerInstanceDataUpdater::ConfigureQueries(const TSharedRef<FMassEntityMa
 
 void UismPerInstanceDataUpdater::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
 	{
 		UMassRepresentationSubsystem* RepresentationSubsystem = Context.GetMutableSharedFragment<FMassRepresentationSubsystemSharedFragment>().RepresentationSubsystem;
 		check(RepresentationSubsystem);
@@ -73,7 +75,7 @@ void UISMPerInstanceDataChangerExampleProcessor::ConfigureQueries(const TSharedR
 }
 void UISMPerInstanceDataChangerExampleProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
 	{
 		const TArrayView<FSampleISMPerInstanceSingleFloatFragment> CustomISMDataFragments = Context.GetMutableFragmentView<FSampleISMPerInstanceSingleFloatFragment>();
 		const int32 NumEntities = Context.GetNumEntities();
