@@ -25,7 +25,7 @@ UMSGravityProcessor::UMSGravityProcessor()
 
 void UMSGravityProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
-	// Initialized the query
+	// Initialize the query
 	GravityEntityQuery.Initialize(EntityManager);
 
 	// Only include entities that meet the following rules:

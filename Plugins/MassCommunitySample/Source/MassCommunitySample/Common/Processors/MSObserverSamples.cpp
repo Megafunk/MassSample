@@ -7,7 +7,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(MSObserverSamples)
 
-UMSObserverOnAdd::UMSObserverOnAdd()
+// This c++ constructor syntax initializes the EntityQuery with this processor as the owner
+UMSObserverOnAdd::UMSObserverOnAdd() : EntityQuery(*this) 
 {
 	ObservedType = FOriginalTransformFragment::StaticStruct();
 	Operation = EMassObservedOperation::Add;
@@ -17,11 +18,8 @@ UMSObserverOnAdd::UMSObserverOnAdd()
 void UMSObserverOnAdd::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	// We still make a query here. You can add other things to query for besides the observed fragments
-	EntityQuery.Initialize(EntityManager);
 	EntityQuery.AddRequirement<FSampleColorFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	EntityQuery.RegisterWithProcessor(*this);
-
 }
 
 void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
