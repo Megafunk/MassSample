@@ -2,7 +2,7 @@
 ### **Note:** This project requires `Git LFS` for it to work properly, `zip` downloads **won't work**.
 
 - 5.6 update: Updated the code to 5.6 with many small improvements and fixes. Apologies for the lack of response to PRs and questions, we have been very busy at work.
-- A lot of this documentation is still valid, but I will need to do a full redo of some of the code examples written in the readme as they might use outdated pre-5.66 code. When in doubt the code is always the most reliable indicator of how the API should be called.
+- A lot of this documentation is still valid, but I will need to do a full redo of some of the code examples written in the readme as they might use outdated pre-5.6 code. When in doubt the code is always the most reliable indicator of how the API should be called.
 
 
 #### **Authors:**
@@ -380,12 +380,12 @@ Queries (`FMassEntityQuery`) filter and iterate entities given a series of rules
 Processors can define multiple `FMassEntityQuery`s and should override the `ConfigureQueries` to add rules to the different queries defined in the processor's header:
 
 ```c++
-void UMyProcessor::ConfigureQueries()
+void UMyProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	MyQuery.AddTagRequirement<FMoverTag>(EMassFragmentPresence::All);
 	MyQuery.AddRequirement<FHitLocationFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::Optional);
 	MyQuery.AddSubsystemRequirement<UMassDebuggerSubsystem>(EMassFragmentAccess::ReadWrite);
-	MyQuery.RegisterWithProcessor(*this);
+	MyQuery.RegisterWithProcessor(*this); // Only needed if the ctor did not initialize the query by passing in itself
 
 	ProcessorRequirements.AddSubsystemRequirement<UMassDebuggerSubsystem>(EMassFragmentAccess::ReadWrite);
 }
@@ -403,7 +403,7 @@ Processors execute queries within their `Execute` function:
 void UMyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	//Note that this is a lambda! If you want extra data you may need to pass it in the [] operator
-	MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
+	MyQuery.ForEachEntityChunk(Context, [](FMassExecutionContext& Context)
 	{
 		//Loop over every entity in the current chunk and do stuff!
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
@@ -433,7 +433,7 @@ Queries can define read/write access requirements for Fragments and Subsystems:
 Here are some basic examples in which we add access rules in two Fragments from a `FMassEntityQuery MyQuery`:
 
 ```c++	
-void UMyProcessor::ConfigureQueries()
+void UMyProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	// Entities must have an FTransformFragment and we are reading and writing it (EMassFragmentAccess::ReadWrite)
 	MyQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
@@ -466,7 +466,7 @@ void UMyProcessor::ConfigureQueries()
 Find below an example:
 
 ```c++
-MyQuery.ForEachEntityChunk(EntityManager, Context, [this, World = EntityManager.GetWorld()](FMassExecutionContext& Context)
+MyQuery.ForEachEntityChunk(Context, [this, World = EntityManager.GetWorld()](FMassExecutionContext& Context)
 {
 	UMassDebuggerSubsystem& Debugger = Context.GetMutableSubsystemChecked<UMassDebuggerSubsystem>(World);
 
@@ -499,7 +499,7 @@ Queries can define presence requirements for Fragments and Tags:
 ##### 4.7.2.1 Presence requirements in Tags
 To add presence rules to Tags, use `AddTagRequirement`.   
 ```c++
-void UMyProcessor::ConfigureQueries()
+void UMyProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	// Entities are considered for iteration without the need of containing the specified Tag
 	MyQuery.AddTagRequirement<FOptionalTag>(EMassFragmentPresence::Optional);
@@ -513,7 +513,7 @@ void UMyProcessor::ConfigureQueries()
 `ForEachChunk`s can use `DoesArchetypeHaveTag` to determine if the current archetype contains the the Tag:
 
 ```c++
-MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
+MyQuery.ForEachEntityChunk(Context, [](FMassExecutionContext& Context)
 {
 	if(Context.DoesArchetypeHaveTag<FOptionalTag>())
 	{
@@ -536,8 +536,11 @@ MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Con
 Fragments and shared fragments can define presence rules in an additional `EMassFragmentPresence` parameter through `AddRequirement` and `AddSharedRequirement`, respectively.
 
 ```c++
-void UMyProcessor::ConfigureQueries()
+void UMyProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	// Initialize the query (you can pass it in the parent processor constructor as well but this is more explicit)
+	MyQuery.Initialize(EntityManager);
+	
 	// Entities are considered for iteration without the need of containing the specified Fragment
 	MyQuery.AddRequirement<FMyOptionalFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 	// Entities must at least have the FHorseFragment or the FSheepFragment
@@ -550,7 +553,7 @@ void UMyProcessor::ConfigureQueries()
 `ForEachChunk`s can use the length of the `Optional`/`Any` fragment's `TArrayView` to determine if the current chunk contains the Fragment before accessing it:
 
 ```c++
-MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
+MyQuery.ForEachEntityChunk(Context, [](FMassExecutionContext& Context)
 {
 	const auto OptionalFragmentList = Context.GetMutableFragmentView<FMyOptionalFragment>();
 	const auto HorseFragmentList = Context.GetMutableFragmentView<FHorseFragment>();	
@@ -583,8 +586,11 @@ MyQuery.ForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Con
 Within the `ForEachEntityChunk` we have access to the current execution context. `FMassExecutionContext` enables us to get entity data and mutate their composition. The following code adds the tag `FDead` to any entity that has a health fragment with its `Health` variable less or equal to 0, at the same time, as we define in `ConfigureQueries`, after the `FDead` tag is added, the entity won't be considered for iteration (`EMassFragmentPresence::None`):
 
 ```c++
-void UDeathProcessor::ConfigureQueries()
+void UDeathProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	// Initialize the query (you can pass it in the parent processor constructor as well but this is more explicit)
+	DeclareDeathQuery.Initialize(EntityManager);
+
 	// All the entities processed in this query must have the FHealthFragment fragment
 	DeclareDeathQuery.AddRequirement<FHealthFragment>(EMassFragmentAccess::ReadOnly, EMassFragmentPresence::All);
 	// Entities processed by this queries shouldn't have the FDead tag, as this query adds the FDead tag
@@ -594,7 +600,7 @@ void UDeathProcessor::ConfigureQueries()
 
 void UDeathProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	DeclareDeathQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	DeclareDeathQuery.ForEachEntityChunk(Context, [&,this](FMassExecutionContext& Context)
 	{
 		auto HealthList = Context.GetFragmentView<FHealthFragment>();
 
@@ -854,21 +860,21 @@ Observers do not run every frame, but every time a batch of entities is changed 
 For example, this observer changes the color to the entities that just had an `FColorFragment` added:
 
 ```c++
-UMSObserverOnAdd::UMSObserverOnAdd()
-{
+// This c++ constructor syntax initializes the EntityQuery with this processor as the owner
+UMSObserverOnAdd::UMSObserverOnAdd() : EntityQuery(*this) 
 	ObservedType = FSampleColorFragment::StaticStruct();
 	Operation = EMassObservedOperation::Add;
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }
 
-void UMSObserverOnAdd::ConfigureQueries()
+void UMSObserverOnAdd::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FSampleColorFragment>(EMassFragmentAccess::ReadWrite);
 }
 
 void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	EntityQuery.ForEachEntityChunk(EntityManager, Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk(Context, [&,this](FMassExecutionContext& Context)
 	{
 		auto Colors = Context.GetMutableFragmentView<FSampleColorFragment>();
 		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
@@ -950,7 +956,7 @@ Out of the box Mass can spread out work to threads in two different ways:
 
 - Per-query parallelism spreads the job of one query over multiple threads using a `ParallelFor`. This is available by using `Query.ParallelForEachEntityChunk` in place of `Query.ForEachEntityChunk`.
 ```c++
-MyQuery.ParallelForEachEntityChunk(EntityManager, Context, [](FMassExecutionContext& Context)
+MyQuery.ParallelForEachEntityChunk(Context, [](FMassExecutionContext& Context)
 {
 	//Loop over every entity in the current chunk and do stuff!
 	for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
