@@ -1,6 +1,10 @@
 # Community Mass Sample
 ### **Note:** This project requires `Git LFS` for it to work properly, `zip` downloads **won't work**.
 
+- 5.6 update: Updated the code to 5.6 with many small improvements and fixes. Apologies for the lack of response to PRs and questions, we have been very busy at work.
+- A lot of this documentation is still valid, but I will need to do a full redo of some of the code examples written in the readme as they might use outdated pre-5.66 code. When in doubt the code is always the most reliable indicator of how the API should be called.
+
+
 #### **Authors:**
 - Karl Mavko - [@Megafunk](https://github.com/Megafunk)
 - Alvaro Jover - [@vorixo](https://github.com/vorixo)
@@ -13,7 +17,7 @@ Currently built for the Unreal Engine 5 latest version binary from the Epic Game
 This documentation will be updated often!
 
 #### **Requirements:**
-- Unreal Engine 5.5 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
+- Unreal Engine 5.6 (latest version as of writing) from the [Epic Games launcher](https://www.unrealengine.com/en-US/download)
 - `Git` version control:
   - [Windows](https://gitforwindows.org/)
   - [Linux/Unix & macOS](https://git-scm.com/downloads)
