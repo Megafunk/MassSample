@@ -2,10 +2,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "MassEntityTypes.h"
+#include "MassEntityHandle.h"
 #include "Chaos/Framework/UncheckedArray.h"
-#include "Math/GenericOctree.h"
+#include "Math/GenericOctreePublic.h"
 #include "MSOctreeFragments.generated.h"
 
 /** An octree. */
@@ -13,15 +12,13 @@
 // These are all template thingies required by TOctree2, so I might be doing things wrong here!
 // The shared pointer for FOctreeElementId2 isn't very ~data oriented~ but it's how TOctree2 is meant to be used afaik.
 
-
-
 struct MASSCOMMUNITYSAMPLE_API FMSEntityOctreeElement
 {
 	FMassEntityHandle EntityHandle;
 	
 	FBoxCenterAndExtent Bounds;
 
-	TSharedPtr<FOctreeElementId2> SharedOctreeID;
+	TSharedPtr<FOctreeElementId2> SharedOctreeID = nullptr;
 };
 
 struct FMSEntityOctreeSemantics 
