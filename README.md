@@ -470,8 +470,8 @@ MyQuery.ForEachEntityChunk(Context, [this, World = EntityManager.GetWorld()](FMa
 {
 	UMassDebuggerSubsystem& Debugger = Context.GetMutableSubsystemChecked<UMassDebuggerSubsystem>(World);
 
-	const auto TransformList = Context.GetFragmentView<FTransformFragment>();
-	const auto ForceList = Context.GetMutableFragmentView<FMassForceFragment>();
+    const auto TransformList = Context.GetMutableFragmentView<FTransformFragment>();
+    const auto ForceList = Context.GetFragmentView<FMassForceFragment>();
 
 	for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
 	{
