@@ -12,6 +12,7 @@
 #include "ProjectileSim/MassProjectileHitInterface.h"
 #include "MassSignalSubsystem.h"
 #include "Experimental/Physics/MSMassCollision.h"
+#include "Experimental/Physics/MSMassPhysics.h"
 #include "VisualLogger/VisualLogger.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 
@@ -63,6 +64,14 @@ void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMass
 					FMSEntityViewBPWrapper(Archetype,Context.GetEntity(EntityIndex)),
 					Hitresult);
 			}
+
+
+			// A temporary example of how to resolve an entity from a hit result
+			FMassEntityHandle HitEntity = UMassSamplePhysicsStorage::FindEntityHandleFromHitResult(Hitresult);
+			if (HitEntity.IsValid())
+			{
+				Context.Defer().DestroyEntities({HitEntity});
+			}
 		}
 	});
 
@@ -87,9 +96,9 @@ void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMass
 				FMassEntityHandle Entity = Context.GetEntity(i);
 
 
-				const auto& HitResult = HitResults[i].HitResult;
-				auto& Transform = Transforms[i].GetMutableTransform();
-				auto& Velocity = Velocities[i].Value;
+				const FHitResult& HitResult = HitResults[i].HitResult;
+				FTransform& Transform = Transforms[i].GetMutableTransform();
+				FVector& Velocity = Velocities[i].Value;
 
 				// TODO-karl this is almost certainly wrong, I have to tool around in something a bit to get a better math setup
 				// Also it should be recursive at least a few times for extra bounces after the fact

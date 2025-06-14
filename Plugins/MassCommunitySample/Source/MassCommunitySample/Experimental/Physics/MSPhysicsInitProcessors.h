@@ -2,9 +2,10 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "MassObserverProcessor.h"
 #include "MSPhysicsInitProcessors.generated.h"
+
+
 
 /**
  * Inits new physics objects to the chaos simulation when a FMSMassPhysicsFragment is added
@@ -19,6 +20,7 @@ class MASSCOMMUNITYSAMPLE_API UMSPhysicsInitProcessor : public UMassObserverProc
 
 	FMassEntityQuery EntityQuery;
 };
+
 UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSPhysicsCleanupProcessor : public UMassObserverProcessor
 {
@@ -29,4 +31,3 @@ class MASSCOMMUNITYSAMPLE_API UMSPhysicsCleanupProcessor : public UMassObserverP
 
 	FMassEntityQuery EntityQuery;
 };
-

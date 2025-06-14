@@ -7,12 +7,14 @@
 #include "MassCommonFragments.h"
 #include "MassExecutionContext.h"
 #include "MSMassCollision.h"
-#include "Common/Fragments/MSFragments.h"
+#include "MSMassPhysics.h"
 #include "Experimental/LambdaBasedMassProcessor.h"
 #include "Physics/PhysicsFiltering.h"
 #include "Physics/Experimental/ChaosInterfaceUtils.h"
 #include "Physics/Experimental/PhysScene_Chaos.h"
 #include "PhysicsEngine/BodySetup.h"
+#include "PhysicsEngine/PhysicsBodyInstanceOwnerInterface.h"
+#include "PhysicsEngine/PhysicsObjectExternalInterface.h"
 #include "PhysicsProxy/SingleParticlePhysicsProxy.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(MSPhysicsInitProcessors)
@@ -54,6 +56,7 @@ FBodyCollisionFilterData CollisionFilterDataDummy(const FCollisionResponseContai
 
 // UObject free chaos body creation (mostly hardcoded as a dynamic body with no welds?).
 // This does not call SetUserData as that requires a body instance so I thought I should do that elsewhere?
+// Currently unused as it's just vastly easier to store a body instance somewhere and use that...
 FPhysicsActorHandle InitAndAddNewChaosBody(FActorCreationParams& ActorParams, const FBodyCollisionData& CollisionData, FKAggregateGeom* AggregateGeom,
                                            float Density)
 {
@@ -79,6 +82,7 @@ FPhysicsActorHandle InitAndAddNewChaosBody(FActorCreationParams& ActorParams, co
 
 	// currently does nothing...
 	FPhysicsInterface::SetSendsSleepNotifies_AssumesLocked(NewPhysHandle, true);
+
 
 	//FPhysicsInterface::SetAngularMotionLimitType_AssumesLocked()
 	FGeometryAddParams CreateGeometryParams;
@@ -163,6 +167,66 @@ FPhysicsActorHandle InitAndAddNewChaosBody(FActorCreationParams& ActorParams, co
 	return NewPhysHandle;
 }
 
+
+FPhysicsActorHandle MassSampleCreatePhysicsStateFromInstanceOwner(FPhysScene* PhysScene, UBodySetup* BodySetup,
+                                                                  FMassSampleBodyInstanceOwner& BodyInstanceOwner, const FTransform& WorldTransform,
+                                                                  FInitBodySpawnParams& InitBodySpawnParams)
+{
+	TRACE_CPUPROFILER_EVENT_SCOPE(MassSampleCreatePhysicsState);
+	FBodyInstance& BodyInstance = BodyInstanceOwner.BodyInstance;
+
+	// This should not be valid already
+	if (BodyInstance.IsValidBodyInstance())
+	{
+		return nullptr;
+	}
+
+	if (BodySetup)
+	{
+		FTransform BodyTransform = WorldTransform;
+
+		// Here we make sure we don't have zero scale. This still results in a body being made and placed in
+		// world (very small) but is consistent with a body scaled to zero.
+		const FVector BodyScale = BodyTransform.GetScale3D();
+		if (BodyScale.IsNearlyZero())
+		{
+			BodyTransform.SetScale3D(FVector(UE_KINDA_SMALL_NUMBER));
+		}
+#if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
+		if ((BodyInstance.GetCollisionEnabled() != ECollisionEnabled::NoCollision) && (FMath::IsNearlyZero(BodyScale.X) ||
+			FMath::IsNearlyZero(BodyScale.Y) || FMath::IsNearlyZero(BodyScale.Z)))
+		{
+			// UE_LOG(LogFastGeoStreaming, Warning, TEXT("Scale for FastGeoPrimitiveComponent has a component set to zero, which will result in a bad body instance. Scale:%s"), *BodyScale.ToString());
+
+			// User warning has been output - fix up the scale to be valid for physics
+			BodyTransform.SetScale3D(FVector(FMath::IsNearlyZero(BodyScale.X) ? UE_KINDA_SMALL_NUMBER : BodyScale.X,
+			                                 FMath::IsNearlyZero(BodyScale.Y) ? UE_KINDA_SMALL_NUMBER : BodyScale.Y,
+			                                 FMath::IsNearlyZero(BodyScale.Z) ? UE_KINDA_SMALL_NUMBER : BodyScale.Z));
+		}
+#endif
+
+		// Initialize the body instance
+		BodyInstance.InitBody(BodySetup, BodyTransform, nullptr, PhysScene, InitBodySpawnParams, &BodyInstanceOwner);
+		
+
+		// Assign BodyInstanceOwner
+		if (FPhysicsActorHandle ProxyHandle = BodyInstance.GetPhysicsActor())
+		{
+			if (Chaos::FPhysicsObject* PhysicsObject = BodyInstance.IsValidBodyInstance() ? BodyInstance.GetPhysicsActor()->GetPhysicsObject() : nullptr)
+			{
+				TArrayView<Chaos::FPhysicsObject*> PhysicsObjects(&PhysicsObject, 1);
+				FPhysicsObjectExternalInterface::LockWrite(PhysicsObjects)->SetUserDefinedEntity(PhysicsObjects, &BodyInstanceOwner);
+
+				return ProxyHandle;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+
+
 UMSPhysicsInitProcessor::UMSPhysicsInitProcessor() : EntityQuery(*this)
 {
 	ObservedType = FMSMassPhysicsFragment::StaticStruct();
@@ -175,6 +239,7 @@ void UMSPhysicsInitProcessor::ConfigureQueries(const TSharedRef<FMassEntityManag
 {
 	EntityQuery.AddRequirement<FMSMassPhysicsFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddSubsystemRequirement<UMassSamplePhysicsStorage>(EMassFragmentAccess::ReadWrite);
 
 	// try FAggGeomFragment first and then  FMSSharedStaticMesh's static mesh's geom
 	EntityQuery.AddSharedRequirement<FSharedCollisionSettingsFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
@@ -187,131 +252,94 @@ void UMSPhysicsInitProcessor::ConfigureQueries(const TSharedRef<FMassEntityManag
 
 void UMSPhysicsInitProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext)
 {
-	// a FPhysicsActorHandle is a Chaos particle pointer (not a regular actor) 
-	TArray<FPhysicsActorHandle> NewPhysicsHandles;
 
 	FPhysScene* PhysScene = GetWorld()->GetPhysicsScene();
 
 	// We use a static mesh asset's collision geo to init a new physics body 
-	EntityQuery.ForEachEntityChunk( InContext, [this,&NewPhysicsHandles,&PhysScene](FMassExecutionContext& Context)
-	{
-		auto PhysicsFragments = Context.GetMutableFragmentView<FMSMassPhysicsFragment>();
-		auto Transforms = Context.GetFragmentView<FTransformFragment>();
-
-		FKAggregateGeom* AggregateGeom = nullptr;
-
-		FBodyInstance* BodyInstance = nullptr;
-
-		void* UserData = nullptr;
-
-		float Density = 100.0f;
-
-		// Note: the term "Actor" here means chaos physics actor handle, which is not a uobject unreal actor...
-		FActorCreationParams ActorParams;
-
-		ActorParams.bEnableGravity = Context.DoesArchetypeHaveTag<FMSGravityTag>();
-
-		// do we care about QueryAndProbe?
-		ECollisionEnabled::Type CollisionEnabled = ECollisionEnabled::QueryOnly;
-		if (Context.DoesArchetypeHaveTag<FMSSimulatesPhysicsTag>())
+	EntityQuery.ForEachEntityChunk(InContext,
+		[this,&PhysScene](FMassExecutionContext& Context)
 		{
-			ActorParams.bSimulatePhysics = true;
-			CollisionEnabled = ECollisionEnabled::QueryAndPhysics;
-		};
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4
-		ActorParams.bUpdateKinematicFromSimulation = Context.DoesArchetypeHaveTag<FMSUpdateKinematicFromSimulationTag>();
-#endif
-		
-		// We want to try a dedicated collision fragment before using a static mesh 
-		if (auto* SharedCollisionSettings = Context.GetMutableSharedFragmentPtr<FSharedCollisionSettingsFragment>())
-		{
-			// gross but I can't figure out a nice way to avoid this
-			AggregateGeom = &SharedCollisionSettings->Geometry;
-			BodyInstance = &SharedCollisionSettings->BodyInstance;
+			auto PhysicsFragments = Context.GetMutableFragmentView<FMSMassPhysicsFragment>();
+			auto Transforms = Context.GetFragmentView<FTransformFragment>();
 
-			if ((AggregateGeom->GetElementCount() <= 0))
+			auto& PhysicsStorage = Context.GetMutableSubsystemChecked<UMassSamplePhysicsStorage>();
+
+
+			FBodyInstance* BodySetupBodyInstance = nullptr;
+
+
+			bool bShouldSimulatePhysics = false;
+
+
+			if (Context.DoesArchetypeHaveTag<FMSSimulatesPhysicsTag>())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("UMSPhysicsInitProcessors FSharedCollisionSettingsFragment has no collision geometry!"));
+				bShouldSimulatePhysics = true;
+			}
+
+			UBodySetup* BodySetup = nullptr;
+			if (const FMSSharedStaticMesh* SharedStaticMesh = Context.GetConstSharedFragmentPtr<FMSSharedStaticMesh>())
+			{
+				if (!ensure(SharedStaticMesh->StaticMesh))
+				{
+					return;
+				}
+
+				// @fixme a nasty LoadSynchronous that should be avoided...
+				UStaticMesh* StaticMesh = SharedStaticMesh->StaticMesh.LoadSynchronous();
+				BodySetup = StaticMesh->GetBodySetup();
+				BodySetupBodyInstance = &BodySetup->DefaultInstance;
+			};
+
+
+			// We want to try a dedicated collision fragment before using a static mesh 
+			if (FSharedCollisionSettingsFragment* SharedCollisionSettings = Context.GetMutableSharedFragmentPtr<
+				FSharedCollisionSettingsFragment>())
+			{
+				BodySetupBodyInstance = &SharedCollisionSettings->BodyInstance;
+			}
+
+
+			if (!BodySetupBodyInstance)
+			{
 				return;
 			}
-		}
-		else if (auto* SharedStaticMesh = Context.GetConstSharedFragmentPtr<FMSSharedStaticMesh>())
-		{
-			if (!ensure(SharedStaticMesh->StaticMesh))
+
+			for (int32 i = 0; i < Context.GetNumEntities(); i++)
 			{
-				return;
+				const FTransform& Transform = Transforms[i].GetTransform();
+
+				FMassEntityHandle Entity = Context.GetEntity(i);
+
+				FMassSampleBodyInstanceOwner* NewOwnerPtr = new FMassSampleBodyInstanceOwner();
+				NewOwnerPtr->OwnerSubsystem = &PhysicsStorage;
+				NewOwnerPtr->EntityHandle = Entity;
+				NewOwnerPtr->BodyInstance.CopyBodyInstancePropertiesFrom(BodySetupBodyInstance);
+				NewOwnerPtr->BodyInstance.InstanceBodyIndex = INDEX_NONE;
+				NewOwnerPtr->BodyInstance.bAutoWeld = false;
+				NewOwnerPtr->BodyInstance.bSimulatePhysics = bShouldSimulatePhysics;
+
+
+				FInitBodySpawnParams InitBodyParams = FInitBodySpawnParams(false, /*bPhysicsTypeDeterminesSimulation*/false);
+
+				FPhysicsActorHandle NewActorHandle = MassSampleCreatePhysicsStateFromInstanceOwner(
+					PhysScene,
+					BodySetup,
+					*NewOwnerPtr,
+					Transform,
+					InitBodyParams);
+
+
+				TSharedRef<FMassSampleBodyInstanceOwner> AsShared = MakeShareable(NewOwnerPtr);
+				
+				if (ensure(NewActorHandle))
+				{
+					// Store this as a shared pointer on physics storage. This MUST be a stable pointer so there is no way this will work stored directly in archetype chunks
+					// A bit of indirection here is fine here as physics interactions are often random by nature anyways
+					PhysicsStorage.BodyInstanceOwners.Add(NewActorHandle->GetPhysicsObject()) = AsShared;
+					PhysicsFragments[i].SingleParticlePhysicsProxy = NewActorHandle;
+				}
 			}
-
-			UStaticMesh* StaticMesh = SharedStaticMesh->StaticMesh.LoadSynchronous();
-			UBodySetup* BodySetup = StaticMesh->GetBodySetup();
-			BodyInstance = &BodySetup->DefaultInstance;
-
-			// Mass... (the weight, not this ECS plugin)
-			Density = BodySetup->CalculateMass();
-
-			AggregateGeom = &BodySetup->AggGeom;
-			if ((AggregateGeom->GetElementCount() <= 0))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("UMSPhysicsInitProcessors static mesh (%s) has no collision geometry!"), *StaticMesh->GetName());
-				return;
-			}
-		};
-
-
-		if (!BodyInstance)
-		{
-			return;
-		}
-
-		#if USE_BODYINSTANCE_DEBUG_NAMES
-				ActorParams.DebugName = (char*)*FString("MassPhysicsBody");
-		#endif
-
-
-		// the weird indirection is because FPhysicsUserData stores an enum about what it is with this ctor
-		BodyInstance->PhysicsUserData = FPhysicsUserData(BodyInstance);
-		// "SetUserData" required for queries hitting this it seems due to SetHitResultFromShapeAndFaceIndex
-		UserData = &BodyInstance->PhysicsUserData;
-
-		FBodyCollisionData CollisionData;
-
-		// this one relies on a live non-default bodysetup + does lots of other uobject stuff so I made CollisionFilterDataDummy
-		//BodyInstance->BuildBodyFilterData(CollisionData.CollisionFilterData);
-		CollisionData.CollisionFilterData = CollisionFilterDataDummy(BodyInstance->GetResponseToChannels(), ECollisionTraceFlag::CTF_UseDefault);
-		BodyInstance->BuildBodyCollisionFlags(CollisionData.CollisionFlags, CollisionEnabled, true /*usecomplexassimple */);
-
-		for (int32 i = 0; i < Context.GetNumEntities(); i++)
-		{
-			ActorParams.InitialTM = Transforms[i].GetTransform();
-			check(PhysScene)
-			ActorParams.Scene = PhysScene;
-			ActorParams.bStatic = false;
-			ActorParams.bQueryOnly = false;
-
-			FPhysicsActorHandle NewHandle = InitAndAddNewChaosBody(ActorParams, CollisionData, AggregateGeom, Density);
-
-			if(!NewHandle)
-			{
-				continue;
-			}
-			
-			Chaos::FRigidBodyHandle_External& Body_External = NewHandle->GetGameThreadAPI();
-
-			// "SetUserData" required for queries hitting this it seems due to SetHitResultFromShapeAndFaceIndex
-			Body_External.SetUserData(UserData);
-
-			NewPhysicsHandles.Add(NewHandle);
-
-			PhysicsFragments[i].SingleParticlePhysicsProxy = NewHandle;
-		}
-	});
-
-	// todo-perf make this work on other threads or just do this all in physics callbacks
-	FPhysicsCommand::ExecuteWrite(PhysScene, [&]()
-	{
-		// We update the solver immediately... Not sure if we should
-		PhysScene->AddActorsToScene_AssumesLocked(NewPhysicsHandles, false);
-	});
+		});
 }
 
 
@@ -319,12 +347,14 @@ UMSPhysicsCleanupProcessor::UMSPhysicsCleanupProcessor() : EntityQuery(*this)
 {
 	ObservedType = FMSMassPhysicsFragment::StaticStruct();
 	Operation = EMassObservedOperation::Remove;
-	// PHyisics API stuff is picky here
+	// Phyisics API stuff is picky here
 	bRequiresGameThreadExecution = true;
 }
 
 void UMSPhysicsCleanupProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
+	EntityQuery.AddSubsystemRequirement<UMassSamplePhysicsStorage>(EMassFragmentAccess::ReadWrite);
+
 	EntityQuery.AddRequirement<FMSMassPhysicsFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.RegisterWithProcessor(*this);
 }
@@ -333,20 +363,26 @@ void UMSPhysicsCleanupProcessor::Execute(FMassEntityManager& EntityManager, FMas
 {
 	FPhysScene* PhysScene = GetWorld()->GetPhysicsScene();
 
-	EntityQuery.ForEachEntityChunk( InContext, [this,&PhysScene](FMassExecutionContext& Context)
-	{
-		if (!ensure(PhysScene))
-		{
-			return;
-		}
-		auto PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
+	EntityQuery.ForEachEntityChunk(InContext,
+       [this,&PhysScene](FMassExecutionContext& Context)
+       {
+           if (!ensure(PhysScene))
+           {
+               return;
+           }
+           auto PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
 
-		for (int32 i = 0; i < Context.GetNumEntities(); i++)
-		{
-			if (FPhysicsActorHandle PhysicsHandle = PhysicsFragments[i].SingleParticlePhysicsProxy)
-			{
-				FChaosEngineInterface::ReleaseActor(PhysicsHandle, PhysScene);
-			}
-		}
-	});
+           UMassSamplePhysicsStorage& PhysicsStorage = Context.GetMutableSubsystemChecked<UMassSamplePhysicsStorage>();
+
+           for (int32 i = 0; i < Context.GetNumEntities(); i++)
+           {
+	           FMassEntityHandle Entity = Context.GetEntity(i);
+           	
+	           if (FPhysicsActorHandle PhysicsHandle = PhysicsFragments[i].SingleParticlePhysicsProxy)
+	           {
+	           	  PhysicsStorage.BodyInstanceOwners.Remove(PhysicsHandle->GetPhysicsObject());
+		          FChaosEngineInterface::ReleaseActor(PhysicsHandle, PhysScene);
+	           }
+           }
+       });
 }

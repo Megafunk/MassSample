@@ -11,6 +11,7 @@
 #include "Chaos/DebugDrawQueue.h"
 #include "Experimental/LambdaBasedMassProcessor.h"
 #include "Physics/Experimental/PhysScene_Chaos.h"
+#include "PhysicsEngine/PhysicsObjectExternalInterface.h"
 #include "PhysicsProxy/SingleParticlePhysicsProxy.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(MSMassPhysics)
@@ -57,7 +58,140 @@ TAutoConsoleVariable<bool> CVMSDrawChaosBodies(
 	TEXT("draw debug info for all mass chaos bodies using the chaos debug draw queue, make sure you also called p.Chaos.DebugDraw.Enabled 1"));
 #endif
 
-UMSChaosMassTranslationProcessorsProcessors::UMSChaosMassTranslationProcessorsProcessors()
+
+
+const FName NAME_MassSampleChaosUserDefinedDataEntityTypeName = TEXT("MassSampleChaosUserDefinedDataEntity");
+
+FMassSampleBodyInstanceOwner::FMassSampleBodyInstanceOwner() : FChaosUserDefinedEntity(NAME_MassSampleChaosUserDefinedDataEntityTypeName)
+{
+}
+
+
+bool FMassSampleBodyInstanceOwner::IsStaticPhysics() const
+{
+	return false;
+}
+
+UObject* FMassSampleBodyInstanceOwner::GetSourceObject() const
+{
+	auto Owner = OwnerSubsystem.Get();
+	check(Owner);
+	return Owner;
+}
+
+UPhysicalMaterial* FMassSampleBodyInstanceOwner::GetPhysicalMaterial() const
+{
+	return nullptr;
+}
+
+void FMassSampleBodyInstanceOwner::GetComplexPhysicalMaterials(TArray<UPhysicalMaterial*>& OutPhysMaterials,
+                                                               TArray<FPhysicalMaterialMaskParams>* OutPhysMaterialMasks) const
+{
+
+	if (BodyInstance.GetPhysMaterialOverride() != nullptr)
+	{
+		OutPhysMaterials.SetNum(1);
+		OutPhysMaterials[0] = BodyInstance.GetPhysMaterialOverride();
+		check(!OutPhysMaterials[0] || OutPhysMaterials[0]->IsValidLowLevel());
+	}
+	else
+	{
+		UStaticMesh* StaticMeshPtr = StaticMesh.Get();
+		if (!StaticMeshPtr)
+		{
+			return;
+		}
+
+		
+		const int32 NumMaterials = StaticMeshPtr->GetStaticMaterials().Num();
+		OutPhysMaterials.SetNum(NumMaterials);
+		
+		if (OutPhysMaterialMasks)
+		{
+			OutPhysMaterialMasks->SetNum(NumMaterials);
+		}
+		
+		for (int32 MatIdx = 0; MatIdx < NumMaterials; MatIdx++)
+		{
+			UPhysicalMaterial* PhysMat = GEngine->DefaultPhysMaterial;
+			UMaterialInterface* Material = StaticMeshPtr->GetStaticMaterials()[MatIdx].MaterialInterface;
+			if (Material)
+			{
+				PhysMat = Material->GetPhysicalMaterial();
+			}
+		
+			OutPhysMaterials[MatIdx] = PhysMat;
+		
+			if (OutPhysMaterialMasks)
+			{
+				UPhysicalMaterialMask* PhysMatMask = nullptr;
+				UMaterialInterface* PhysMatMap = nullptr;
+		
+				if (Material)
+				{
+					PhysMatMask = Material->GetPhysicalMaterialMask();
+					if (PhysMatMask)
+					{
+						PhysMatMap = Material;
+					}
+				}
+		
+				(*OutPhysMaterialMasks)[MatIdx].PhysicalMaterialMask = PhysMatMask;
+				(*OutPhysMaterialMasks)[MatIdx].PhysicalMaterialMap = PhysMatMap;
+			}
+		}
+	}
+
+}
+
+ECollisionResponse FMassSampleBodyInstanceOwner::GetCollisionResponseToChannel(ECollisionChannel Channel) const
+{
+	return BodyInstance.GetResponseToChannel(Channel);
+}
+
+TWeakObjectPtr<UObject> FMassSampleBodyInstanceOwner::GetOwnerObject()
+{
+	check(OwnerSubsystem.IsValid());
+	return OwnerSubsystem;
+}
+
+FMassEntityHandle UMassSamplePhysicsStorage::FindEntityHandleFromHitResult(const FHitResult& HitResult)
+{
+	if (UMassSamplePhysicsStorage* Owner = Cast<UMassSamplePhysicsStorage>(HitResult.PhysicsObjectOwner.Get()))
+	{
+		if (TSharedPtr<FMassSampleBodyInstanceOwner>* ObjectOwner = Owner->BodyInstanceOwners.Find(HitResult.PhysicsObject))
+		{
+			if (FMassSampleBodyInstanceOwner* OwnerPtr = ObjectOwner->Get())
+			{
+				return OwnerPtr->EntityHandle;
+			}
+		}
+		
+	}
+	
+	return FMassEntityHandle();
+}
+
+IPhysicsBodyInstanceOwner* UMassSamplePhysicsStorage::ResolvePhysicsBodyInstanceOwner(Chaos::FConstPhysicsObjectHandle PhysicsObject)
+{
+	if (PhysicsObject)
+	{
+		FLockedReadPhysicsObjectExternalInterface PhysicsObjectInterface = FPhysicsObjectExternalInterface::LockRead(PhysicsObject);
+		FChaosUserDefinedEntity* UserDefinedEntity = PhysicsObjectInterface->GetUserDefinedEntity(PhysicsObject);
+
+		// chaos user data is type safe with a simple name member
+		if (UserDefinedEntity && UserDefinedEntity->GetEntityTypeName() == NAME_MassSampleChaosUserDefinedDataEntityTypeName)
+		{
+			FMassSampleBodyInstanceOwner* FastGeoPhysicsBodyInstanceOwner = static_cast<FMassSampleBodyInstanceOwner*>(UserDefinedEntity);
+			check(FastGeoPhysicsBodyInstanceOwner->GetOwnerObject().IsValid());
+			return FastGeoPhysicsBodyInstanceOwner;
+		}
+	}
+
+	return nullptr;
+}
+
+UMSChaosMassTranslationProcessorsProcessors::UMSChaosMassTranslationProcessorsProcessors() : ChaosSimToMass(*this), UpdateChaosKinematicTargets(*this), MassTransformsToChaosBodies(*this)
 {
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::UpdateWorldFromMass;
 	ExecutionOrder.ExecuteAfter.Add(UE::Mass::ProcessorGroupNames::Movement);
@@ -83,7 +217,13 @@ void UMSChaosMassTranslationProcessorsProcessors::ConfigureQueries(const TShared
 
 void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	ChaosSimToMass.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
+	FPhysScene* PhysicsScene = GetWorld()->GetPhysicsScene();
+	if (!PhysicsScene)
+	{
+		return;
+	}
+	
+	ChaosSimToMass.ForEachEntityChunk( Context, [&](FMassExecutionContext& Context)
 	{
 		auto PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
 		auto Transforms = Context.GetMutableFragmentView<FTransformFragment>();
@@ -91,7 +231,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 		for (int32 i = 0; i < Context.GetNumEntities(); i++)
 		{
 			FPhysicsActorHandle PhysicsHandle = PhysicsFragments[i].SingleParticlePhysicsProxy;
-			if (GetWorld()->GetPhysicsScene() && PhysicsHandle)
+			if ( PhysicsHandle)
 			{
 				Chaos::FRigidBodyHandle_External& Body_External = PhysicsHandle->GetGameThreadAPI();
 				Transforms[i].GetMutableTransform() = FTransform(Body_External.R(), Body_External.X());;
@@ -100,7 +240,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 	});
 
 	// mass forces to kinematic targets
-	UpdateChaosKinematicTargets.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
+	UpdateChaosKinematicTargets.ForEachEntityChunk( Context, [&](FMassExecutionContext& Context)
 	{
 		const auto& PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
 		const auto& Transforms = Context.GetMutableFragmentView<FTransformFragment>();
@@ -109,7 +249,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 		for (int32 i = 0; i < Context.GetNumEntities(); i++)
 		{
 			FPhysicsActorHandle PhysicsHandle = PhysicsFragments[i].SingleParticlePhysicsProxy;
-			if (GetWorld()->GetPhysicsScene() && PhysicsHandle)
+			if (PhysicsHandle)
 			{
 				const FTransform NewPose = Transforms[i].GetTransform();
 				//FChaosEngineInterface::SetGlobalPose_AssumesLocked(PhysicsHandle,);
@@ -128,11 +268,11 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 					Body_External.SetKinematicTarget(NewPose + FTransform(Forces[i].Value));
 				}
 #endif
-				
 			}
 		}
 	});
-	MassTransformsToChaosBodies.ForEachEntityChunk( Context, [this](FMassExecutionContext& Context)
+	
+	MassTransformsToChaosBodies.ForEachEntityChunk( Context, [&](FMassExecutionContext& Context)
 	{
 		// This one is by value as we do an evil reinterpret cast later?
 		TConstArrayView<FMSMassPhysicsFragment> PhysicsFragments = Context.GetFragmentView<FMSMassPhysicsFragment>();
@@ -142,7 +282,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 		{
 			// mostly a dupe of FChaosEngineInterface::SetGlobalPose_AssumesLocked with some small changes
 			FPhysicsActorHandle PhysicsHandle = PhysicsFragments[i].SingleParticlePhysicsProxy;
-			if (GetWorld()->GetPhysicsScene() && PhysicsHandle)
+			if (PhysicsHandle)
 			{
 				//FChaosEngineInterface::SetGlobalPose_AssumesLocked loop unrolled?
 
@@ -159,7 +299,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 #if CHAOS_DEBUG_DRAW
 			if(CVMSDrawChaosBodies.GetValueOnAnyThread())
 			{
-				if (GetWorld()->GetPhysicsScene() && PhysicsHandle)
+				if (PhysicsHandle)
 				{
 					Chaos::FRigidBodyHandle_External& Body_External = PhysicsHandle->GetGameThreadAPI();
 
