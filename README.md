@@ -410,6 +410,11 @@ void UMyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionCont
 		{
 			// ...
 		}
+		// Alternatively use Iterator syntax
+		// for (auto EntityIt : Context.CreateEntityIterator())
+		// {
+		// 	// ...
+		// }
 	});
 }
 ```
