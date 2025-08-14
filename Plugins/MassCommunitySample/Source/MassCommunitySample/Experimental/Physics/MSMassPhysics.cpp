@@ -318,7 +318,7 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 
 					Chaos::FRigidTransform3 RigidTransform(Body_External.X(), Body_External.R());
 					Chaos::DebugDraw::DrawShape(RigidTransform,
-						Body_External.Geometry().Get(),ShapeUnion,
+						Body_External.GetGeometry(),ShapeUnion,
 						FColor::Silver,&ChaosMassPhysDebugDebugDrawSettings);
 
 				}
