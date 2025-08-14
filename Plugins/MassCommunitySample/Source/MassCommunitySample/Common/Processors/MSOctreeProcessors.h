@@ -20,16 +20,11 @@ public:
 	
 	UMSOctreeProcessor();
 	
-	FMassEntityQuery AddToHashGridQuery;
 	FMassEntityQuery UpdateOctreeElementsQuery;
-	FMassEntityQuery RemoveFromGridEntityQuery;
 	
-	UPROPERTY()
-	TObjectPtr<UMSSubsystem> MassSampleSystem;
-
 	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
-	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext) override;
 	virtual void BeginDestroy() override;
 };
 
@@ -43,13 +38,9 @@ public:
 	UMSHashGridMemberInitializationProcessor();
 	
 	FMassEntityQuery EntityQuery;
-
-	UPROPERTY()
-	TObjectPtr<UMSSubsystem> MassSampleSystem = nullptr;
 	
-	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
-	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext) override;
 
 };
 
@@ -64,12 +55,8 @@ public:
 	UMSOctreeMemberCleanupProcessor();
 	
 	FMassEntityQuery EntityQuery;
-
-	UPROPERTY()
-	TObjectPtr<UMSSubsystem> MassSampleSystem;
 	
-	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
-	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
+	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& InContext) override;
 
 };

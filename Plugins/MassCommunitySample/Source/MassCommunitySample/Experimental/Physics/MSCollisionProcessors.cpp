@@ -50,7 +50,7 @@ void UMSEntityCollisionQueryProcessors::ConfigureQueries(const TSharedRef<FMassE
 
 void UMSEntityCollisionQueryProcessors::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
-	FMSOctree2& MSOctree2 = MSSubsystem->Octree2;
+	FMSOctree2& MSOctree2 = MSSubsystem->MassSampleOctree2;
 
 	// Other entities we hit
 	TQueue<FMassEntityHandle, EQueueMode::Mpsc> EntitiesCollided;
