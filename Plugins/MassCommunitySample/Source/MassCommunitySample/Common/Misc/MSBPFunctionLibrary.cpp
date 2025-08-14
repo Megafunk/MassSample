@@ -4,6 +4,7 @@
 #include "MSBPFunctionLibrary.h"
 #include "MassAgentComponent.h"
 #include "MassCommonFragments.h"
+#include "MassEntitySubsystem.h"
 #include "MassMovementFragments.h"
 #include "MassSpawnerSubsystem.h"
 #include "MSSubsystem.h"
@@ -165,15 +166,15 @@ FVector UMSBPFunctionLibrary::GetEntityVelocity(const FMSEntityViewBPWrapper Ent
 
 	if (!EntityHandle.EntityView.IsValid())
 	{
-		return FVector();
-	};
+		return FVector::ZeroVector;
+	}
 
 	if (const auto VelocityFragmentPtr = EntityManager.GetFragmentDataPtr<FMassVelocityFragment>(EntityHandle.EntityView.GetEntity()))
 	{
 		return VelocityFragmentPtr->Value;
 	}
 
-	return FVector();
+	return FVector::ZeroVector;
 }
 
 void UMSBPFunctionLibrary::SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force)
@@ -227,7 +228,7 @@ void UMSBPFunctionLibrary::FindOctreeEntitiesInBox(const FVector Center, const F
 		TArray<FMassEntityHandle> EntitiesFound;
 
 
-		MassSampleSystem->Octree2.FindElementsWithBoundsTest(FBoxCenterAndExtent(Center, Extents), [&](const FMSEntityOctreeElement& OctreeElement)
+		MassSampleSystem->MassSampleOctree2.FindElementsWithBoundsTest(FBoxCenterAndExtent(Center, Extents), [&](const FMSEntityOctreeElement& OctreeElement)
 		{
 			EntitiesFound.Add(OctreeElement.EntityHandle);
 		});
@@ -251,7 +252,7 @@ void UMSBPFunctionLibrary::FindClosestHashGridEntityInBox(const FVector Center, 
 	{
 		double ShortestDistance = MAX_dbl;
 		FMassEntityHandle EntityHandle;
-		MassSampleSystem->Octree2.FindElementsWithBoundsTest(FBoxCenterAndExtent(Center, Extents), [&](const FMSEntityOctreeElement& OctreeElement)
+		MassSampleSystem->MassSampleOctree2.FindElementsWithBoundsTest(FBoxCenterAndExtent(Center, Extents), [&](const FMSEntityOctreeElement& OctreeElement)
 		{
 			double Distance = UE::Geometry::DistanceSquared(FVector(OctreeElement.Bounds.Center), Center);
 
