@@ -23,7 +23,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSEntityOctreeElement
 
 struct FMSEntityOctreeSemantics 
 {
-	enum { MaxElementsPerLeaf = 128 };
+	enum { MaxElementsPerLeaf = 16 };
 	enum { MinInclusiveElementsPerNode = 7 };
 	enum { MaxNodeDepth = 12 };
 
@@ -41,7 +41,6 @@ struct FMSEntityOctreeSemantics
 
 	FORCEINLINE static void SetElementId(const FMSEntityOctreeElement& Element, FOctreeElementId2 Id)
 	{
-
 		*Element.SharedOctreeID = Id;
 	};
 };
