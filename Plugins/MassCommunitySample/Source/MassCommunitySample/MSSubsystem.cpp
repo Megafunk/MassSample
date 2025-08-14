@@ -12,44 +12,41 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(MSSubsystem)
 
-
 void UMSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	const UWorld* World = GetWorld();
+	Super::Initialize(Collection);
 	
-	if (!ensure(Collection.InitializeDependency<UMassEntitySubsystem>())) {
-		return;
-	}
-	
-	EntityManager = World->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager().AsShared();
-
-
 	float OctreeSize = GetDefault<UMassSampleSettings>()->OctreeBoundsSize;
-	Octree2 = FMSOctree2(FVector::Zero(),OctreeSize);
-	NavSystem = Cast<UNavigationSystemV1>(GetWorld()->GetNavigationSystem());
-	
+	MassSampleOctree2 = FMSOctree2(FVector::Zero(),OctreeSize);
+}
+
+bool UMSSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const {
+	// Only use game worlds for now
+	return WorldType == EWorldType::Game || WorldType == EWorldType::PIE;
 }
 
 
 int32 UMSSubsystem::SampleSpawnEntityExamples()
 {
+	FMassEntityManager& EntityManager = GetWorld()->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager();
+
 	/** NOTE: It should be noted that this is a very "raw" way to build entities,
 	* it serves to show how they can be manipulated with direct calls to the mass entity manager
-	*
 	* In most cases you will be changing entities by deferred commands and processors, rather than raw calls like this
 	*/ 
 	
 	//To spawn entities raw from C++ we can make a new archetype like so:
-	MoverArchetype =  EntityManager->CreateArchetype(
+		FMassArchetypeHandle MoverArchetype =  EntityManager.CreateArchetype(
 	{
 		FTransformFragment::StaticStruct(),
 		FMassVelocityFragment::StaticStruct()
 	});
 
-	//You could cache it, but this is just an example
+	// You could cache it, but this is just an example
 	
-	//Create and store a handle to our new entity
-	FMassEntityHandle NewEntity = EntityManager->CreateEntity(MoverArchetype);
+	// Create and store a handle to our new entity
+	// this is a REALLY "raw" example and not how you generally use Mass (you don't need to manually change or declare archetypes like this). Mostly for demonstration
+	FMassEntityHandle NewEntity = EntityManager.CreateEntity(MoverArchetype);
 
 	// NOTE: to be clear, Mass has many other ways to change and read entity data that are more designed for user code.
 	// Doing stuff raw like this is not the norm, it is mostly for demonstration
@@ -58,19 +55,18 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 
 	
 	//Afterwards you can add, remove or change fragments of the entity. Let's add a mass tag!
-	EntityManager->AddTagToEntity(NewEntity,FMSGravityTag::StaticStruct());
+	EntityManager.AddTagToEntity(NewEntity,FMSGravityTag::StaticStruct());
 	//Make sure you use AddTag for tags and AddFragment for fragments!
-	EntityManager->AddFragmentToEntity(NewEntity,FSampleColorFragment::StaticStruct());
+	EntityManager.AddFragmentToEntity(NewEntity,FSampleColorFragment::StaticStruct());
 	
 	//How about changing data on a fragment?
-	EntityManager->GetFragmentDataChecked<FMassVelocityFragment>(NewEntity).Value = FMath::VRand()*100.0f;
-	EntityManager->GetFragmentDataChecked<FSampleColorFragment>(NewEntity).Color = FColor::Blue;
+	EntityManager.GetFragmentDataChecked<FMassVelocityFragment>(NewEntity).Value = FMath::VRand()*100.0f;
+	EntityManager.GetFragmentDataChecked<FSampleColorFragment>(NewEntity).Color = FColor::Blue;
 
 	
-
 	//calling mass.PrintEntityFragments 1 in editor should reveal this entity's fragments! For example:
 
-	// 	Listing fragments values for Entity[i: 1 sn: 1] in /Game/ThirdPerson/Maps/ThirdPersonMap.ThirdPersonMap:MassEntitySubsystem_0
+	// Listing fragments values for Entity[i: 1 sn: 1] in /Game/ThirdPerson/Maps/ThirdPersonMap.ThirdPersonMap:MassEntitySubsystem_0
 	// TransformFragment: (Transform=(Rotation=(X=0.000000,Y=0.000000,Z=0.000000,W=1.000000),Translation=(X=0.000000,Y=0.000000,Z=0.000000),Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)))
 	// MassVelocityFragment: ()
 	// SampleColorFragment: ()
@@ -82,7 +78,7 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 
 
 	// We reserve an entity here, this way the system knows not to give this index out to other processors/deferred actions etc
-	FMassEntityHandle ReserverdEntity = EntityManager->ReserveEntity();
+	FMassEntityHandle ReserverdEntity = EntityManager.ReserveEntity();
 
 	FTransformFragment MyTransformFragment;
 	MyTransformFragment.SetTransform(FTransform::Identity);
@@ -90,33 +86,31 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 	FSampleColorFragment MyColorFragment;
 
 	// We build a new entity and add fragments to it in one command!
-	EntityManager->Defer().PushCommand<FMassCommandBuildEntity>(ReserverdEntity,MyColorFragment);
+	EntityManager.Defer().PushCommand<FMassCommandBuildEntity>(ReserverdEntity,MyColorFragment);
 
 
 	// Flush the commands so this new entity is actually around, but not during processing
-	if (!EntityManager->IsProcessing())
+	if (!EntityManager.IsProcessing())
 	{
 		// This is an example because Mass will generally call FlushCommands commands for you during the frame, but sometimes immediate results are needed
-		EntityManager->FlushCommands();
+		EntityManager.FlushCommands();
 	}
-
 	
 	// Sets fragment data on an existing entity
-	EntityManager->Defer().PushCommand<FMassCommandAddFragmentInstances>(ReserverdEntity,MyColorFragment,MyTransformFragment);
-
-
+	EntityManager.Defer().PushCommand<FMassCommandAddFragmentInstances>(ReserverdEntity,MyColorFragment,MyTransformFragment);
+	
 	// Reserve yet another entity...
-	ReserverdEntity = EntityManager->ReserveEntity();
+	ReserverdEntity = EntityManager.ReserveEntity();
 
 	FMSExampleSharedFragment SharedFragmentExample;
 	SharedFragmentExample.SomeKindaOfData = FMath::Rand() * 10000.0f;
 	FMassArchetypeSharedFragmentValues SharedFragmentValues;
 	
 	// This is what traits use to create their shared fragment info as well
-	const FConstSharedStruct& SharedFragmentSharedStruct = EntityManager->GetOrCreateConstSharedFragment(SharedFragmentExample);
+	const FConstSharedStruct& SharedFragmentSharedStruct = EntityManager.GetOrCreateConstSharedFragment(SharedFragmentExample);
 	SharedFragmentValues.Add(SharedFragmentSharedStruct);
 
-	EntityManager->Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(ReserverdEntity, MoveTemp(SharedFragmentValues), MyTransformFragment, MyColorFragment);
+	EntityManager.Defer().PushCommand<FMassCommandBuildEntityWithSharedFragments>(ReserverdEntity, MoveTemp(SharedFragmentValues), MyTransformFragment, MyColorFragment);
 	
 	return NewEntity.Index;
 }
