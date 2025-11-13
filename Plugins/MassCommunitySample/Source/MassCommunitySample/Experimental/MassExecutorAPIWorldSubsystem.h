@@ -3,7 +3,7 @@
 #pragma once
 #include "MassProcessor.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "MassExecutorAPI.generated.h"
+#include "MassExecutorAPIWorldSubsystem.generated.h"
 
 struct FMassEntityManager;
 
@@ -24,14 +24,18 @@ public:
 };
 /**
  *  An example scratchpad of some newer APIs added by Epic (not me) in recent versions of Mass (post 5.6 for example)
+ *  this really just exists so I can hook into beginplay 
  */
 UCLASS()
-class MASSCOMMUNITYSAMPLE_API UMassExecutorAPI : public UWorldSubsystem {
+class MASSCOMMUNITYSAMPLE_API UMassExecutorAPIWorldSubsystem : public UWorldSubsystem {
 	GENERATED_BODY()
 
 public:
-	virtual void Deinitialize() override;
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+
+	TSharedPtr<FMassEntityManager> ĘntityManager;
 	
-	TSharedRef<FMassEntityManager> ĘntityManager;
+	UPROPERTY()
+	TArray<TObjectPtr<UMassSampleNewAPIProcessor>> Processors;
 };

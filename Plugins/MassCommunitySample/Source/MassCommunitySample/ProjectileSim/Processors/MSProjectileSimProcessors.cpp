@@ -75,16 +75,11 @@ void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntityManager, FMas
 			TEnumAsByte<ECollisionChannel> CollisionChannel = CollisionChannels[i].Channel;
 
 
-			QueryParams.ClearIgnoredActors();
-
-			//todo-perf: somehow keep the query params around as this is fairly evil to do
-			if (IgnoredActorsFragments.Num() > 0)
+			QueryParams.ClearIgnoredSourceObjects();
+			for (const auto IgnoredActor : IgnoredActorsFragments[i].IgnoredActors)
 			{
-				for (const AActor* IgnoredActor : IgnoredActorsFragments[i].IgnoredActors) {
-					QueryParams.AddIgnoredActor(IgnoredActor);
-				}
+					QueryParams.AddIgnoredSourceObject(IgnoredActor);
 			}
-
 
 			if (GetWorld()->LineTraceSingleByChannel(HitResult,
 			                                         // Create the previous location from our velocity
@@ -95,7 +90,10 @@ void UMSProjectileSimProcessors::Execute(FMassEntityManager& EntityManager, FMas
 
 				EntitiesThatHitSomething.Enqueue(Entity);
 				++NumEntitiesThatHitSomething;
-				Context.Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, FMSHitResultFragment(HitResult));
+
+				FMSHitResultFragment NewHitResultFragment;
+				NewHitResultFragment.HitResult = HitResult;
+				Context.Defer().PushCommand<FMassCommandAddFragmentInstances>(Entity, NewHitResultFragment);
 			}
 		}
 	});

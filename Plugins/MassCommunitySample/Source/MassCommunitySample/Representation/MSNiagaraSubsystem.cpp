@@ -1,5 +1,5 @@
-#include "MSNiagaraSubsystem.h"
 
+#include "MSNiagaraSubsystem.h"
 #include "MassEntitySubsystem.h"
 #include "MSNiagaraActor.h"
 #include "NiagaraComponent.h"
@@ -17,7 +17,7 @@ void UMSNiagaraSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 }
 
-FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType(UNiagaraSystem* NiagaraSystem, UStaticMesh* StaticMeshOverride, UMaterialInterface* MaterialOverride)
+AMSNiagaraActor* UMSNiagaraSubsystem::GetOrCreateNiagaraManagerForSystemType(UNiagaraSystem* NiagaraSystem, UStaticMesh* StaticMeshOverride, UMaterialInterface* MaterialOverride)
 {
 
 	// We only want to key these based off of unique types of niagara systems! Usually the entire fragment would be hashed.
@@ -33,18 +33,20 @@ FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType
 	{
 		ParamsHash = HashCombineFast(NiagaraAssetHash,GetTypeHash(MaterialOverride->GetFName()));
 	}
-	FSharedNiagaraSystemFragment SharedStructToReturn;
+	FMSSharedNiagaraSystemFragment SharedStructToReturn;
 
-	//try to see if we have seen this system type before...
-	if(PreexistingSharedNiagaraActors.Contains(ParamsHash))
+	// try to see if we have made a manager for hash before...
+	// Note that this TObjectPtr is a pointer to a pointer
+	if(TObjectPtr<AMSNiagaraActor>* ExistingManagerActor = PreexistingSharedNiagaraActors.Find(ParamsHash))
 	{
 		//if yes, just grab the one we made earlier!
-		return MassManager->GetOrCreateSharedFragmentByHash<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
+		return *ExistingManagerActor;
 	}
 
 	FActorSpawnParameters SpawnParameters;
-
-	SpawnParameters.ObjectFlags = RF_Transient | RF_DuplicateTransient;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParameters.ObjectFlags = RF_Transient;
+	SpawnParameters.bNoFail = true;
 
 	//if not, we need to spawn an entity+actor for it!
 	AMSNiagaraActor* NewNiagaraActor = GetWorld()->SpawnActor<AMSNiagaraActor>(SpawnParameters);
@@ -70,6 +72,6 @@ FSharedStruct UMSNiagaraSubsystem::GetOrCreateSharedNiagaraFragmentForSystemType
 
 	PreexistingSharedNiagaraActors.FindOrAdd(ParamsHash,NewNiagaraActor);
 	
-	return MassManager->GetOrCreateSharedFragmentByHash<FSharedNiagaraSystemFragment>(ParamsHash,SharedStructToReturn);
+	return NewNiagaraActor;
 }
 

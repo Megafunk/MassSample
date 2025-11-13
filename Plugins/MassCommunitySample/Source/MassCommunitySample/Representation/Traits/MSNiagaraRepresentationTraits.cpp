@@ -24,24 +24,29 @@ void UMSNiagaraRepresentationTrait::BuildTemplate(FMassEntityTemplateBuildContex
 		FConstSharedStruct SharedStaticMeshFragment = EntityManager.GetOrCreateConstSharedFragment(FMSSharedStaticMesh(StaticMesh));
 		BuildContext.AddConstSharedFragment(SharedStaticMeshFragment);
 	}
-
-
 	
-	UMSNiagaraSubsystem* NiagaraSubsystem = UWorld::GetSubsystem<UMSNiagaraSubsystem>(&World);
-
 	BuildContext.RequireFragment<FTransformFragment>();
-
-	UMaterial* Material = nullptr;
-
+	
 	// @todo support material overrides
 	if(MaterialOverride)
 	{
 	}
 
-	if (NiagaraSubsystem)
+	if (!BuildContext.IsInspectingData()) 
 	{
-		FSharedStruct SharedFragment = NiagaraSubsystem->GetOrCreateSharedNiagaraFragmentForSystemType(SharedNiagaraSystem.Get(),StaticMesh.Get(),MaterialOverride.Get());
-		BuildContext.AddSharedFragment(SharedFragment);
+		UMSNiagaraSubsystem* NiagaraSubsystem = UWorld::GetSubsystem<UMSNiagaraSubsystem>(&World);
+		if (ensure(NiagaraSubsystem)) 
+		{
+			AMSNiagaraActor* NiagaraManagerActor = NiagaraSubsystem->GetOrCreateNiagaraManagerForSystemType(
+				SharedNiagaraSystem.Get(),
+				StaticMesh.Get(),
+				MaterialOverride.Get());
+
+			FMSSharedNiagaraSystemFragment SharedNiagaraSystemFragment;
+			SharedNiagaraSystemFragment.NiagaraManagerActor = NiagaraManagerActor;
+			const FSharedStruct& SharedFragment = EntityManager.GetOrCreateSharedFragment(SharedNiagaraSystemFragment);
+			BuildContext.AddSharedFragment(SharedFragment);
+		}
 	}
 
 }

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassEntityTraitBase.h"
 #include "MassObserverProcessor.h"
 #include "MSActorMassTrait.generated.h"

@@ -301,35 +301,35 @@ void UMSChaosMassTranslationProcessorsProcessors::Execute(FMassEntityManager& En
 			{
 				if (PhysicsHandle)
 				{
-					Chaos::FRigidBodyHandle_External& Body_External = PhysicsHandle->GetGameThreadAPI();
-
+					// I am not super confident in this part. I think I am almost certainly missing a niceer way to do this.
+					using namespace Chaos;
 					
-					Chaos::FShapeOrShapesArray ShapeUnion;
+					FRigidBodyHandle_External& Body_External = PhysicsHandle->GetGameThreadAPI();
+					FRigidTransform3 RigidTransform(Body_External.X(), Body_External.R());
+
 					if(Body_External.ShapesArray().Num() == 1)
 					{
-						ShapeUnion = Chaos::FShapeOrShapesArray(Body_External.ShapesArray()[0].Get());
+						
+						Chaos::DebugDraw::DrawShape(RigidTransform, Body_External.GetGeometry(), Body_External.ShapesArray()[0].Get(), FColor::Silver, 0.0f, &ChaosMassPhysDebugDebugDrawSettings);
+
 					}
 					else if(Body_External.ShapesArray().Num() > 1)
 					{
-						ShapeUnion = Chaos::FShapeOrShapesArray(&Body_External.ShapesArray());
-					}
-
 					
-
-					Chaos::FRigidTransform3 RigidTransform(Body_External.X(), Body_External.R());
-					Chaos::DebugDraw::DrawShape(RigidTransform,
-						Body_External.GetGeometry(),ShapeUnion,
-						FColor::Silver,&ChaosMassPhysDebugDebugDrawSettings);
-
+						for (const TUniquePtr<FPerShapeData>& PerShapeData : Body_External.ShapesArray()) 
+						{
+							Chaos::DebugDraw::DrawShape(RigidTransform, Body_External.GetGeometry(), PerShapeData.Get(), FColor::Silver, 0.0f, &ChaosMassPhysDebugDebugDrawSettings);
+						}
+					}
 				}
-				
 			}
 #endif
-				
+			
 		}
 		static_assert(std::is_convertible_v<FPhysicsActorHandle, FMSMassPhysicsFragment>,
-		              "We want to convert from FMSMassPhysicsFragment to FMSMassPhysicsFragment here to avoid making new array or this reinterpret_cast is going to get weird")
-			;
+		              "We want to convert from FMSMassPhysicsFragment to FMSMassPhysicsFragment here to avoid making new array or this reinterpret_cast is going to get weird");
+		
+
 		// Update all of of this chunk at once;
 		GetWorld()->GetPhysicsScene()->UpdateActorsInAccelerationStructure(reinterpret_cast<TArray<FPhysicsActorHandle>&>(PhysicsFragments));
 	});

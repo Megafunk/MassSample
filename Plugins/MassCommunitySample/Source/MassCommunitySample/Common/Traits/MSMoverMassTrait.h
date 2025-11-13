@@ -2,9 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "MassEntityTraitBase.h"
-#include "UObject/Object.h"
 #include "MSMoverMassTrait.generated.h"
 
 /**

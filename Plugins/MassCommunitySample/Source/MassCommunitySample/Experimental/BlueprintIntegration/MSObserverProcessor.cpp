@@ -65,7 +65,7 @@ void UMSObserverProcessorBP::Execute(FMassEntityManager& EntityManager, FMassExe
 			{
 				// snipped for now, might not bother with these
 			}
-			BPExecute(FMSEntityViewBPWrapper(Archetype,Context.GetEntity(i)), World);
+			BPExecute(Context.GetEntity(i), World);
 
 		}
 	});

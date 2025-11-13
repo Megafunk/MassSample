@@ -50,9 +50,7 @@ void UMSPhysicsBody::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext
 		FKSphylElem Capsule = FKSphylElem(50.0f, 400.0f);
 		CollisionSettingsFragment.Geometry.SphylElems.Add(Capsule);
 
-		uint32 Hash = UE::StructUtils::GetStructCrc32(FConstStructView::Make(CollisionSettingsFragment));
-		BuildContext.AddSharedFragment(EntityManager.GetOrCreateSharedFragmentByHash<FSharedCollisionSettingsFragment>(
-			Hash, CollisionSettingsFragment));
+		BuildContext.AddSharedFragment(EntityManager.GetOrCreateSharedFragment<FSharedCollisionSettingsFragment>(CollisionSettingsFragment));
 
 	}
 	else

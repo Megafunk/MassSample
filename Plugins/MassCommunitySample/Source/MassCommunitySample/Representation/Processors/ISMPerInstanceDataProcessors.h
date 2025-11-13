@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassProcessor.h"
 #include "ISMPerInstanceDataProcessors.generated.h"
 

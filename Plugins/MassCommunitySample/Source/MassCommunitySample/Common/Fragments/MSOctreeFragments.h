@@ -50,12 +50,21 @@ struct FMSEntityOctreeSemantics
 typedef TOctree2<FMSEntityOctreeElement, FMSEntityOctreeSemantics> FMSOctree2;
 
 
-// This entity's start location on our octree this frame
 USTRUCT()
 struct MASSCOMMUNITYSAMPLE_API FMSOctreeFragment : public FMassFragment
 {
+	// It is probably possible to make this stored by-value but this is easier for now
 	GENERATED_BODY()
 	TSharedPtr<FOctreeElementId2> OctreeID;
+};
+
+template<>
+struct TMassFragmentTraits<FMSOctreeFragment> final
+{
+	enum
+	{
+		AuthorAcceptsItsNotTriviallyCopyable = true
+	};
 };
 
 // To indicate the entity is in the octree, it should be added internally by an observer  

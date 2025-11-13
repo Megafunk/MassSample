@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "MassRepresentationProcessor.h"
 #include "MassVisualizationLODProcessor.h"
 

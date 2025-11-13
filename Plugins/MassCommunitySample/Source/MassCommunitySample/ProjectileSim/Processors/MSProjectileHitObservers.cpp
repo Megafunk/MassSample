@@ -21,7 +21,7 @@
 UMSProjectileHitObservers::UMSProjectileHitObservers()
 {
 	ObservedType = FMSHitResultFragment::StaticStruct();
-	Operation = EMassObservedOperation::Add;
+	ObservedOperations = EMassObservedOperationFlags::Add;
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 
 	bRequiresGameThreadExecution = true;
@@ -50,9 +50,9 @@ void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMass
 	
 		auto HitResults = Context.GetFragmentView<FMSHitResultFragment>();
 	
-		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		for (auto EntityIt : Context.CreateEntityIterator())
 		{
-			auto Hitresult = HitResults[EntityIndex].HitResult;
+			const FHitResult& Hitresult = HitResults[EntityIt].HitResult;
 					
 			FMassArchetypeHandle Archetype = EntityManager.GetArchetypeForEntityUnsafe(Context.GetEntity(0));
 	
@@ -61,7 +61,7 @@ void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMass
 			{
 				IMassProjectileHitInterface::Execute_ProjectileHit(
 					Hitresult.GetActor(),
-					FMSEntityViewBPWrapper(Archetype,Context.GetEntity(EntityIndex)),
+					FMSEntityHandleBPWrapper(Context.GetEntity(EntityIt)),
 					Hitresult);
 			}
 
@@ -70,7 +70,7 @@ void UMSProjectileHitObservers::Execute(FMassEntityManager& EntityManager, FMass
 			FMassEntityHandle HitEntity = UMassSamplePhysicsStorage::FindEntityHandleFromHitResult(Hitresult);
 			if (HitEntity.IsValid())
 			{
-				Context.Defer().DestroyEntities({HitEntity});
+				Context.Defer().DestroyEntity(HitEntity);
 			}
 		}
 	});

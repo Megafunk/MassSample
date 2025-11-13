@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "InstancedStruct.h"
 #include "MassEntityTraitBase.h"
-#include "UObject/Object.h"
+#include "StructUtils/InstancedStruct.h"
 #include "MSAssortedTags.generated.h"
 
 /**

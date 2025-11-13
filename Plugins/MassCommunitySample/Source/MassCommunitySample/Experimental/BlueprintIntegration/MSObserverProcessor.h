@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassEntitySubsystem.h"
 #include "MassObserverRegistry.h"
 #include "Common/Misc/MSBPFunctionLibrary.h"
@@ -29,7 +29,7 @@ public:
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 	UFUNCTION(BlueprintImplementableEvent, meta=(WorldContext="WorldContextObject"))
-	void BPExecute(FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
+	void BPExecute(FMSEntityHandleBPWrapper EntityHandle, const UObject* WorldContextObject);
 
 
 	FMassEntityQuery EntityQuery;

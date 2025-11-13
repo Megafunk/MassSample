@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassObserverProcessor.h"
 #include "MassSignalProcessorBase.h"
 #include "UObject/Object.h"

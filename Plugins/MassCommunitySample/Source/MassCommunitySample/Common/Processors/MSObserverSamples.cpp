@@ -11,7 +11,7 @@
 UMSObserverOnAdd::UMSObserverOnAdd() : EntityQuery(*this) 
 {
 	ObservedType = FOriginalTransformFragment::StaticStruct();
-	Operation = EMassObservedOperation::Add;
+	ObservedOperations = EMassObservedOperationFlags::Add;
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }
 
@@ -29,10 +29,10 @@ void UMSObserverOnAdd::Execute(FMassEntityManager& EntityManager, FMassExecution
 		auto OriginalTransforms = Context.GetMutableFragmentView<FOriginalTransformFragment>();
 		auto Transforms = Context.GetFragmentView<FTransformFragment>();
 
-		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		for (const int32 EntityIt : Context.CreateEntityIterator())
 		{
 			// When an original transform is added, set it to our transform!
-			OriginalTransforms[EntityIndex].Transform = Transforms[EntityIndex].GetTransform();			
+			OriginalTransforms[EntityIt].Transform = Transforms[EntityIt].GetTransform();			
 		}
 	});
 }

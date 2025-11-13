@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassAgentTraits.h"
 #include "MassEntityView.h"
 #include "MassGameplayDebugTypes.h"

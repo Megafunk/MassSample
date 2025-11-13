@@ -7,43 +7,16 @@
 #include "MSBPFunctionLibrary.generated.h"
 
 
-// 
-
-// TODO @karl having two of these feels quite weird, it makes sense in C++ but do we care about the distinction in BP?
-// Feedback please!! What makes the most sense? Personally I think BP stuff should be where we have the most freedom
-// to just get data we need on the spot even if it means we do some repeated work. Or perhaps the mass entity view can be smarter?
-/**
- * FMassEntityView wrapper for for general blueprint use
- * This can be rather evil due to the fact that the EntityView is transient in representing the actual state
- * If you want to store an entity ID longer term you might be better off with the FMSEntityHandleBPWrapper
- */
-USTRUCT(BlueprintType)
-struct FMSEntityViewBPWrapper
-{
-	GENERATED_BODY()
-
-	FMSEntityViewBPWrapper() = default;
-
-	FMSEntityViewBPWrapper(const FMassArchetypeHandle& Archetype, FMassEntityHandle EntityHandle)
-	{
-		EntityView = FMassEntityView(Archetype, EntityHandle);
-	}
-	
-	FMSEntityViewBPWrapper(const FMassEntityManager& Manager, FMassEntityHandle EntityHandle)
-	{
-		EntityView = FMassEntityView(Manager,EntityHandle);
-	}
-
-	
-	FMassEntityView EntityView;
-
-};
-
 // An entity handle only BP wrapper.
 USTRUCT(BlueprintType)
 struct FMSEntityHandleBPWrapper
 {
 	GENERATED_BODY()
+
+	FMSEntityHandleBPWrapper() = default;
+	
+	FMSEntityHandleBPWrapper(const FMassEntityHandle& InHandle) : EntityHandle(InHandle) {}
+	
 	FMassEntityHandle EntityHandle;
 };
 
@@ -62,54 +35,54 @@ public:
 
 	// Check if a given entity view has a fragment
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass", meta=(WorldContext = "WorldContextObject"))
-	static bool EntityHasFragment(FMSEntityViewBPWrapper Entity, UPARAM(meta=(MetaStruct="/Script/MassEntity.MassFragment")) UScriptStruct* Fragment, UObject* WorldContextObject);
+	static bool EntityHasFragment(FMSEntityHandleBPWrapper Entity, UPARAM(meta=(MetaStruct="/Script/MassEntity.MassFragment")) UScriptStruct* Fragment, UObject* WorldContextObject);
 
 	// Check if a given entity view has a tag
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass", meta=(WorldContext = "WorldContextObject"))
-	static bool EntityHasTag(FMSEntityViewBPWrapper Entity, UPARAM(meta=(MetaStruct="/Script/MassEntity.MassTag")) UScriptStruct* Tag, UObject* WorldContextObject);
+	static bool EntityHasTag(FMSEntityHandleBPWrapper Entity, UPARAM(meta=(MetaStruct="/Script/MassEntity.MassTag")) UScriptStruct* Tag, UObject* WorldContextObject);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass", meta=(WorldContext = "WorldContextObject", ExpandBoolAsExecs = "ReturnValue"))
-	static bool IsEntityValid(FMSEntityViewBPWrapper Entity, UObject* WorldContextObject);
+	static bool IsEntityValid(FMSEntityHandleBPWrapper Entity, UObject* WorldContextObject);
 	
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
-	static FMSEntityViewBPWrapper SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig,
+	static FMSEntityHandleBPWrapper SpawnEntityFromEntityConfig(UMassEntityConfigAsset* MassEntityConfig,
 															 const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
 
-	UFUNCTION(BlueprintCallable, Category = "Mass")
-	static void SetEntityTransform(const FMSEntityViewBPWrapper EntityHandle,const FTransform Transform);
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
+	static void SetEntityTransform(const FMSEntityHandleBPWrapper EntityHandle,const FTransform& Transform, UObject* WorldContextObject);
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FTransform GetEntityTransform(FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
+	static FTransform GetEntityTransform(FMSEntityHandleBPWrapper EntityHandle, const UObject* WorldContextObject);
 
-
-	UFUNCTION(BlueprintCallable, Category = "Mass")
-	static void SetEntityVelocity(FMSEntityViewBPWrapper EntityHandle, FVector Velocity);
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static FVector GetEntityVelocity(FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
+	static void SetEntityVelocity(FMSEntityHandleBPWrapper EntityHandle, FVector Velocity, const UObject* WorldContextObject);
 
-	UFUNCTION(BlueprintCallable, Category = "Mass")
-	static void SetEntityForce(const FMSEntityViewBPWrapper EntityHandle, const FVector Force);
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
+	static FVector GetEntityVelocity(FMSEntityHandleBPWrapper EntityHandle, const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
+	static void SetEntityForce(const FMSEntityHandleBPWrapper EntityHandle, const FVector Force, const UObject* WorldContextObject);
 	
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void DestroyEntity(const FMSEntityViewBPWrapper EntityHandle, const UObject* WorldContextObject);
+	static void DestroyEntity(const FMSEntityHandleBPWrapper EntityHandle, const UObject* WorldContextObject);
 
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandBoolAsExecs = "ReturnValue"))
-	static bool GetMassAgentEntity(FMSEntityViewBPWrapper& OutEntity, UMassAgentComponent* Agent, const UObject* WorldContextObject);
+	static bool GetMassAgentEntity(FMSEntityHandleBPWrapper& OutEntity, UMassAgentComponent* Agent, const UObject* WorldContextObject);
 
 	
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject"))
-	static void FindOctreeEntitiesInBox(const FVector Center,const FVector Extents, TArray<FMSEntityViewBPWrapper>& Entities ,const UObject* WorldContextObject);
+	static void FindOctreeEntitiesInBox(const FVector Center,const FVector Extents, TArray<FMSEntityHandleBPWrapper>& Entities ,const UObject* WorldContextObject);
 
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta = (WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
-	static void FindClosestHashGridEntityInBox(const FVector Center,const FVector Extents, FMSEntityViewBPWrapper& Entity, const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
+	static void FindClosestHashGridEntityInBox(const FVector Center,const FVector Extents, FMSEntityHandleBPWrapper& Entity, const UObject* WorldContextObject,EReturnSuccess& ReturnBranch);
 
 	/**
 	 * Sets an entity's fragment data or adds it if it's ins't present. This might need more testing...
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta=(WorldContext = "WorldContextObject"))
-	static void SetEntityFragment(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment,const UObject* WorldContextObject);
+	static void SetEntityFragment(FMSEntityHandleBPWrapper Entity, FInstancedStruct Fragment,const UObject* WorldContextObject);
 
 
 	/**
@@ -117,18 +90,12 @@ public:
 	 * A better experience would probably require a custom k2 node thingy?
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Mass", meta=(WorldContext = "WorldContextObject",ExpandEnumAsExecs = "ReturnBranch"))
-	static FInstancedStruct GetEntityFragmentByType(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment,const UObject* WorldContextObject, EReturnSuccess& ReturnBranch);
+	static FInstancedStruct GetEntityFragmentByType(FMSEntityHandleBPWrapper EntityHandle, FInstancedStruct Fragment,const UObject* WorldContextObject, EReturnSuccess& ReturnBranch);
 
 	UFUNCTION(BlueprintPure)
-	static void BreakIndexToInt(const FMSEntityViewBPWrapper& InValue, int32& Index)
+	static void BreakIndexToInt(const FMSEntityHandleBPWrapper& InValue, int32& Index)
 	{
-		Index = InValue.EntityView.GetEntity().Index;
+		Index = InValue.EntityHandle.Index;
 	};
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass" , meta=(CustomStructureParam, DeprecatedFunction))
-	static bool EntityHasFragment_OLD(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment);
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mass",meta=(WorldContext = "WorldContextObject", DeprecatedFunction))
-	static bool EntityHasTag_OLD(FMSEntityViewBPWrapper Entity, FInstancedStruct Fragment, UObject* WorldContextObject);
-
 };

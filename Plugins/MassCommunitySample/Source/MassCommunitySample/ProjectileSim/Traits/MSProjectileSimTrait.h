@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassEntityTraitBase.h"
 #include "ProjectileSim/Fragments/MSProjectileFragments.h"
 #include "MSProjectileSimTrait.generated.h"

@@ -1,6 +1,7 @@
 # Community Mass Sample
 ### **Note:** This project requires `Git LFS` for it to work properly, `zip` downloads **won't work**.
 
+- 5.7 update: Updated the code to 5.7. I will have to update the readme over time
 - 5.6 update: Updated the code to 5.6 with many small improvements and fixes. Apologies for the lack of response to PRs and questions, we have been very busy at work.
 - A lot of this documentation is still valid, but I will need to do a full redo of some of the code examples written in the readme as they might use outdated pre-5.6 code. When in doubt the code is always the most reliable indicator of how the API should be called.
 
@@ -406,9 +407,9 @@ void UMyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionCont
 	MyQuery.ForEachEntityChunk(Context, [](FMassExecutionContext& Context)
 	{
 		//Loop over every entity in the current chunk and do stuff!
-		for (int32 EntityIndex = 0; EntityIndex < Context.GetNumEntities(); ++EntityIndex)
+		for (const int32 EntityIndex : Context.CreateEntityIterator())
 		{
-			// ...
+		    //...
 		}
 	});
 }

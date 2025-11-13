@@ -1,11 +1,10 @@
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "Representation/MSNiagaraSubsystem.h"
 #include "MassProcessor.h"
 #include "MassSignalProcessorBase.h"
 #include "MSNiagaraRepresentationProcessors.generated.h"
-
 
 
 UCLASS()
@@ -25,6 +24,7 @@ public:
 	FMassEntityQuery PushArraysToNiagaraSystems;
 };
 
+// This is a bit redundant now with the advent of Niagara data channel islands but I still think it's a nice example of signal processors
 UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSNiagaraRepresentationSpawnProcs : public UMassSignalProcessorBase
 {

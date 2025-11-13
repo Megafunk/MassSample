@@ -3,7 +3,7 @@
 #pragma once
 #define MASSSAMPLE_PARALLEL_OCTREE_QUERY 1
 
-#include "CoreMinimal.h"
+
 #include "MassProcessor.h"
 #include "MSProjectileSimProcessors.generated.h"
 /**

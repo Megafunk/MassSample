@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassProcessor.h"
 
 #include "MSCollisionProcessors.generated.h"

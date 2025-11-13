@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassEntitySubsystem.h"
 #include "MassObserverRegistry.h"
 #include "MassProcessor.h"
@@ -11,8 +11,7 @@
 #include "Misc/DefinePrivateMemberPtr.h"
 #include "LambdaBasedMassProcessor.generated.h"
 
-// EVIL MACRO BECAUSE EPIC REFUSES TO MAKE ANYTHING PUBLIC EVEN THOUGH IT IS A POINTE
-UE_DEFINE_PRIVATE_MEMBER_PTR(TSharedPtr<FMassEntityManager>, GPrivateEntityManagerPointer, UMassSimulationSubsystem, EntityManager);
+static UE_DEFINE_PRIVATE_MEMBER_PTR(TSharedPtr<FMassEntityManager>, GPrivateEntityManagerPointer, UMassSimulationSubsystem, EntityManager);
 
 
 /**

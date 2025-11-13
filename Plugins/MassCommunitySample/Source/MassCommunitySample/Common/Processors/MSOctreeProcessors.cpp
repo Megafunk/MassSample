@@ -60,7 +60,8 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 		for (int32 i = 0; i < NumEntities; ++i)
 		{
 			const auto& Transform = LocationList[i].GetTransform();
-			auto OctreeFragment = OctreeFragments[i];
+			// We do not actually need to write this value itself, as it's just a pointer to the octree ID (a bit sad indirection-wise)
+			const FMSOctreeFragment& OctreeFragment = OctreeFragments[i];
 
 			if (!OctreeFragment.OctreeID)
 			{
@@ -94,7 +95,11 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 #if CHAOS_DEBUG_DRAW
 	QUICK_SCOPE_CYCLE_COUNTER(STAT_UMSOctreeDebugDraw)
 	// I would prefer to use the subsystem access from the context but I can't seem to mimick the way the signal subsystem does so
-	const UMSSubsystem* MSSubSystem = InContext.GetWorld()->GetSubsystem<UMSSubsystem>();
+	const UMSSubsystem* MSSubSystem  = nullptr;
+	if (auto World = GetWorld()) {
+		MSSubSystem = World->GetSubsystem<UMSSubsystem>();
+	}
+
 	if (MSSubSystem && CVarMSDrawOctree.GetValueOnAnyThread())
 	{
 		MSSubSystem->MassSampleOctree2.FindAllElements([&](const FMSEntityOctreeElement& Element)
@@ -122,7 +127,7 @@ void UMSOctreeProcessor::BeginDestroy()
 UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor() : EntityQuery(*this)
 {
 	ObservedType = FMSOctreeFragment::StaticStruct();
-	Operation = EMassObservedOperation::Add;
+	ObservedOperations = EMassObservedOperationFlags::Add;
 
 	bRequiresGameThreadExecution = true;
 	ExecutionFlags = (int32)EProcessorExecutionFlags::AllNetModes;
@@ -190,7 +195,7 @@ void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& Entit
 
 UMSOctreeMemberCleanupProcessor::UMSOctreeMemberCleanupProcessor(): EntityQuery(*this) {
 	ObservedType = FMSOctreeFragment::StaticStruct();
-	Operation = EMassObservedOperation::Remove;
+	ObservedOperations = EMassObservedOperationFlags::Remove;
 
 	bRequiresGameThreadExecution = true;
 	ExecutionFlags = (int32)EProcessorExecutionFlags::AllNetModes;

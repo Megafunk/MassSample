@@ -13,8 +13,8 @@ struct MASSCOMMUNITYSAMPLE_API FMSMassPhysicsFragment : public FMassFragment
 	GENERATED_BODY()
 
 	FMSMassPhysicsFragment() = default;
-	// Note: the term "Actor" here means chaos physics actor handle, which is not a uobject unreal actor...
-	FPhysicsActorHandle SingleParticlePhysicsProxy;
+	// Note: the term "Actor" here is not a typical unreal AActor but a pointer to a chaos physics particle
+	FPhysicsActorHandle SingleParticlePhysicsProxy = nullptr;
 
 
 	FMSMassPhysicsFragment(const FPhysicsActorHandle& ParticlePhysicsProxy)
@@ -22,6 +22,7 @@ struct MASSCOMMUNITYSAMPLE_API FMSMassPhysicsFragment : public FMassFragment
 		SingleParticlePhysicsProxy = ParticlePhysicsProxy;
 	};
 };
+
 // Imitates the collision shapes a static mesh would normally have
 USTRUCT(BlueprintType)
 struct FSharedCollisionSettingsFragment : public FMassSharedFragment
@@ -41,7 +42,6 @@ struct MASSCOMMUNITYSAMPLE_API FMSSimulatesPhysicsTag : public FMassTag
 {
 	GENERATED_BODY()
 };
-
 
 /* Inits new choas bodies with bUpdateKinematicFromSimulation = true
  * which is VERY NEW and is on main only as of writing?

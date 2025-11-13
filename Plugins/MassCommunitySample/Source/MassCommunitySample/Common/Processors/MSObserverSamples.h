@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassObserverProcessor.h"
-#include "UObject/Object.h"
 #include "MSObserverSamples.generated.h"
 
 /**

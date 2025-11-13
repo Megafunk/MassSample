@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "MSNiagaraRepresentationProcessors.h"
 #include "MassCommonFragments.h"
 #include "MassSignalSubsystem.h"
@@ -29,7 +28,7 @@ void UMSNiagaraRepresentationProcessors::ConfigureQueries(const TSharedRef<FMass
 {
 	PositionToNiagaraFragmentQuery.Initialize(EntityManager);
 	PositionToNiagaraFragmentQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	PositionToNiagaraFragmentQuery.AddSharedRequirement<FSharedNiagaraSystemFragment>(EMassFragmentAccess::ReadWrite);
+	PositionToNiagaraFragmentQuery.AddSharedRequirement<FMSSharedNiagaraSystemFragment>(EMassFragmentAccess::ReadWrite);
 	PositionToNiagaraFragmentQuery.RegisterWithProcessor(*this);
 }
 
@@ -42,23 +41,29 @@ void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntityManag
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_PositionToNiagara);
 		const int32 QueryLength = Context.GetNumEntities();
 
-		const auto& Transforms = Context.GetFragmentView<FTransformFragment>().GetData();
-		auto& SharedNiagaraFragment = Context.GetMutableSharedFragment<FSharedNiagaraSystemFragment>();
+		const TConstArrayView<FTransformFragment> Transforms = Context.GetFragmentView<FTransformFragment>();
+		FMSSharedNiagaraSystemFragment& SharedNiagaraSystemFragment = Context.GetMutableSharedFragment<FMSSharedNiagaraSystemFragment>();
 
-		int32 ArrayResizeAmount = SharedNiagaraFragment.IteratorOffset + QueryLength;
+		AMSNiagaraActor* ManagerActor = SharedNiagaraSystemFragment.NiagaraManagerActor.Get();
+		
+		if (!ManagerActor) {
+			return;
+		}
 
-		SharedNiagaraFragment.IteratorOffset += QueryLength;
-		SharedNiagaraFragment.ParticlePositions.SetNumUninitialized(ArrayResizeAmount);
-		SharedNiagaraFragment.ParticleOrientations.SetNumUninitialized(ArrayResizeAmount);
+		int32 ArrayResizeAmount = ManagerActor->IteratorOffset + QueryLength;
 
-		FVector* PositionsDataArray = SharedNiagaraFragment.ParticlePositions.GetData();
-		FQuat4f* DirectionsDataArray = SharedNiagaraFragment.ParticleOrientations.GetData();
+		ManagerActor->IteratorOffset += QueryLength;
+		ManagerActor->ParticlePositions.SetNumUninitialized(ArrayResizeAmount);
+		ManagerActor->ParticleOrientations.SetNumUninitialized(ArrayResizeAmount);
+
+		FVector* PositionsDataArray = ManagerActor->ParticlePositions.GetData();
+		FQuat4f* DirectionsDataArray = ManagerActor->ParticleOrientations.GetData();
 
 
 		for (int32 i = 0; i < QueryLength; ++i)
 		{
 			// this is needed because there are multiple chunks for each shared niagara system
-			const int32 ArrayPosition = i + SharedNiagaraFragment.IteratorOffset - QueryLength;
+			const int32 ArrayPosition = i + ManagerActor->IteratorOffset - QueryLength;
 			auto& Transform = Transforms[i].GetTransform();
 
 			PositionsDataArray[ArrayPosition] = Transform.GetTranslation();
@@ -67,36 +72,43 @@ void UMSNiagaraRepresentationProcessors::Execute(FMassEntityManager& EntityManag
 	});
 
 	// with our nice new data, we push to the actual niagara components in the world!
-	EntityManager.ForEachSharedFragment<FSharedNiagaraSystemFragment>([](FSharedNiagaraSystemFragment& SharedNiagaraFragment)
+	EntityManager.ForEachSharedFragment<FMSSharedNiagaraSystemFragment>([](FMSSharedNiagaraSystemFragment& SharedNiagaraFragment)
 	{
-		const AMSNiagaraActor* NiagaraActor = SharedNiagaraFragment.NiagaraManagerActor.Get();
+		AMSNiagaraActor* NiagaraActor = SharedNiagaraFragment.NiagaraManagerActor.Get();
+		
+		if (!NiagaraActor) {
+			return;
+		}
 
 		// UE_LOG( LogTemp, Error, TEXT("Niagara array length for %s is %i"),*NiagaraActor->GetName(),SharedNiagaraFragment.NiagaraManagerActor->ParticlePositions.Num());
 		if (UNiagaraComponent* NiagaraComponent = NiagaraActor->GetNiagaraComponent())
 		{
 			// If the offset is 0, we didn't iterate anything and should reset our arrays (could do an evil setnumunsafe?)
-			if (SharedNiagaraFragment.IteratorOffset == 0)
+			if (NiagaraActor->IteratorOffset == 0)
 			{
-				SharedNiagaraFragment.ParticlePositions.Reset();
-				SharedNiagaraFragment.ParticleOrientations.Reset();
+				NiagaraActor->ParticlePositions.Reset();
+				NiagaraActor->ParticleOrientations.Reset();
 			}
 
+			static FName ParticlePositionsName = "MassParticlePositions";
+
+			static FName ParticleOrientationsParameterName = "MassParticleOrientations";
+
 			// congratulations to me (karl) for making SetNiagaraArrayVector public in an engine PR (he's so cool) (wow)
-			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, SharedNiagaraFragment.ParticlePositionsName,
-			                                                                 SharedNiagaraFragment.ParticlePositions);
-			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayQuat(NiagaraComponent, SharedNiagaraFragment.ParticleOrientationsParameterName,
-			                                                               SharedNiagaraFragment.ParticleOrientations);
+			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, ParticlePositionsName,
+			                                                                 NiagaraActor->ParticlePositions);
+			UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayQuat(NiagaraComponent, ParticleOrientationsParameterName,
+			                                                               NiagaraActor->ParticleOrientations);
 		}
 		else
 		{
 			UE_LOG(LogTemp, Error, TEXT("projectile manager %s was invalid during array push!"), *NiagaraActor->GetName());
 		}
 
-		// Let's prepare the shared fragments to accept new data next frame,
+		// Let's prepare the manager actor to accept new data next frame,
 		// this also ensures that if no entities are left we will reset the array data
-
-
-		SharedNiagaraFragment.IteratorOffset = 0;
+		
+		NiagaraActor->IteratorOffset = 0;
 	});
 }
 
@@ -106,7 +118,6 @@ UMSNiagaraRepresentationSpawnProcs::UMSNiagaraRepresentationSpawnProcs()
 	//We don't care about rendering on the dedicated server!
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::Client | EProcessorExecutionFlags::Standalone | EProcessorExecutionFlags::Editor);
 	//join the other representation processors in their existing group
-	//ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Representation;
 	ExecutionOrder.ExecuteAfter.Add(TEXT("MSNiagaraRepresentationProcessors"));
 }
 
@@ -125,8 +136,8 @@ void UMSNiagaraRepresentationSpawnProcs::SignalEntities(FMassEntityManager& Enti
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_MASS_SpawnPositionToNiagara);
 
-		const auto& Transforms = Context.GetFragmentView<FTransformFragment>().GetData();
-		auto& SharedNiagaraFragment = Context.GetSharedFragment<FSharedNiagaraSystemSpawnFragment>();
+		const TConstArrayView<FTransformFragment> Transforms = Context.GetFragmentView<FTransformFragment>();
+		const FSharedNiagaraSystemSpawnFragment& SharedNiagaraFragment = Context.GetSharedFragment<FSharedNiagaraSystemSpawnFragment>();
 
 		check(SharedNiagaraFragment.NiagaraManagerActor.Get()->GetNiagaraComponent())
 
@@ -141,11 +152,13 @@ void UMSNiagaraRepresentationSpawnProcs::SignalEntities(FMassEntityManager& Enti
 			LocationsArray.Add(Transforms[i].GetTransform().GetLocation());
 			NormalsArray.Add(-Transforms[i].GetTransform().GetRotation().GetForwardVector());
 
-			UE_LOG(LogTemp, Error, TEXT("projectile manager niagara system %s iterated on! with chunk length "), *NiagaraComponent->GetName());
+			UE_LOG(LogTemp, Error, TEXT("UMSNiagaraRepresentationSpawnProcs: projectile manager niagara system %s iterated on! with chunk length "), *NiagaraComponent->GetName());
 		}
 
-		UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, "HitPositions", LocationsArray);
-		UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, "HitNormals", NormalsArray);
+		static FName HitPositionsName = "HitPositions";
+		static FName HitNormalsName = "HitNormals";
+		UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, HitPositionsName, LocationsArray);
+		UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, HitNormalsName, NormalsArray);
 		//NiagaraComponent->SetNiagaraVariableInt("System.NumToSpawnThisFrame",Context.GetNumEntities());
 	});
 }

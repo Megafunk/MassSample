@@ -230,7 +230,7 @@ FPhysicsActorHandle MassSampleCreatePhysicsStateFromInstanceOwner(FPhysScene* Ph
 UMSPhysicsInitProcessor::UMSPhysicsInitProcessor() : EntityQuery(*this)
 {
 	ObservedType = FMSMassPhysicsFragment::StaticStruct();
-	Operation = EMassObservedOperation::Add;
+	ObservedOperations = EMassObservedOperationFlags::Add;
 	// PHyisics API stuff is picky here
 	bRequiresGameThreadExecution = true;
 }
@@ -346,7 +346,7 @@ void UMSPhysicsInitProcessor::Execute(FMassEntityManager& EntityManager, FMassEx
 UMSPhysicsCleanupProcessor::UMSPhysicsCleanupProcessor() : EntityQuery(*this)
 {
 	ObservedType = FMSMassPhysicsFragment::StaticStruct();
-	Operation = EMassObservedOperation::Remove;
+	ObservedOperations = EMassObservedOperationFlags::Remove;
 	// Phyisics API stuff is picky here
 	bRequiresGameThreadExecution = true;
 }

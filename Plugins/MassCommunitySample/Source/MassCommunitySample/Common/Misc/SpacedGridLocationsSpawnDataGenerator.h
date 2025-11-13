@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassEntitySpawnDataGeneratorBase.h"
 #include "MassSpawnLocationProcessor.h"
 #include "MassSpawnerTypes.h"

@@ -2,12 +2,10 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "MassEntityConfigAsset.h"
+
 #include "MassEntitySpawnDataGeneratorBase.h"
 #include "MassSpawnLocationProcessor.h"
 #include "MassSpawnerTypes.h"
-#include "MassEntityConfigAsset.h"
 #include "ThisLocationSpawnDataGenerator.generated.h"
 
 /**

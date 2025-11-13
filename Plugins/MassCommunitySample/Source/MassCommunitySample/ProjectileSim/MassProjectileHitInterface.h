@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassCommunitySample/Common/Misc/MSBPFunctionLibrary.h"
 #include "UObject/Interface.h"
 #include "MassProjectileHitInterface.generated.h"
@@ -21,5 +21,5 @@ class MASSCOMMUNITYSAMPLE_API IMassProjectileHitInterface
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintImplementableEvent, Category="Mass")
-	void ProjectileHit(FMSEntityViewBPWrapper Entity, FHitResult HitResult);
+	void ProjectileHit(FMSEntityHandleBPWrapper Entity, FHitResult HitResult);
 };

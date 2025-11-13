@@ -7,9 +7,8 @@ public class MassCommunitySample : ModuleRules
 	public MassCommunitySample(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		
-		
+
+
 		PublicIncludePaths.AddRange(
 			new string[] {
 				ModuleDirectory
@@ -69,19 +68,16 @@ public class MassCommunitySample : ModuleRules
 				"RHI"
 			}
 		);
-						//todo: maybe do thee editor only stuff on another module?
+		
+		//todo: maybe do thee editor only stuff on another module?
 
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.Add("CodeView");
 			PrivateDependencyModuleNames.Add("UnrealEd");
 		}
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-			);
+	
+		// Currently a random niagara type breaks compilation with unity and I am not currently interested in figuring out why
+		bUseUnity = false;
 	}
 }

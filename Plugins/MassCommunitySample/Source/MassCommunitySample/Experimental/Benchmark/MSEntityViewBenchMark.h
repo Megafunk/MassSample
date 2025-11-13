@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassProcessor.h"
 #include "UObject/Object.h"
 #include "MSEntityViewBenchMark.generated.h"
@@ -23,13 +23,13 @@ struct FMassEntityWrapper
 	FORCEINLINE bool HasTag() const
 	{
 		checkSlow(Handle.IsValid());
-		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).Tags.Contains<T>();
+		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).GetTags().Contains<T>();
 	}
 	
 	FORCEINLINE bool HasTag(const UScriptStruct& TagType) const
 	{
 		checkSlow(Handle.IsValid());
-		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).Tags.Contains(TagType);
+		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).GetTags().Contains(TagType);
 	}
 
 	FMassEntityManager& EntitySystem;

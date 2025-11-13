@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassEntityQuery.h"
 
 /**
@@ -18,15 +18,15 @@ namespace MSMassUtils
 		EMassFragmentAccess Access = EMassFragmentAccess::ReadWrite;
 		EMassFragmentPresence Presence = EMassFragmentPresence::All;
 
-		if constexpr (TIsConst<T>::Value)
+		if constexpr (std::is_const_v<T>)
 		{
 			Access = EMassFragmentAccess::ReadOnly;
 		}
-		if constexpr (TIsPointer<T>::Value)
+		if constexpr (std::is_pointer_v<T>)
 		{
 			Presence = EMassFragmentPresence::Optional;
 		}
-		if constexpr (TIsSigned<T>::Value)
+		if constexpr (std::is_signed_v<T>)
 		{
 			Presence = EMassFragmentPresence::None;
 		}

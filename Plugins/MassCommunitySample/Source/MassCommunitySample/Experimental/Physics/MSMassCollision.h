@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassEntityView.h"
 #include "MSMassCollision.generated.h"
 
@@ -24,13 +24,31 @@ USTRUCT(BlueprintType)
 struct MASSCOMMUNITYSAMPLE_API FMSHitResultFragment : public FMassFragment
 {
 	GENERATED_BODY()
-	FMSHitResultFragment() = default;
 
-	explicit FMSHitResultFragment(const FHitResult& HitResult)
-		: HitResult(HitResult){}
+	// FMSHitResultFragment(const FMSHitResultFragment&) = default;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	// explicit FMSHitResultFragment(const FHitResult& HitResult)
+	// 	: HitResult(HitResult) {
+	// }
+
+
+
+
+	// A ctor to make this from a hitresult as that is all this thing wraps
+	// FMSHitResultFragment(const FHitResult& InHitResult) : HitResult(InHitResult) {};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FHitResult HitResult;
+};
+
+// A template that makes the our FMSHitResultFragment okay to use as a fragment despite the fact that it isn't trivally copyable
+template<>
+struct TMassFragmentTraits<FMSHitResultFragment> final
+{
+	enum
+	{
+		AuthorAcceptsItsNotTriviallyCopyable = true
+	};
 };
 
 // To be clear here, these are more raw math queries against geo we pass in and not something you use for regular physics sim

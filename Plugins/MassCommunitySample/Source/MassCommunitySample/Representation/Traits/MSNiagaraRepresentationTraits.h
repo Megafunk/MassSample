@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+
 #include "MassEntityTraitBase.h"
 #include "NiagaraSystem.h"
 #include "MSNiagaraRepresentationTraits.generated.h"

@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "MassEntityTypes.h"
 #include "MSFragments.generated.h"
 
