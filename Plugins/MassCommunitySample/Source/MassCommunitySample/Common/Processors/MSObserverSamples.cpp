@@ -10,7 +10,7 @@
 // This c++ constructor syntax initializes the EntityQuery with this processor as the owner
 UMSObserverOnAdd::UMSObserverOnAdd() : EntityQuery(*this) 
 {
-	ObservedType = FOriginalTransformFragment::StaticStruct();
+	ObservedTypes = {FOriginalTransformFragment::StaticStruct()};
 	ObservedOperations = EMassObservedOperationFlags::Add;
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 }

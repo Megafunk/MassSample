@@ -87,7 +87,7 @@ int32 UMSSubsystem::SampleSpawnEntityExamples()
 
 	// We build a new entity and add fragments to it in one command!
 	EntityManager.Defer().PushCommand<FMassCommandBuildEntity>(ReserverdEntity,MyColorFragment);
-
+	EntityManager.Defer().PushCommand<FMassCommandBuildEntity>(ReserverdEntity,MyColorFragment);
 
 	// Flush the commands so this new entity is actually around, but not during processing
 	if (!EntityManager.IsProcessing())

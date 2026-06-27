@@ -79,74 +79,159 @@ UObject* FMassSampleBodyInstanceOwner::GetSourceObject() const
 	return Owner;
 }
 
-UPhysicalMaterial* FMassSampleBodyInstanceOwner::GetPhysicalMaterial() const
-{
-	return nullptr;
-}
 
-void FMassSampleBodyInstanceOwner::GetComplexPhysicalMaterials(TArray<UPhysicalMaterial*>& OutPhysMaterials,
-                                                               TArray<FPhysicalMaterialMaskParams>* OutPhysMaterialMasks) const
-{
-
-	if (BodyInstance.GetPhysMaterialOverride() != nullptr)
-	{
-		OutPhysMaterials.SetNum(1);
-		OutPhysMaterials[0] = BodyInstance.GetPhysMaterialOverride();
-		check(!OutPhysMaterials[0] || OutPhysMaterials[0]->IsValidLowLevel());
-	}
-	else
-	{
-		UStaticMesh* StaticMeshPtr = StaticMesh.Get();
-		if (!StaticMeshPtr)
-		{
-			return;
-		}
-
-		
-		const int32 NumMaterials = StaticMeshPtr->GetStaticMaterials().Num();
-		OutPhysMaterials.SetNum(NumMaterials);
-		
-		if (OutPhysMaterialMasks)
-		{
-			OutPhysMaterialMasks->SetNum(NumMaterials);
-		}
-		
-		for (int32 MatIdx = 0; MatIdx < NumMaterials; MatIdx++)
-		{
-			UPhysicalMaterial* PhysMat = GEngine->DefaultPhysMaterial;
-			UMaterialInterface* Material = StaticMeshPtr->GetStaticMaterials()[MatIdx].MaterialInterface;
-			if (Material)
-			{
-				PhysMat = Material->GetPhysicalMaterial();
-			}
-		
-			OutPhysMaterials[MatIdx] = PhysMat;
-		
-			if (OutPhysMaterialMasks)
-			{
-				UPhysicalMaterialMask* PhysMatMask = nullptr;
-				UMaterialInterface* PhysMatMap = nullptr;
-		
-				if (Material)
-				{
-					PhysMatMask = Material->GetPhysicalMaterialMask();
-					if (PhysMatMask)
-					{
-						PhysMatMap = Material;
-					}
-				}
-		
-				(*OutPhysMaterialMasks)[MatIdx].PhysicalMaterialMask = PhysMatMask;
-				(*OutPhysMaterialMasks)[MatIdx].PhysicalMaterialMap = PhysMatMap;
-			}
-		}
-	}
-
-}
 
 ECollisionResponse FMassSampleBodyInstanceOwner::GetCollisionResponseToChannel(ECollisionChannel Channel) const
 {
 	return BodyInstance.GetResponseToChannel(Channel);
+}
+
+bool FMassSampleBodyInstanceOwner::IsMultiBodyOverlap() const
+{
+	// I assume we don't want multiple body overlaps for now
+	return false;
+}
+
+UObject* FMassSampleBodyInstanceOwner::GetSourceObjectOwner() const
+{
+	return OwnerSubsystem.Get();
+}
+
+FTransform FMassSampleBodyInstanceOwner::GetPhysicsOwnerTransform() const
+{
+	// Does this refer to the body instance or the Mass entity transform? I am unsure
+	return BodyInstance.GetUnrealWorldTransform();
+}
+
+FTransform FMassSampleBodyInstanceOwner::GetPhysicsOwnerSocketTransform(FName InSocketName) const
+{
+	ensureMsgf(false, TEXT("FMassSampleBodyInstanceOwner::GetPhysicsOwnerSocketTransform doesn't do anything yet"));
+	return FTransform::Identity;
+}
+
+ECollisionChannel FMassSampleBodyInstanceOwner::GetCollisionObjectType() const
+{
+	return BodyInstance.GetObjectType();
+}
+
+ECollisionEnabled::Type FMassSampleBodyInstanceOwner::GetCollisionEnabled() const
+{
+	// @todo we should store this state directly
+	return BodyInstance.GetCollisionEnabled();
+}
+
+UBodySetup* FMassSampleBodyInstanceOwner::GetPhysicsBodySetup() const
+{
+	return BodyInstance.GetBodySetup();
+}
+
+const FWalkableSlopeOverride& FMassSampleBodyInstanceOwner::GetWalkableSlopeOverride() const
+{
+	return BodyInstance.GetWalkableSlopeOverride();
+}
+
+Chaos::FPhysicsObject* FMassSampleBodyInstanceOwner::GetPhysicsObjectById(Chaos::FPhysicsObjectId Id) const
+{
+	if (!BodyInstance.IsValidBodyInstance())
+	{
+		return nullptr;
+	}
+
+	return BodyInstance.GetPhysicsActor()->GetPhysicsObject();
+}
+
+bool FMassSampleBodyInstanceOwner::IsPhysicsOwnerMovable() const
+{
+	ensureMsgf(false, TEXT("FMassSampleBodyInstanceOwner::IsPhysicsOwnerMovable doesn't do anything yet"));
+
+	//@todo add mobility settings
+	return true;
+}
+
+bool FMassSampleBodyInstanceOwner::IsPhysicsOwnerSimulatingPhysics() const
+{
+	ensureMsgf(false, TEXT("FMassSampleBodyInstanceOwner::IsPhysicsOwnerSimulatingPhysics doesn't do anything yet"));
+
+	//@todo add simulating settings
+	return true;
+}
+
+FVector FMassSampleBodyInstanceOwner::GetPhysicsOwnerVelocity() const
+{
+	ensureMsgf(false, TEXT("FMassSampleBodyInstanceOwner::GetPhysicsOwnerVelocity doesn't do anything yet"));
+
+	return FVector::ZeroVector;
+}
+
+UObject* FMassSampleBodyInstanceOwner::GetPhysicsOwnerAttachmentRoot() const
+{
+	// This doesn't seem to be used much except for character based movement on actors... 
+	// I don't think we need to return this unless we have an idea of attachment and this actually is meaningful
+	// I would suggest using regular actors for things that ACharacters can stand on for now
+	return nullptr;
+}
+
+bool FMassSampleBodyInstanceOwner::IsPhysicsObjectWorldGeometry() const
+{
+	// The engine returns Mobility != EComponentMobility::Movable and if we are not static
+	// @todo if IsPhysicsOwnerMovable is done this should probably call that as well? unsure
+	return GetCollisionObjectType() == ECC_WorldStatic;
+}
+
+bool FMassSampleBodyInstanceOwner::DoesSocketExistOnPhysicsOwner(FName InSocketName) const
+{
+	// We don't have any sockets yet
+	return false;
+}
+
+TArray<Chaos::FPhysicsObject*> FMassSampleBodyInstanceOwner::GetAllPhysicsObjects() const
+{
+	// I am not sure if we ever want you you to have more than one. 
+	// I see no reason why you should limit yourself to 1 entity = 1 body but the tooling required to make that nice is way out of the scope of this example 
+	if (!BodyInstance.IsValidBodyInstance())
+	{
+		return {};
+	}
+
+	return {BodyInstance.GetPhysicsActor()->GetPhysicsObject()};
+}
+
+FBodyInstance* FMassSampleBodyInstanceOwner::GetBodyInstance(FName BoneName, bool bGetWelded, int32 Index) const
+{
+	
+#if DO_ENSURE
+	// A bit wacky but I want to catch this assumption if it is made just in case...
+	if (bGetWelded)
+	{
+		ensureMsgf(BodyInstance.WeldParent == nullptr, 
+			TEXT("FMassSampleBodyInstanceOwner::GetBodyInstance was called with bGetWelded and we have a welded parent but do not return it "
+				"consider followoing what UPrimitiveComponent::GetBodyInstance does to return the weld parent conditionally"));
+	}
+#endif
+	
+	return const_cast<FBodyInstance*>(&BodyInstance);
+}
+
+UPhysicalMaterial* FMassSampleBodyInstanceOwner::GetPhysicsMaterialOverride() const
+{
+	return BodyInstance.GetPhysMaterialOverride();
+}
+
+UMaterialInterface* FMassSampleBodyInstanceOwner::GetPhysicsMaterialBase() const
+{
+	// I am not sure how to line up the UPhysicalMaterial to a regular material... We might have to actually phone home into Mass here
+	// @todo add a pointer to the material interaface (and in GetNumMaterials, GetMaterial etc)
+	return nullptr;
+}
+
+int32 FMassSampleBodyInstanceOwner::GetNumMaterials() const
+{
+	return 0;
+}
+
+UMaterialInterface* FMassSampleBodyInstanceOwner::GetMaterial(int32 Index) const
+{
+	return nullptr;
 }
 
 TWeakObjectPtr<UObject> FMassSampleBodyInstanceOwner::GetOwnerObject()
@@ -166,7 +251,6 @@ FMassEntityHandle UMassSamplePhysicsStorage::FindEntityHandleFromHitResult(const
 				return OwnerPtr->EntityHandle;
 			}
 		}
-		
 	}
 	
 	return FMassEntityHandle();

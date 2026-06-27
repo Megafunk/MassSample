@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MSOctreeProcessors.h"
-
+#include "Misc/EngineVersionComparison.h"
 #include "MassCommonFragments.h"
 #include "MassCommonTypes.h"
 #include "MassExecutionContext.h"
@@ -10,10 +10,13 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(MSOctreeProcessors)
 
-static TAutoConsoleVariable<bool> CVarMSDrawOctree(
-	TEXT("masssample.debugoctree"), false,
-	TEXT(
-		"Enables debug drawing for the Mass Sample octree example. Uses Chaos debug draw so it can called from other threads"));
+
+bool GbMSDrawOctree = false;
+static FAutoConsoleVariableRef CVarMSDrawOctree(
+	TEXT("masssample.debugoctree"),
+	GbMSDrawOctree,
+	TEXT("Enables debug drawing for the Mass Sample octree example. Uses Chaos debug draw so it can called from other threads.\n"),
+	ECVF_Default);
 
 UMSOctreeProcessor::UMSOctreeProcessor() : UpdateOctreeElementsQuery(*this) {
 	ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::UpdateWorldFromMass;
@@ -100,7 +103,7 @@ void UMSOctreeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 		MSSubSystem = World->GetSubsystem<UMSSubsystem>();
 	}
 
-	if (MSSubSystem && CVarMSDrawOctree.GetValueOnAnyThread())
+	if (MSSubSystem && CVarMSDrawOctree->GetBool())
 	{
 		MSSubSystem->MassSampleOctree2.FindAllElements([&](const FMSEntityOctreeElement& Element)
 		{
@@ -126,7 +129,7 @@ void UMSOctreeProcessor::BeginDestroy()
 
 UMSHashGridMemberInitializationProcessor::UMSHashGridMemberInitializationProcessor() : EntityQuery(*this)
 {
-	ObservedType = FMSOctreeFragment::StaticStruct();
+	ObservedTypes = {FMSOctreeFragment::StaticStruct()};
 	ObservedOperations = EMassObservedOperationFlags::Add;
 
 	bRequiresGameThreadExecution = true;
@@ -194,7 +197,8 @@ void UMSHashGridMemberInitializationProcessor::Execute(FMassEntityManager& Entit
 }
 
 UMSOctreeMemberCleanupProcessor::UMSOctreeMemberCleanupProcessor(): EntityQuery(*this) {
-	ObservedType = FMSOctreeFragment::StaticStruct();
+	
+	ObservedTypes = {FMSOctreeFragment::StaticStruct()};
 	ObservedOperations = EMassObservedOperationFlags::Remove;
 
 	bRequiresGameThreadExecution = true;

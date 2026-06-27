@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "MassEntityHandle.h"
 #include "Chaos/Framework/UncheckedArray.h"
+#include "Math/GenericOctree.h"
 #include "Math/GenericOctreePublic.h"
 #include "MSOctreeFragments.generated.h"
 

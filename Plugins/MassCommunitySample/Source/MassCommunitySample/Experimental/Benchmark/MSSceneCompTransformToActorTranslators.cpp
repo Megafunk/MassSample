@@ -68,8 +68,7 @@ void UMSTransformToSceneCompTranslatorFastPath::Execute(FMassEntityManager& Enti
 		const auto& TransformList = Context.GetMutableFragmentView<FTransformFragment>();
 
 		const int32 NumEntities = Context.GetNumEntities();
-
-
+		
 		FPhysScene* PhysicsScene = Context.GetWorld()->GetPhysicsScene();
 		
 		FPhysicsCommand::ExecuteRead(PhysicsScene, [&]()

@@ -3,7 +3,6 @@
 #include "MassCommonFragments.h"
 #include "MassEntityTemplateRegistry.h"
 #include "MassMovementFragments.h"
-#include "Common/Fragments/MSFragments.h"
 #include "Experimental/Physics/MSMassCollision.h"
 #include "Representation/MSNiagaraSubsystem.h"
 #include "Representation/Fragments/MSRepresentationFragments.h"

@@ -25,32 +25,44 @@ FBodyCollisionFilterData CollisionFilterDataDummy(const FCollisionResponseContai
 	FBodyCollisionFilterData OutFilterData;
 
 	// Yoinked from FBodyInstance::BuildBodyFilterData
-	FCollisionFilterData QueryFilterData;
-	FCollisionFilterData SimpleQueryData;
-	CreateShapeFilterData(ECC_WorldDynamic, FMaskFilter(0), 0, ResponseContainer, 0, 0, QueryFilterData, SimpleQueryData, false, true, true, false);
-	// Build filterdata variations for complex and simple
+	
+	FPhysicsFilterBuilder Builder;
+	Builder.SetCollisionChannelIndex(ECC_WorldDynamic);
+	Builder.SetMaskFilter(FMaskFilter(0));
+	Builder.SetResponses(ResponseContainer);
+	Builder.SetFlags(Chaos::EFilterFlags::ContactNotify, true);
 
-	FCollisionFilterData ComplexQueryData = SimpleQueryData;
+	Builder.SetFlags(Chaos::EFilterFlags::CCD, false);
+	Builder.SetFlags(Chaos::EFilterFlags::ContactNotify, false);
+	Builder.SetFlags(Chaos::EFilterFlags::StaticShape, false);
+	Builder.SetFlags(Chaos::EFilterFlags::ModifyContacts, false);
+	
+
+	
+	Builder.SetOwnerID(0);
+	Builder.SetComponentID(0);
+
 
 	// Set output sim data
-	OutFilterData.SimFilter = SimpleQueryData;
-
-	// Build filterdata variations for complex and simple
-	// turning this on seems to break things?
-	SimpleQueryData.Word3 |= EPDF_SimpleCollision;
-	if (TraceFlag == ECollisionTraceFlag::CTF_UseSimpleAsComplex)
+	OutFilterData.FilterInstanceData = Builder.BuildInstanceData();
+	
+	
+	// We use this twice now for both complex and simple, they are opposites here
+	
 	{
-		SimpleQueryData.Word3 |= EPDF_ComplexCollision;
+		bool bUseSimpleAsComplex = TraceFlag == ECollisionTraceFlag::CTF_UseSimpleAsComplex;
+		Builder.SetFlags(Chaos::EFilterFlags::ComplexCollision, bUseSimpleAsComplex);
+		Builder.SetFlags(Chaos::EFilterFlags::SimpleCollision, true);
+		OutFilterData.SimpleShapeFilterData = Builder.BuildShapeFilterData();
 	}
 
-	ComplexQueryData.Word3 |= EPDF_ComplexCollision;
-	if (TraceFlag == ECollisionTraceFlag::CTF_UseComplexAsSimple)
 	{
-		ComplexQueryData.Word3 |= EPDF_SimpleCollision;
+		bool bUseComplexAsSimple = TraceFlag == ECollisionTraceFlag::CTF_UseComplexAsSimple;
+		Builder.SetFlags(Chaos::EFilterFlags::SimpleCollision, bUseComplexAsSimple);
+		Builder.SetFlags(Chaos::EFilterFlags::ComplexCollision, true);
+		OutFilterData.ComplexShapeFilterData = Builder.BuildShapeFilterData();
 	}
-
-	OutFilterData.QuerySimpleFilter = SimpleQueryData;
-	OutFilterData.QueryComplexFilter = ComplexQueryData;
+	
 	return OutFilterData;
 }
 
@@ -229,7 +241,7 @@ FPhysicsActorHandle MassSampleCreatePhysicsStateFromInstanceOwner(FPhysScene* Ph
 
 UMSPhysicsInitProcessor::UMSPhysicsInitProcessor() : EntityQuery(*this)
 {
-	ObservedType = FMSMassPhysicsFragment::StaticStruct();
+	ObservedTypes = {FMSMassPhysicsFragment::StaticStruct()};
 	ObservedOperations = EMassObservedOperationFlags::Add;
 	// PHyisics API stuff is picky here
 	bRequiresGameThreadExecution = true;
@@ -345,7 +357,7 @@ void UMSPhysicsInitProcessor::Execute(FMassEntityManager& EntityManager, FMassEx
 
 UMSPhysicsCleanupProcessor::UMSPhysicsCleanupProcessor() : EntityQuery(*this)
 {
-	ObservedType = FMSMassPhysicsFragment::StaticStruct();
+	ObservedTypes = {FMSMassPhysicsFragment::StaticStruct()};
 	ObservedOperations = EMassObservedOperationFlags::Remove;
 	// Phyisics API stuff is picky here
 	bRequiresGameThreadExecution = true;

@@ -151,15 +151,12 @@ void UMSNiagaraRepresentationSpawnProcs::SignalEntities(FMassEntityManager& Enti
 		{
 			LocationsArray.Add(Transforms[i].GetTransform().GetLocation());
 			NormalsArray.Add(-Transforms[i].GetTransform().GetRotation().GetForwardVector());
-
-			UE_LOG(LogTemp, Error, TEXT("UMSNiagaraRepresentationSpawnProcs: projectile manager niagara system %s iterated on! with chunk length "), *NiagaraComponent->GetName());
 		}
 
 		static FName HitPositionsName = "HitPositions";
 		static FName HitNormalsName = "HitNormals";
 		UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, HitPositionsName, LocationsArray);
 		UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(NiagaraComponent, HitNormalsName, NormalsArray);
-		//NiagaraComponent->SetNiagaraVariableInt("System.NumToSpawnThisFrame",Context.GetNumEntities());
 	});
 }
 

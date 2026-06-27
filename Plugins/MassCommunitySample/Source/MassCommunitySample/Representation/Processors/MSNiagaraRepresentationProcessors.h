@@ -11,15 +11,16 @@ UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSNiagaraRepresentationProcessors : public UMassProcessor
 {
 	GENERATED_BODY()
+
 public:
-	
 	UMSNiagaraRepresentationProcessors();
-	
+
+protected:
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 
-	
+
 	FMassEntityQuery PositionToNiagaraFragmentQuery;
 	FMassEntityQuery PushArraysToNiagaraSystems;
 };
@@ -29,14 +30,14 @@ UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSNiagaraRepresentationSpawnProcs : public UMassSignalProcessorBase
 {
 	GENERATED_BODY()
+
 public:
-	
 	UMSNiagaraRepresentationSpawnProcs();
-	
-	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
-	
-	virtual void SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context,
-		FMassSignalNameLookup& EntitySignals) override;
+
 protected:
+	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
+
+	virtual void SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context, FMassSignalNameLookup& EntitySignals) override;
+
 	virtual void InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& Manager) override;
 };

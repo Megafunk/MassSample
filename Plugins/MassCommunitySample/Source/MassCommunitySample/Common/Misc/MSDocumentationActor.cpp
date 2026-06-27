@@ -18,7 +18,7 @@ AMSDocumentationActor::AMSDocumentationActor()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-void AMSDocumentationActor::NavigateToFunctionSource(const FString SymbolName, const FString ModuleName)
+void AMSDocumentationActor::NavigateToFunctionSource(const FString& SymbolName, const FString& ModuleName)
 {
 #if WITH_EDITOR
 

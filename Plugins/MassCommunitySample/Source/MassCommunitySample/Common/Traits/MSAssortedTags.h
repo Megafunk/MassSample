@@ -3,7 +3,6 @@
 #pragma once
 
 
-#include "InstancedStruct.h"
 #include "MassEntityTraitBase.h"
 #include "StructUtils/InstancedStruct.h"
 #include "MSAssortedTags.generated.h"
@@ -14,6 +13,7 @@
 UCLASS(meta=(DisplayName="Assorted Tags"), Deprecated)
 class MASSCOMMUNITYSAMPLE_API UDEPRECATED_UMSAssortedTags : public UMassEntityTraitBase
 {
+public:
 	GENERATED_BODY()
 	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
 

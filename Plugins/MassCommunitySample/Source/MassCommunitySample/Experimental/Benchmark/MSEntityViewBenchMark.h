@@ -15,7 +15,7 @@ struct FMassEntityWrapper
 	// Is this fair to compare with editor binary code?
 	
 
-	FMassEntityWrapper(FMassEntityManager& InEntitySubsystem, FMassEntityHandle& Entity):
+	FMassEntityWrapper(FMassEntityManager& InEntitySubsystem, const FMassEntityHandle& Entity):
 	EntitySystem(InEntitySubsystem),
 	Handle(Entity){};
 
@@ -23,13 +23,13 @@ struct FMassEntityWrapper
 	FORCEINLINE bool HasTag() const
 	{
 		checkSlow(Handle.IsValid());
-		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).GetTags().Contains<T>();
+		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).Contains<T>();
 	}
 	
 	FORCEINLINE bool HasTag(const UScriptStruct& TagType) const
 	{
 		checkSlow(Handle.IsValid());
-		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).GetTags().Contains(TagType);
+		return EntitySystem.GetArchetypeComposition(EntitySystem.GetArchetypeForEntity(Handle)).Contains(&TagType);
 	}
 
 	FMassEntityManager& EntitySystem;

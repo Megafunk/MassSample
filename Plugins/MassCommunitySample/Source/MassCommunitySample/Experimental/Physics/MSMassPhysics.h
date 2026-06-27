@@ -3,6 +3,8 @@
 #pragma once
 
 #include "MassProcessor.h"
+#include "Chaos/ChaosUserEntity.h"
+#include "PhysicsEngine/BodyInstance.h"
 #include "PhysicsEngine/PhysicsBodyInstanceOwnerInterface.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "MSMassPhysics.generated.h"
@@ -21,10 +23,29 @@ public:
 	// IPhysicsBodyInstanceOwner interface begin
 	virtual bool IsStaticPhysics() const override;
 	virtual UObject* GetSourceObject() const override;
-	virtual UPhysicalMaterial* GetPhysicalMaterial() const override;
-	virtual void GetComplexPhysicalMaterials(TArray<UPhysicalMaterial*>& OutPhysMaterials,
-														  TArray<FPhysicalMaterialMaskParams>* OutPhysMaterialMasks) const override;
 	virtual ECollisionResponse GetCollisionResponseToChannel(ECollisionChannel Channel) const override;
+	
+	virtual bool IsMultiBodyOverlap() const override;
+	virtual UObject* GetSourceObjectOwner() const override;
+	virtual FTransform GetPhysicsOwnerTransform() const override;
+	virtual FTransform GetPhysicsOwnerSocketTransform(FName InSocketName) const override;
+	virtual ECollisionChannel GetCollisionObjectType() const override;
+	virtual ECollisionEnabled::Type GetCollisionEnabled() const override;
+	virtual UBodySetup* GetPhysicsBodySetup() const override;
+	virtual const FWalkableSlopeOverride& GetWalkableSlopeOverride() const override;
+	virtual Chaos::FPhysicsObject* GetPhysicsObjectById(Chaos::FPhysicsObjectId Id) const override;
+	virtual bool IsPhysicsOwnerMovable() const override;
+	virtual bool IsPhysicsOwnerSimulatingPhysics() const override;
+	virtual FVector GetPhysicsOwnerVelocity() const override;
+	virtual UObject* GetPhysicsOwnerAttachmentRoot() const override;
+	virtual bool IsPhysicsObjectWorldGeometry() const override;
+	virtual bool DoesSocketExistOnPhysicsOwner(FName InSocketName) const override;
+	virtual TArray<Chaos::FPhysicsObject*> GetAllPhysicsObjects() const override;
+	virtual FBodyInstance* GetBodyInstance(FName BoneName = NAME_None, bool bGetWelded = true, int32 Index = INDEX_NONE) const override;
+	virtual UPhysicalMaterial* GetPhysicsMaterialOverride() const override;
+	virtual UMaterialInterface* GetPhysicsMaterialBase() const override;
+	virtual int32 GetNumMaterials() const override;
+	virtual UMaterialInterface* GetMaterial(int32 Index) const override;
 	//IPhysicsBodyInstanceOwner interface end
 	
 	// FChaosUserDefinedEntity:
@@ -65,7 +86,7 @@ class MASSCOMMUNITYSAMPLE_API UMSChaosMassTranslationProcessorsProcessors : publ
 {
 	GENERATED_BODY()
 	UMSChaosMassTranslationProcessorsProcessors();
-
+protected:
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>&) override;
 	virtual void Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context) override;
 

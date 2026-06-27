@@ -127,6 +127,7 @@ namespace MassSample::Signals
 {
 	static const FName OnEntityHitSomething = FName("SampleOnEntityHitSomething");
 	static const FName OnGetHit = FName("SampleOnGetHit");
+	static const FName OnSignalExampleExecutor = FName("SignalExampleExecutor");
 }
 
 

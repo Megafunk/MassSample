@@ -15,11 +15,10 @@ UCLASS()
 class MASSCOMMUNITYSAMPLE_API UMSSubsystem : public UMassSubsystemBase
 {
 	GENERATED_BODY()
-public:
+protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
 	virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
-
+public:
 	FMSOctree2 MassSampleOctree2;
 	
 	UFUNCTION(BlueprintCallable)

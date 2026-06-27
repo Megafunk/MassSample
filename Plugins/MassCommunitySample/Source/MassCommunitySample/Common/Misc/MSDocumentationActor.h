@@ -15,7 +15,7 @@ public:
 	AMSDocumentationActor();
 	
 	UFUNCTION(BlueprintCallable)
-	static void NavigateToFunctionSource(const FString SymbolName, const FString ModuleName = "MassSample");
+	static void NavigateToFunctionSource(const FString& SymbolName, const FString& ModuleName = "MassSample");
 
 protected:
 	// Called when the game starts or when spawned

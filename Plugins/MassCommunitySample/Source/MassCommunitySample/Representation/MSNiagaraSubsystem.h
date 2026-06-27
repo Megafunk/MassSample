@@ -13,7 +13,7 @@ class MASSCOMMUNITYSAMPLE_API UMSNiagaraSubsystem : public UWorldSubsystem
 protected:
 	
 	TSharedPtr<FMassEntityManager> MassManager = nullptr;
-	
+public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 	virtual void Deinitialize() override
@@ -22,7 +22,6 @@ protected:
 		PreexistingSharedNiagaraActors.Empty();
 	};
 
-public:
 	// Creates/Finds a new niagara shared fragment and their manager actor. Can also set an overriden static mesh (a tad hacky though)
 	AMSNiagaraActor* GetOrCreateNiagaraManagerForSystemType(class UNiagaraSystem* NiagaraSystem, UStaticMesh* StaticMeshOverride, UMaterialInterface* MaterialOverride = nullptr);
 	

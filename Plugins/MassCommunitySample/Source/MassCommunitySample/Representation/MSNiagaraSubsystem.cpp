@@ -57,15 +57,18 @@ AMSNiagaraActor* UMSNiagaraSubsystem::GetOrCreateNiagaraManagerForSystemType(UNi
 
 	if(StaticMeshOverride)
 	{
-		NewNiagaraActor->GetNiagaraComponent()->SetVariableStaticMesh("StaticMeshToRender", StaticMeshOverride);
+		static FName StaticMeshToRender_NAME("StaticMeshToRender");
+		NewNiagaraActor->GetNiagaraComponent()->SetVariableStaticMesh(StaticMeshToRender_NAME, StaticMeshOverride);
 
+		
+		static FName StaticMeshMaterial_NAME("StaticMeshMaterial");
 		if(MaterialOverride)
 		{
-			NewNiagaraActor->GetNiagaraComponent()->SetVariableMaterial("StaticMeshMaterial", MaterialOverride);
+			NewNiagaraActor->GetNiagaraComponent()->SetVariableMaterial(StaticMeshMaterial_NAME, MaterialOverride);
 		}
 		else
 		{
-			NewNiagaraActor->GetNiagaraComponent()->SetVariableMaterial("StaticMeshMaterial", StaticMeshOverride->GetMaterial(0));
+			NewNiagaraActor->GetNiagaraComponent()->SetVariableMaterial(StaticMeshMaterial_NAME, StaticMeshOverride->GetMaterial(0));
 		}
 	}
 	SharedStructToReturn.NiagaraManagerActor = NewNiagaraActor;

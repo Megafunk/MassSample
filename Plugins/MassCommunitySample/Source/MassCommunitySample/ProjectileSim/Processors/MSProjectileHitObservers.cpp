@@ -20,7 +20,7 @@
 
 UMSProjectileHitObservers::UMSProjectileHitObservers()
 {
-	ObservedType = FMSHitResultFragment::StaticStruct();
+	ObservedTypes = {FMSHitResultFragment::StaticStruct()};
 	ObservedOperations = EMassObservedOperationFlags::Add;
 	ExecutionFlags = (int32)(EProcessorExecutionFlags::All);
 
@@ -171,10 +171,10 @@ void UMSEntityWasHitSignalProcessor::InitializeInternal(UObject& Owner, const TS
 	SubscribeToSignal(*SignalSubsystem, MassSample::Signals::OnGetHit);
 }
 
-void UMSEntityWasHitSignalProcessor::SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context,
+void UMSEntityWasHitSignalProcessor::SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& ProcessorContext,
                                                     FMassSignalNameLookup& EntitySignals)
 {
-	EntityQuery.ForEachEntityChunk( Context, [&,this](FMassExecutionContext& Context)
+	EntityQuery.ForEachEntityChunk( ProcessorContext, [this](FMassExecutionContext& Context)
 	{
 		auto Transforms = Context.GetFragmentView<FTransformFragment>();
 

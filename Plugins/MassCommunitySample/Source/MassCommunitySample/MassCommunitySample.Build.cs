@@ -32,6 +32,7 @@ public class MassCommunitySample : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[] {
+				"MassCore", // This module is new in 5.8
 				"MassEntity",
 				//"StructUtils", StructUtils is now in the base engine coreuobject module! yay
 				"MassCommon",
@@ -76,8 +77,8 @@ public class MassCommunitySample : ModuleRules
 			PrivateDependencyModuleNames.Add("CodeView");
 			PrivateDependencyModuleNames.Add("UnrealEd");
 		}
-	
-		// Currently a random niagara type breaks compilation with unity and I am not currently interested in figuring out why
-		bUseUnity = false;
+		
+		
+		
 	}
 }

@@ -2,7 +2,6 @@
 
 
 #include "MSAssortedTags.h"
-
 #include "MassEntityTemplateRegistry.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(MSAssortedTags)
@@ -18,7 +17,7 @@ void UDEPRECATED_UMSAssortedTags::BuildTemplate(FMassEntityTemplateBuildContext&
 		const UScriptStruct* StructType = Tag.GetScriptStruct();
 		if (StructType->IsChildOf(FMassTag::StaticStruct()))
 		{
-			BuildContext.AddTag(*StructType);
+			BuildContext.AddTag(StructType);
 		}
 	}
 }
