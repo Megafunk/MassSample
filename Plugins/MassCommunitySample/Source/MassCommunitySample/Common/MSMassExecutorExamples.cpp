@@ -12,9 +12,8 @@
 // The important thing is setting UMassProcessor::AutoExecuteQuery and it being picked up in ConfigureQueries
 struct FTestQueryExecutor_ForSignal : public UE::Mass::FQueryExecutor
 {
-	// Read-only access to FTransformFragment
 	UE::Mass::FQueryDefinition<
-		UE::Mass::FConstFragmentAccess<FTransformFragment>
+		UE::Mass::FConstFragmentAccess<FTransformFragment> // Read-only access to FTransformFragment
 	> Accessors{*this};
 
 	// Basically just ::Execute but in a function ptr!
@@ -27,7 +26,9 @@ struct FTestQueryExecutor_ForSignal : public UE::Mass::FQueryExecutor
 		                   {
 			                   for (uint32 EntityIndex : Context.CreateEntityIterator())
 			                   {
-			                   	// 
+				                   // Just draw a simple debug sphere where each entity is to show it actually doing something
+
+				                   // Yes, the `template` is needed in front here
 				                   const FTransformFragment& TransformFragment = Data.template Get<FTransformFragment>()[EntityIndex];
 				                   DrawDebugSphere(Context.GetWorld(),
 				                                   TransformFragment.GetTransform().GetLocation(),
