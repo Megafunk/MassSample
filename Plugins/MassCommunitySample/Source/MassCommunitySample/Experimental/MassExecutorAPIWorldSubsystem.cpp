@@ -26,10 +26,9 @@ void UMassExecutorAPIWorldSubsystem::Initialize(FSubsystemCollectionBase& Collec
 }
 
 // FQueryExecutors are a fancy new way to make queries + execution introduced in 5.6
-using namespace UE::Mass;
-struct FTestQueryExecutor_DrawTransforms : public FQueryExecutor
+struct FTestQueryExecutor_DrawTransforms : public UE::Mass::FQueryExecutor
 {
-	FQueryDefinition<FConstFragmentAccess<FTransformFragment>> Accessors{*this};
+	UE::Mass::FQueryDefinition<UE::Mass::FConstFragmentAccess<FTransformFragment>> Accessors{*this};
 	
 	virtual void Execute(FMassExecutionContext& Context)
 	{
